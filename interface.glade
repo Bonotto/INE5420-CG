@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.1 -->
+<!-- Generated with glade 3.18.3 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
   <object class="GtkWindow" id="main_window">
     <property name="can_focus">False</property>
     <property name="window_position">center</property>
-    <child>
-      <placeholder/>
-    </child>
     <child>
       <object class="GtkBox" id="main_box">
         <property name="visible">True</property>
@@ -114,7 +111,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="up_buttom">
+                  <object class="GtkButton" id="up_button">
                     <property name="label" translatable="yes">Up</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>

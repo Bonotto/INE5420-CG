@@ -21,10 +21,10 @@
 # SOFTWARE.
 
 # Defines
-CXX      = gcc
-CPPFLAGS = `pkg-config --cflags gtk+-3.0` -std=c++11 -Wall
+CXX      = g++
+CPPFLAGS = -std=c++11 -Wall `pkg-config --cflags gtkmm-3.0`
 LDFLAGS  = 
-LDLIBS   = -lstdc++ -lm `pkg-config --libs gtk+-3.0`
+LDLIBS   = `pkg-config --libs gtkmm-3.0`
 
 PHONY: main clean
 
@@ -46,3 +46,6 @@ clean:
 # Builds a CPP Source file
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c $< -o $@
+
+cmd:
+	g++ main.cpp -o main `pkg-config gtkmm-3.0 --cflags --libs`

@@ -1,45 +1,56 @@
-
-#include <gtk/gtk.h>
-#include <cairo.h>
+#include <gtkmm.h>
 #include <iostream>
 
-static gboolean
-draw_cb (GtkWidget *widget,
-         cairo_t   *cr,
-         gpointer   data)
+Gtk::Window* main_window = nullptr;
+
+static
+void on_button_clicked()
 {
-//   cairo_set_source_surface (cr, surface, 0, 0);
-//   cairo_paint (cr);
-
-	std::cout << "a" << std::endl;
-
-  return FALSE;
+	std::cout << "HELLO" << std::endl;
 }
 
-int main (int argc, char *argv[])
+int main (int argc, char **argv)
 {
+  auto app = Gtk::Application::create(argc, argv, "org.gtkmm.example");
 
-	GObject *main_window;
-	GObject *draw_area;
-	GtkBuilder *builder;
+  //Load the GtkBuilder file and instantiate its widgets:
+  auto refBuilder = Gtk::Builder::create();
+  try
+  {
+    refBuilder->add_from_file("interface.glade");
+  }
+  catch(const Glib::FileError& ex)
+  {
+    std::cerr << "FileError: " << ex.what() << std::endl;
+    return 1;
+  }
+  catch(const Glib::MarkupError& ex)
+  {
+    std::cerr << "MarkupError: " << ex.what() << std::endl;
+    return 1;
+  }
+  catch(const Gtk::BuilderError& ex)
+  {
+    std::cerr << "BuilderError: " << ex.what() << std::endl;
+    return 1;
+  }
 
-	gtk_init (&argc, &argv);
+  //Get the GtkBuilder-instantiated Dialog:
+  refBuilder->get_widget("main_window", main_window);
+  if(main_window)
+  {
+    //Get the GtkBuilder-instantiated Button, and connect a signal handler:
+    Gtk::Button* pButton = nullptr;
+    refBuilder->get_widget("up_button", pButton);
+    if(pButton)
+    {
+      pButton->signal_clicked().connect( sigc::ptr_fun(on_button_clicked) );
+    }
 
-	/* Construct a GtkBuilder instance and load our UI description */
-	builder = gtk_builder_new ();
+    app->run(*main_window);
+  }
 
-	gtk_builder_add_from_file (builder, "interface-1.glade", NULL);
+  delete main_window;
 
-	/* Connect signal handlers to the constructed widgets. */
-	main_window = gtk_builder_get_object (builder, "main_window");
-	draw_area = gtk_builder_get_object (builder, "viewport");
-
-	g_signal_connect (main_window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
-	// g_signal_connect (draw_area, "draw", G_CALLBACK (draw_cb), NULL);
-
-	gtk_widget_show(GTK_WIDGET(main_window));
-
-	gtk_main ();
-
-	return 0;
+  return 0;
 }
