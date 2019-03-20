@@ -1,7 +1,7 @@
 #include <gtkmm.h>
 #include <iostream>
 
-#include "./src/vision/Viewport.hpp"
+#include "src/vision/viewport.hpp"
 
 int main(int argc, char **argv)
 {
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 	auto refBuilder = Gtk::Builder::create();
 	try
 	{
-		refBuilder->add_from_file("interface.glade");
+		refBuilder->add_from_file("src/vision/interface.glade");
 	}
 	catch (const Glib::FileError &ex)
 	{
