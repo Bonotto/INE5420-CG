@@ -21,61 +21,48 @@
  * THE SOFTWARE.
  */
 
-#ifndef CONTROL_VIEWPORT_HPP
-#define CONTROL_VIEWPORT_HPP
+#ifndef MODEL_VECTOR_HPP
+#define MODEL_VECTOR_HPP
 
-#include <iostream>
-#include <gtkmm/drawingarea.h>
+#include <vector>
+#include "../config/traits.hpp"
 
-#include "../model/point.hpp"
-#include "../model/line.hpp"
-#include "../model/rectangle.hpp"
-
-namespace control
+namespace model
 {
-
-	class Viewport
+	
+	class Vector
 	{
 	public:
-		Viewport(Gtk::DrawingArea& draw_area) :
-			_draw_area(draw_area)
+		const static int _x = Traits<Vector>::x;
+		const static int _y = Traits<Vector>::y;
+		const static int _z = Traits<Vector>::z;
+		const static int _w = Traits<Vector>::w;
+	
+		const static int dimension = Traits<Vector>::dimension;
+
+		Vector() :
+			_coordinates{_x, _y, _z, _w}
 		{
-			_draw_area.signal_draw().connect(sigc::mem_fun(*this, &Viewport::on_draw));
 		}
+		
+		Vector(double x, double y, double z = _z, double w = _w) :
+			_coordinates{x, y, z, w}
+		{
+		}
+		
+		~Vector() = default;
 
-		~Viewport() = default;
-
-		const bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
-		void update();
+		double& operator[](int position);
 	
 	private:
-		Gtk::DrawingArea &_draw_area;
+		std::vector<double> _coordinates; //! Maybe using double[dimension] explicit?
 	};
 
-	const bool Viewport::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
+	double& Vector::operator[](int position)
 	{
-		std::cout << "control::Viewport::on_draw()" << std::endl;
-
-		cr->set_source_rgb(255, 1, 1); //! Test Paints background
-		cr->paint();
-
-		cr->set_line_cap(Cairo::LINE_CAP_ROUND); //! Line config
-		cr->set_source_rgb(0, 0, 0);             //! Line color
-
-		model::Rectangle p(100, 100);
-
-		p.draw(cr);
-
-		cr->stroke();
-
-		return true;
+		return _coordinates[position];
 	}
 
-	void Viewport::update()
-	{
-		_draw_area.queue_draw();
-	}
+} //! namespace model
 
-} //! namespace control
-
-#endif  // CONTROL_VIEWPORT_HPP
+#endif  // MODEL_VECTOR_HPP

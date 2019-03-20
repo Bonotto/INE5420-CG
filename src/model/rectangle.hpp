@@ -21,29 +21,47 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_UTIL_VECTOR_HPP
-#define MODEL_UTIL_VECTOR_HPP
+#ifndef MODEL_RECTANGLE_HPP
+#define MODEL_RECTANGLE_HPP
 
-#include <vector>
-#include "../../config/traits.hpp"
+#include "../config/traits.hpp"
+#include "shape.hpp"
 
-namespace util
+namespace model
 {
 	
-	class Vector
+	class Rectangle : public Shape
 	{
-	public:
-		Vector()  = default;
-		
-		template <typename ... Value>
-		Vector(Value && ... values) : _vector{values...} {}
-		
-		~Vector() = default;
-	
 	private:
-		double _vector[Traits<Vector>::dimension];
+		const static int _x = Vector::_x;
+		const static int _y = Vector::_y;
+		const static int _z = Vector::_z;
+		const static int _w = Vector::_w;
+
+	public:
+		Rectangle() :
+			Shape({Vector(50, 50), Vector(200, 200)})
+		{}
+
+		Rectangle(const Vector& v1, const Vector& v2) :
+			Shape({v1, v2})
+		{}
+
+		~Rectangle() = default;
+
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr);
 	};
 
-} //! namespace util
+    void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr)
+    {
+		/* First point */
+		cr->move_to(_vectors[0][0], _vectors[0][1]);
 
-#endif  // MODEL_UTIL_VECTOR_HPP
+		// Draw all other points
+		for (Vector& v : _vectors)
+			cr->line_to(v[0], v[1]);
+    }
+
+} //! namespace model
+
+#endif  // MODEL_RECTANGLE_HPP

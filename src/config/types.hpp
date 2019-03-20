@@ -24,18 +24,22 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-//! General
+/* General */
 class Debug;
 
-namespace util
+namespace control
 {
-    //! Control
 
-    //! Model
-    class Vector;
+} //! namespace control
 
-    //! Vision
+namespace model
+{
+    class Vector;   
+} //! namespace model
 
-} //! namespace util
+namespace view
+{
+    
+} //! namespace view
 
 #endif //! TYPES_HPP

@@ -21,61 +21,39 @@
  * THE SOFTWARE.
  */
 
-#ifndef CONTROL_VIEWPORT_HPP
-#define CONTROL_VIEWPORT_HPP
+#ifndef MODEL_POINT_HPP
+#define MODEL_POINT_HPP
 
-#include <iostream>
-#include <gtkmm/drawingarea.h>
+#include "../config/traits.hpp"
+#include "shape.hpp"
 
-#include "../model/point.hpp"
-#include "../model/line.hpp"
-#include "../model/rectangle.hpp"
-
-namespace control
+namespace model
 {
-
-	class Viewport
-	{
-	public:
-		Viewport(Gtk::DrawingArea& draw_area) :
-			_draw_area(draw_area)
-		{
-			_draw_area.signal_draw().connect(sigc::mem_fun(*this, &Viewport::on_draw));
-		}
-
-		~Viewport() = default;
-
-		const bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
-		void update();
 	
+	class Point : public Shape
+	{
 	private:
-		Gtk::DrawingArea &_draw_area;
+		const static int _x = Vector::_x;
+		const static int _y = Vector::_y;
+		const static int _z = Vector::_z;
+		const static int _w = Vector::_w;
+
+	public:
+		Point() :
+			Shape(Vector(_x, _y, _z, _w))
+		{}
+
+		Point(const Vector& v) :
+			Shape(v)
+		{}
+		
+		Point(double x, double y, double z = _z, double w = _w) :
+			Shape(Vector(x, y, z, w))
+		{}
+
+		~Point() = default;
 	};
 
-	const bool Viewport::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
-	{
-		std::cout << "control::Viewport::on_draw()" << std::endl;
+} //! namespace model
 
-		cr->set_source_rgb(255, 1, 1); //! Test Paints background
-		cr->paint();
-
-		cr->set_line_cap(Cairo::LINE_CAP_ROUND); //! Line config
-		cr->set_source_rgb(0, 0, 0);             //! Line color
-
-		model::Rectangle p(100, 100);
-
-		p.draw(cr);
-
-		cr->stroke();
-
-		return true;
-	}
-
-	void Viewport::update()
-	{
-		_draw_area.queue_draw();
-	}
-
-} //! namespace control
-
-#endif  // CONTROL_VIEWPORT_HPP
+#endif  // MODEL_POINT_HPP

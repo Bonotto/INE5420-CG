@@ -21,61 +21,54 @@
  * THE SOFTWARE.
  */
 
-#ifndef CONTROL_VIEWPORT_HPP
-#define CONTROL_VIEWPORT_HPP
+#ifndef MODEL_SHAPE_HPP
+#define MODEL_SHAPE_HPP
 
-#include <iostream>
 #include <gtkmm/drawingarea.h>
+#include "vector.hpp"
 
-#include "../model/point.hpp"
-#include "../model/line.hpp"
-#include "../model/rectangle.hpp"
-
-namespace control
+namespace model
 {
-
-	class Viewport
-	{
-	public:
-		Viewport(Gtk::DrawingArea& draw_area) :
-			_draw_area(draw_area)
-		{
-			_draw_area.signal_draw().connect(sigc::mem_fun(*this, &Viewport::on_draw));
-		}
-
-		~Viewport() = default;
-
-		const bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
-		void update();
 	
-	private:
-		Gtk::DrawingArea &_draw_area;
+	class Shape
+	{	
+	public:
+		Shape()  = default;
+
+		Shape(const Vector& v) :
+			_vectors{{v}}
+		{}
+		
+		Shape(double x, double y, double z = Vector::_z, double w = Vector::_w) :
+			_vectors{{x, y, z, w}}
+		{}
+		
+		Shape(std::initializer_list<Vector>& vs) :
+			_vectors{vs}
+		{}
+
+		Shape(std::initializer_list<Vector>&& vs) :
+			_vectors{vs}
+		{}
+
+		~Shape() = default;
+
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr);
+	
+	protected:
+		std::vector<Vector> _vectors{{0, 0}};
 	};
 
-	const bool Viewport::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
-	{
-		std::cout << "control::Viewport::on_draw()" << std::endl;
+    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr)
+    {
+		/* First point */
+		cr->move_to(_vectors[0][0], _vectors[0][1]);
 
-		cr->set_source_rgb(255, 1, 1); //! Test Paints background
-		cr->paint();
+		// Draw all other points
+		for (Vector& v : _vectors)
+			cr->line_to(v[0], v[1]);
+    }
 
-		cr->set_line_cap(Cairo::LINE_CAP_ROUND); //! Line config
-		cr->set_source_rgb(0, 0, 0);             //! Line color
+} //! namespace model
 
-		model::Rectangle p(100, 100);
-
-		p.draw(cr);
-
-		cr->stroke();
-
-		return true;
-	}
-
-	void Viewport::update()
-	{
-		_draw_area.queue_draw();
-	}
-
-} //! namespace control
-
-#endif  // CONTROL_VIEWPORT_HPP
+#endif  // MODEL_SHAPE_HPP

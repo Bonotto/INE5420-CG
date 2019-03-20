@@ -35,9 +35,13 @@ struct Traits
     static const bool hysterically_debugged = false;
 };
 
-template<> struct Traits<util::Vector> : public Traits<void>
+template<> struct Traits<model::Vector> : public Traits<void>
 {
     static const int dimension = 3;
+    static const int x = 0;
+    static const int y = 0;
+    static const int z = 1;
+    static const int w = 1;
     static const bool debugged = hysterically_debugged;
 };
 
