@@ -1,12 +1,13 @@
 #include <gtkmm.h>
 #include <iostream>
 
-#include "src/vision/viewport.hpp"
+#include "src/control/viewport.hpp"
 
 int main(int argc, char **argv)
 {
 	Gtk::Window *main_window{nullptr};
 	Gtk::DrawingArea *draw_area{nullptr};
+	control::Viewport *view;
 
 	auto app = Gtk::Application::create(argc, argv, "org.gtkmm.example");
 
@@ -14,7 +15,7 @@ int main(int argc, char **argv)
 	auto refBuilder = Gtk::Builder::create();
 	try
 	{
-		refBuilder->add_from_file("src/vision/interface.glade");
+		refBuilder->add_from_file("src/view/interface.glade");
 	}
 	catch (const Glib::FileError &ex)
 	{
@@ -33,18 +34,23 @@ int main(int argc, char **argv)
 	}
 
 	//Get the GtkBuilder-instantiated Dialog:
-	refBuilder->get_widget("main_window", main_window);
+	refBuilder->get_widget("window_main", main_window);
 	if (main_window)
 	{
-		refBuilder->get_widget("draw_area", draw_area);
+		std::cout << "Main window up" << std::endl;
 
-		if (!draw_area)
-			Vision::Viewport(*draw_area);
+		refBuilder->get_widget("area_draw", draw_area);
 
+		if (draw_area)
+			view = new control::Viewport(*draw_area);
+
+		main_window->show_all();
 		app->run(*main_window);
 	}
 
 	delete main_window;
+
+	if (view) delete view;
 
 	return 0;
 }

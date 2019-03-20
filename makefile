@@ -39,19 +39,23 @@ CPP_SRC = $(wildcard main.cpp)             \
 # Object Files
 OBJ = $(CPP_SRC:.cpp=.o)
 
-# Builds All Object Files
+# Run Main Executable
+run: main
+	@./main
+
+# Builds Main Executable
 main: $(OBJ)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 	# $(CXX) $(CPPFLAGS) $(OBJ) -o main $(LDFLAGS) $(LDLIBS)
+
+# Builds a CPP Source file
+%.o: %.cpp
+	$(CXX) $(CPPFLAGS) -c $< -o $@
 
 # Cleans All Object Files
 clean:
 	rm -rf $(OBJ)
 	rm main
-
-# Builds a CPP Source file
-%.o: %.cpp
-	$(CXX) $(CPPFLAGS) -c $< -o $@
 
 cmd:
 	g++ $(CPP_SRC) -o main `pkg-config gtkmm-3.0 --cflags --libs`

@@ -21,12 +21,13 @@
  * THE SOFTWARE.
  */
 
-#ifndef VISION_VIEWPORT_HPP
-#define VISION_VIEWPORT_HPP
+#ifndef CONTROL_VIEWPORT_HPP
+#define CONTROL_VIEWPORT_HPP
 
+#include <iostream>
 #include <gtkmm/drawingarea.h>
 
-namespace Vision
+namespace control
 {
 
 	class Viewport
@@ -41,6 +42,7 @@ namespace Vision
 		~Viewport() = default;
 
 		const bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
+		void update();
 	
 	private:
 		Gtk::DrawingArea &_draw_area;
@@ -48,12 +50,20 @@ namespace Vision
 
 	const bool Viewport::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 	{
+		std::cout << "control::Viewport::on_draw()" << std::endl;
+
 		cr->set_source_rgb(255, 1, 1); //! Test Paints background
 		cr->paint();
+		cr->stroke();
 
 		return true;
 	}
 
-} //! namespace Vision
+	void Viewport::update()
+	{
+		_draw_area.queue_draw();
+	}
 
-#endif  // VISION_VIEWPORT_HPP
+} //! namespace control
+
+#endif  // CONTROL_VIEWPORT_HPP

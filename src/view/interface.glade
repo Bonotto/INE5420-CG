@@ -2,36 +2,116 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
-  <object class="GtkWindow" id="main_window">
+  <object class="GtkDialog" id="window_dialog">
+    <property name="can_focus">False</property>
+    <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog_box_main">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog_box_confirm_buttons">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="dialog_button_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="dialog_button_ok">
+                <property name="label" translatable="yes">OK</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="window_main">
     <property name="can_focus">False</property>
     <property name="window_position">center</property>
     <child>
       <placeholder/>
     </child>
     <child>
-      <object class="GtkBox" id="main_box">
+      <object class="GtkBox" id="box_main">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">3</property>
         <property name="margin_top">3</property>
         <property name="spacing">5</property>
         <child>
-          <object class="GtkBox" id="menu_box">
+          <object class="GtkBox" id="box_menu">
             <property name="width_request">200</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
             <property name="spacing">6</property>
             <child>
-              <object class="GtkBox" id="objects_box">
+              <object class="GtkBox" id="box_objects">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel" id="object_label">
+                  <object class="GtkBox" id="box_object_header">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Objects</property>
+                    <child>
+                      <object class="GtkLabel" id="object_label">
+                        <property name="width_request">100</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Objects</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="button_new_object">
+                        <property name="label" translatable="yes">New</property>
+                        <property name="width_request">100</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -40,10 +120,14 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkTextView" id="objects_list">
-                    <property name="height_request">100</property>
+                  <object class="GtkTreeView" id="tree_objects">
+                    <property name="width_request">200</property>
+                    <property name="height_request">200</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection"/>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -59,12 +143,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="navegation_box">
+              <object class="GtkBox" id="box_navegation">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel" id="window_label">
+                  <object class="GtkLabel" id="label_window">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">Window</property>
@@ -76,7 +160,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox" id="step_box">
+                  <object class="GtkBox" id="box_step">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">3</property>
@@ -84,7 +168,7 @@
                     <property name="margin_bottom">5</property>
                     <property name="spacing">3</property>
                     <child>
-                      <object class="GtkLabel" id="step_label">
+                      <object class="GtkLabel" id="label_step">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Step </property>
@@ -96,7 +180,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="step_entry">
+                      <object class="GtkEntry" id="entry_step">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                       </object>
@@ -114,11 +198,13 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="up_button">
+                  <object class="GtkButton" id="button_up">
                     <property name="label" translatable="yes">Up</property>
+                    <property name="width_request">100</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="halign">center</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -127,11 +213,11 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox" id="left_right_box">
+                  <object class="GtkBox" id="box_left_right">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkButton" id="left_buttom">
+                      <object class="GtkButton" id="button_left">
                         <property name="label" translatable="yes">Left</property>
                         <property name="width_request">100</property>
                         <property name="visible">True</property>
@@ -145,7 +231,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="right_button">
+                      <object class="GtkButton" id="button_right">
                         <property name="label" translatable="yes">Right</property>
                         <property name="width_request">100</property>
                         <property name="visible">True</property>
@@ -166,11 +252,13 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkButton" id="down_button">
+                  <object class="GtkButton" id="button_down">
                     <property name="label" translatable="yes">Down</property>
+                    <property name="width_request">100</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="halign">center</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -179,12 +267,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox" id="zoom_box">
+                  <object class="GtkBox" id="box_zoom">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_top">5</property>
                     <child>
-                      <object class="GtkButton" id="in_button">
+                      <object class="GtkButton" id="button_in">
                         <property name="label" translatable="yes">In</property>
                         <property name="width_request">100</property>
                         <property name="visible">True</property>
@@ -198,8 +286,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="out_button">
-                        <property name="label" translatable="yes">button</property>
+                      <object class="GtkButton" id="button_out">
+                        <property name="label" translatable="yes">Out</property>
                         <property name="width_request">100</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
@@ -246,7 +334,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkDrawingArea" id="draw_area">
+          <object class="GtkDrawingArea" id="area_draw">
             <property name="width_request">500</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
