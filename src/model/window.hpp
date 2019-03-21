@@ -37,6 +37,24 @@ namespace model
 			_lower(lower),
             _upper(upper)
 		{
+            if (Traits<model::Vector>::dimension == 3)
+            {
+                _dimensions = {
+                    {1, 0, 0, 0},
+                    {0, 1, 0, 0},
+                    {_lower    },
+                    {0, 0, 0, 1}
+                };
+            }
+            else
+            {
+                _dimensions = {
+                    {1, 0, 0, 0},
+                    {0, 1, 0, 0},
+                    {0, 0, 1, 0},
+                    {_lower    }
+                };
+            }
 		}
 
 		~Window() = default;
@@ -44,10 +62,13 @@ namespace model
         const double width() const;
         const double height() const;
 
+
+        void transformation(Matrix & M);
         Matrix transformation() const;
 
 	private:
 		Vector _lower, _upper;
+        Matrix _dimensions;
 	};
 
     const double Window::width() const
@@ -60,26 +81,15 @@ namespace model
         return _upper[1] - _lower[1]; //! Need Euclidean distance!
     }
 
+
+    void transformation(Matrix & M)
+    {
+        _dimensions = _dimensions * M;
+    }
+
     Matrix Window::transformation() const
     {
-        if (Traits<model::Vector::dimension == 3)
-        {
-            return {
-                {1, 0, 0, 0},
-                {0, 1, 0, 0},
-                {_lower    },
-                {0, 0, 0, 1}
-            };
-        }
-        else
-        {
-            return {
-                {1, 0, 0, 0},
-                {0, 1, 0, 0},
-                {0, 0, 1, 0},
-                {_lower    }
-            };
-        }
+        return _dimensions;
     }
 
 } //! namespace model

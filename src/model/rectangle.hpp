@@ -43,10 +43,12 @@ namespace model
 
 		~Rectangle() = default;
 
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr);
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
+
+        std::string type();
 	};
 
-    void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr)
+    void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
     {
 		/* First point */
 		cr->move_to(_vectors[0][0], _vectors[0][1]);
@@ -54,6 +56,11 @@ namespace model
 		// Draw all other points
 		for (Vector& v : _vectors)
 			cr->line_to(v[0], v[1]);
+    }
+
+    std::string Rectangle::type()
+    {
+    	return "Rectangle";
     }
 
 } //! namespace model

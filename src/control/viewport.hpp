@@ -28,9 +28,11 @@
 #include <gtkmm/drawingarea.h>
 
 #include "../model/geometry.hpp"
+#include "../model/shape.hpp"
 #include "../model/point.hpp"
 #include "../model/line.hpp"
 #include "../model/rectangle.hpp"
+#include "../model/window.hpp"
 
 namespace control
 {
@@ -38,7 +40,9 @@ namespace control
 	class Viewport
 	{
 	public:
-		Viewport(Gtk::DrawingArea& draw_area) :
+		Viewport(Window & window, std::vector<Shape> & shapes, Gtk::DrawingArea& draw_area) :
+			_window(window),
+			_shapes(shapes),
 			_draw_area(draw_area)
 		{
 			_draw_area.signal_draw().connect(sigc::mem_fun(*this, &Viewport::on_draw));
@@ -50,6 +54,8 @@ namespace control
 		void update();
 	
 	private:
+		Window & _window;
+		std::vector<Shape> _shapes;
 		Gtk::DrawingArea &_draw_area;
 	};
 
@@ -63,9 +69,10 @@ namespace control
 		cr->set_line_cap(Cairo::LINE_CAP_ROUND); //! Line config
 		cr->set_source_rgb(0, 0, 0);             //! Line color
 
-		model::Rectangle p;
+		auto T = _window.transformation();
 
-		p.draw(cr);
+		for (auto & shape : _shapes)
+			shape.draw(cr, T);
 
 		cr->stroke();
 

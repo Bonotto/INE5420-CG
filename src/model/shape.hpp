@@ -24,6 +24,7 @@
 #ifndef MODEL_SHAPE_HPP
 #define MODEL_SHAPE_HPP
 
+#include <string>
 #include <gtkmm/drawingarea.h>
 #include "geometry.hpp"
 
@@ -31,42 +32,69 @@ namespace model
 {
 	
 	class Shape
-	{	
+	{
 	public:
 		Shape()  = default;
 
-		Shape(const Vector& v) :
+		Shape(std::string name) :
+			_name{name}
+		{}
+
+		Shape(std::string name, const Vector& v) :
+			_name{name},
 			_vectors{{v}}
 		{}
 		
-		Shape(double x, double y, double z = Vector::x, double w = Vector::w) :
+		Shape(std::string name, double x, double y, double z = Vector::x, double w = Vector::w) :
+			_name{name},
 			_vectors{{x, y, z, w}}
 		{}
 		
-		Shape(std::initializer_list<Vector>& vs) :
+		Shape(std::string name, std::initializer_list<Vector>& vs) :
+			_name{name},
 			_vectors{vs}
 		{}
 
-		Shape(std::initializer_list<Vector>&& vs) :
+		Shape(std::string name, std::initializer_list<Vector>&& vs) :
+			_name{name},
 			_vectors{vs}
 		{}
 
 		~Shape() = default;
 
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr);
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
+
+        std::string name();
+        virtual std::string type();
 	
 	protected:
 		std::vector<Vector> _vectors{{0, 0}};
+		std::string _name{"Shape"};
 	};
 
-    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr)
+    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
     {
+    	Vector v0 = _vectors[0] * T;
+
 		/* First point */
-		cr->move_to(_vectors[0][0], _vectors[0][1]);
+		cr->move_to(v0[0], v0[0][1]);
 
 		// Draw all other points
 		for (Vector& v : _vectors)
-			cr->line_to(v[0], v[1]);
+		{
+			Vector vi = v * T;
+			cr->line_to(vi[0], vi[1]);
+		}
+    }
+
+    std::string Shape::name()
+    {
+    	return _name;
+    }
+
+    std::string Shape::type()
+    {
+    	return "Shape_t";
     }
 
 } //! namespace model

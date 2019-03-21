@@ -21,29 +21,35 @@
  * THE SOFTWARE.
  */
 
-#ifndef CONTROL_MAIN_WINDOW_HPP
-#define CONTROL_MAIN_WINDOW_HPP
+#ifndef CONTROL_MAIN_CONTROL_HPP
+#define CONTROL_MAIN_CONTROL_HPP
 
+#include <vector>
 #include <iostream>
 #include <gtkmm.h>
 
-#include "window.hpp"
+#include "../model/shape.hpp"
+#include "../model/window.hpp"
 #include "viewport.hpp"
 
 namespace control
 {
 
-	class MainWindow
+	class MainControl
 	{
 	public:
-		MainWindow(Glib::RefPtr<Gtk::Builder>& builder)
+		MainControl(Glib::RefPtr<Gtk::Builder>& builder)
 		{
             build_window(builder);
             build_viewport(builder);
             build_connection(builder);
 		}
 
-		~MainWindow() = default;
+		~MainControl()
+        {
+            delete _window;
+            delete _viewport;
+        }
 	
 	private:
 		void build_window(Glib::RefPtr<Gtk::Builder>& builder);
@@ -52,19 +58,22 @@ namespace control
 
 		control::Viewport * _viewport;
 		view::Window * _window;
+        std::vector<model::Shape> _shapes;
 	};
 
-    void MainWindow::build_window(Glib::RefPtr<Gtk::Builder>& builder)
+    void MainControl::build_window(Glib::RefPtr<Gtk::Builder>& builder)
     {
-
+        _window = new model::Window(/* draw area points */);
     }
 
-    void MainWindow::build_viewport(Glib::RefPtr<Gtk::Builder>& builder)
+    void MainControl::build_viewport(Glib::RefPtr<Gtk::Builder>& builder)
     {
-
+        Gtk::DrawingArea *draw;
+        refBuilder->get_widget("area_draw", draw);
+        _viewport = new control::Viewport(*_window, _shapes, *draw);
     }
 
-    void MainWindow::build_connection(Glib::RefPtr<Gtk::Builder>& builder)
+    void MainControl::build_connection(Glib::RefPtr<Gtk::Builder>& builder)
     {
 
     }
@@ -72,4 +81,4 @@ namespace control
 
 } //! namespace control
 
-#endif  // CONTROL_MAIN_WINDOW_HPP
+#endif  // CONTROL_MAIN_CONTROL_HPP

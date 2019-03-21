@@ -69,6 +69,7 @@ namespace model
 		double& operator[](int position);
 
 		Vector&& operator*(Matrix& M);
+		Vector&& operator*(double scalar);
 	
 	private:
 		std::vector<double> _coordinates;
@@ -124,6 +125,17 @@ namespace model
 		return std::move(v);
 	}
 
+
+	Vector&& Vector::operator*(double scalar)
+	{
+		Vector v;
+
+		for (int i = 0; i < dimension; ++i)
+			v[i] = scalar * _coordinates[i];
+		
+		return std::move(v);
+	}
+
 /*================================================================================*/
 /*                                   Matrix                                       */
 /*================================================================================*/
@@ -144,6 +156,50 @@ namespace model
 
         return std::move(R);
     }
+
+
+/*================================================================================*/
+/*                                Operations                                      */
+/*================================================================================*/
+
+	namespace transformations
+	{
+
+		Matrix&& translation(Vector * factor)
+		{
+			if (Traits<Vector>::dimension == 3)
+			{
+				return {
+					{1, 0, 0, 0},
+					{0, 1, 0, 0},
+					factor,
+					{0, 0, 0, 1},
+				};
+			}
+			else
+			{
+				return {
+					{1, 0, 0, 0},
+					{0, 1, 0, 0},
+					{0, 0, 1, 0},
+					factor,
+				};
+			}
+		}
+
+		Matrix&& scheduling(Vector& mass_center, Vector& factor)
+		{
+			return translation(-1 * mass_center)
+			* {
+				{factor[0], 0, 0, 0},
+				{0, factor[1], 0, 0},
+				{0, 0, factor[2], 0},
+				{0, 0, 0, factor[3]},
+			}
+			* translation(mass_center);
+		}
+		
+	} //! namespace operations
 
 } //! namespace model
 

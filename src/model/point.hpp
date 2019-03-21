@@ -33,18 +33,27 @@ namespace model
 	class Point : public Shape
 	{
 	public:
-		Point() = default;
+		Point(std::string name) :
+			Shape(name)
+		{}
 
-		Point(const Vector& v) :
-			Shape(v)
+		Point(std::string name, const Vector& v) :
+			Shape(name, v)
 		{}
 		
-		Point(double x, double y, double z = Vector::z, double w = Vector::w) :
-			Shape(Vector(x, y, z, w))
+		Point(std::string name, double x, double y, double z = Vector::z, double w = Vector::w) :
+			Shape(name, Vector(x, y, z, w))
 		{}
 
 		~Point() = default;
+
+        virtual std::string type();
 	};
+
+	std::string type()
+	{
+		return "Point";
+	}
 
 } //! namespace model
 

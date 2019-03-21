@@ -1,13 +1,12 @@
 #include <gtkmm.h>
 #include <iostream>
 
-#include "src/control/viewport.hpp"
+#include "src/control/main_control.hpp"
 
 int main(int argc, char **argv)
 {
 	Gtk::Window *main_window{nullptr};
-	Gtk::DrawingArea *draw_area{nullptr};
-	control::Viewport *view;
+	control::MainControl *main_control{nullptr};
 
 	auto app = Gtk::Application::create(argc, argv, "org.gtkmm.example");
 
@@ -37,20 +36,15 @@ int main(int argc, char **argv)
 	refBuilder->get_widget("window_main", main_window);
 	if (main_window)
 	{
-		std::cout << "Main window up" << std::endl;
 
-		refBuilder->get_widget("area_draw", draw_area);
-
-		if (draw_area)
-			view = new control::Viewport(*draw_area);
+		main_control = new MainControl(refBuilder);
 
 		main_window->show_all();
 		app->run(*main_window);
 	}
 
+	delete main_control;
 	delete main_window;
-
-	if (view) delete view;
 
 	return 0;
 }

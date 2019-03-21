@@ -33,16 +33,23 @@ namespace model
 	class Line : public Shape
 	{
 	public:
-		Line() :
-			Shape({Vector(), Vector()})
+		Line(std::string name) :
+			Shape(name, {Vector(), Vector()})
 		{}
 
-		Line(const Vector& v1, const Vector& v2) :
-			Shape({v1, v2})
+		Line(std::string name, const Vector& v1, const Vector& v2) :
+			Shape(name, {v1, v2})
 		{}
 
 		~Line() = default;
+
+        virtual std::string type();
 	};
+
+    std::string Line::type()
+    {
+    	return "Line";
+    }
 
 } //! namespace model
 
