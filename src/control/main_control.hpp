@@ -73,6 +73,8 @@ namespace control
         void down();
         void zoom_in();
         void zoom_out();
+
+        void on_item_selected();
 	
 	private:
 		void build_window(Glib::RefPtr<Gtk::Builder>& builder);
@@ -89,6 +91,7 @@ namespace control
         //! GTK
         Gtk::TreeView * _tree;
         Glib::RefPtr<Gtk::ListStore> _ref_tree_model;
+        Glib::RefPtr<Gtk::TreeSelection> _tree_selection;
         // Gtk::Entry * _step;
         // Gtk::Row * _window_row;
         // std::map<Gtk::Row *, model::Shape*> _tree_map;
@@ -115,11 +118,25 @@ namespace control
 
         _tree->append_column("Name", _tree_model._column_name);
         _tree->append_column("Type", _tree_model._column_type);
+
+        _tree_selection = _tree->get_selection();
+        _tree_selection->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_item_selected));
+
+        Gtk::TreeModel::Row row         = *(_ref_tree_model->append());
+        row[_tree_model._column_name]   = "Window";
+        row[_tree_model._column_type]   = "View";
+
+        std::cout << "## " << row.get_value(_tree_model._column_name) << std::endl;
     }
 
     void MainControl::build_connection(Glib::RefPtr<Gtk::Builder>& builder)
     {
 
+    }
+
+    void MainControl::on_item_selected()
+    {
+        std::cout << "UI " << _tree_selection->get_selected()->get_value(_tree_model._column_name) << std::endl;
     }
 
     void MainControl::up()
