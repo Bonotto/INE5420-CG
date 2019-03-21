@@ -21,67 +21,55 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_WINDOW_HPP
-#define MODEL_WINDOW_HPP
+#ifndef CONTROL_MAIN_WINDOW_HPP
+#define CONTROL_MAIN_WINDOW_HPP
 
-#include "geometry.hpp"
-#include "matrix.hpp"
+#include <iostream>
+#include <gtkmm.h>
 
-namespace model
+#include "window.hpp"
+#include "viewport.hpp"
+
+namespace control
 {
 
-	class Window
+	class MainWindow
 	{
 	public:
-		Window(Vector & lower, Vector & upper) :
-			_lower(lower),
-            _upper(upper)
+		MainWindow(Glib::RefPtr<Gtk::Builder>& builder)
 		{
+            build_window(builder);
+            build_viewport(builder);
+            build_connection(builder);
 		}
 
-		~Window() = default;
-
-        const double width() const;
-        const double height() const;
-
-        Matrix transformation() const;
-
+		~MainWindow() = default;
+	
 	private:
-		Vector _lower, _upper;
+		void build_window(Glib::RefPtr<Gtk::Builder>& builder);
+        void build_viewport(Glib::RefPtr<Gtk::Builder>& builder);
+        void build_connection(Glib::RefPtr<Gtk::Builder>& builder);
+
+		control::Viewport * _viewport;
+		view::Window * _window;
 	};
 
-    const double Window::width() const
+    void MainWindow::build_window(Glib::RefPtr<Gtk::Builder>& builder)
     {
-        return _upper[0] - _lower[0]; //! Need Euclidean distance!
+
     }
 
-    const double Window::height() const
+    void MainWindow::build_viewport(Glib::RefPtr<Gtk::Builder>& builder)
     {
-        return _upper[1] - _lower[1]; //! Need Euclidean distance!
+
     }
 
-    Matrix Window::transformation() const
+    void MainWindow::build_connection(Glib::RefPtr<Gtk::Builder>& builder)
     {
-        if (Traits<model::Vector::dimension == 3)
-        {
-            return {
-                {1, 0, 0, 0},
-                {0, 1, 0, 0},
-                {_lower    },
-                {0, 0, 0, 1}
-            };
-        }
-        else
-        {
-            return {
-                {1, 0, 0, 0},
-                {0, 1, 0, 0},
-                {0, 0, 1, 0},
-                {_lower    }
-            };
-        }
+
     }
 
-} //! namespace model
 
-#endif  // MODEL_WINDOW_HPP
+} //! namespace control
+
+#endif  // CONTROL_MAIN_WINDOW_HPP
