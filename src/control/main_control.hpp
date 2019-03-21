@@ -42,10 +42,12 @@ namespace control
 
         ModelColumns()
         {
+            add(_column_id);
             add(_column_name);
             add(_column_type);
         }
 
+        Gtk::TreeModelColumn<int> _column_id;
         Gtk::TreeModelColumn<Glib::ustring> _column_name;
         Gtk::TreeModelColumn<Glib::ustring> _column_type;
     };
@@ -93,13 +95,15 @@ namespace control
         void build_new_objects(Glib::RefPtr<Gtk::Builder>& builder);
         void build_movements();
 
+        void add_entry(int id, std::string name, std::string type);
+
         //! OUR
 		control::Viewport * _viewport;
 		model::Window * _window;
         
         /* Shapes */
         std::vector<std::shared_ptr<model::Shape>> _shapes;
-        std::map<std::string, std::shared_ptr<model::Shape>> _shapes_map;
+        std::map<int, std::shared_ptr<model::Shape>> _shapes_map;
 
         ModelColumns _tree_model;
 
@@ -108,8 +112,9 @@ namespace control
         Glib::RefPtr<Gtk::Builder> _builder;
         Glib::RefPtr<Gtk::ListStore> _ref_tree_model;
         Glib::RefPtr<Gtk::TreeSelection> _tree_selection;
-
         Glib::RefPtr<Gtk::Builder>& _builder;
+        // Gtk::Entry * _step;
+        // Gtk::Row * _window_row;
 	};
 
     void MainControl::build_window(Glib::RefPtr<Gtk::Builder>& builder)
@@ -142,6 +147,7 @@ namespace control
         _ref_tree_model = Gtk::ListStore::create(_tree_model);
         _tree->set_model(_ref_tree_model);
 
+        _tree->append_column("ID", _tree_model._column_id);
         _tree->append_column("Name", _tree_model._column_name);
         _tree->append_column("Type", _tree_model._column_type);
 
@@ -149,6 +155,7 @@ namespace control
         _tree_selection->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_item_selected));
 
         Gtk::TreeModel::Row row         = *(_ref_tree_model->append());
+        row[_tree_model._column_id]     = 0;
         row[_tree_model._column_name]   = "Window";
         row[_tree_model._column_type]   = "View";
 
@@ -206,7 +213,6 @@ namespace control
         std::cout << "UI " << _tree_selection->get_selected()->get_value(_tree_model._column_name) << std::endl;
     }
 
-<<<<<<< 42093e524922c0d8695981df1544b2d2f7d8a4e8
     void MainControl::build_movements()
     {
         Gtk::SpinButton *spin;
@@ -262,9 +268,14 @@ namespace control
     	Gtk::RadioButton* radio;
     	Gtk::Entry* entry;
 
+		_builder->get_widget("entry_name", entry);
+
+  		std::string name = (std::string) entry->get_text();
+    	
     	_builder->get_widget("radio_point", radio);
   		
-  		if (radio->activate()) {
+  		if (radio->activate())
+  		{
   			double x, y, z;
 
   			_builder->get_widget("entry_point_x", entry);
@@ -276,13 +287,95 @@ namespace control
   			_builder->get_widget("entry_point_z", entry);
   			z = atof(((std::string) entry->get_text()).c_str());
 
-  			/*
-  				CRIAR UM MÉTODO PARA INSERIR O OBJETO NA TREEVIEW
-  				CRIAR UM MÉTODO PARA CRIAR O OBJETO, INSERIR NA LISTA E DESENHÁ-LO NA WINDOW
-  			*/
+  			add_entry(_shapes_map.size() + 1, name, "Point");
 
+  			auto point = new model::Point(name, model::Vector(x, y));
+
+  			_shapes.push_back(*point);
+
+  			_shapes_map[_shapes_map.size() + 1] = point;
+
+  			return;
   		}
+
+    	// 	_builder->get_widget("radio_line", radio);
+
+  		// if (radio->activate())
+  		// {
+  		// 	double x1, y1, z1, x2, y2, z2;
+
+  		// 	_builder->get_widget("entry_line_x1", entry);
+  		// 	x1 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_line_y1", entry);
+  		// 	y1 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_line_z1", entry);
+  		// 	z1 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_line_x2", entry);
+  		// 	x2 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_line_y2", entry);
+  		// 	y2 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_line_z2", entry);
+  		// 	z2 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	add_entry(_shapes_map.size() + 1, name, "Line");
+
+  		// 	auto line = new model::Line(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2));
+
+  		// 	_shapes.push_back(*line);
+
+  		// 	_shapes_map[_shapes_map.size() + 1] = line;
+
+  		// 	return;
+  		// }
+
+    // 	_builder->get_widget("radio_rectangle", radio);
+
+  		// if (radio->activate())
+  		// {
+  		// 	double x1, y1, z1, x2, y2, z2;
+
+  		// 	_builder->get_widget("entry_rectangle_x1", entry);
+  		// 	x1 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_rectangle_y1", entry);
+  		// 	y1 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_rectangle_z1", entry);
+  		// 	z1 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_rectangle_x2", entry);
+  		// 	x2 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_rectangle_y2", entry);
+  		// 	y2 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	_builder->get_widget("entry_rectangle_z2", entry);
+  		// 	z2 = atof(((std::string) entry->get_text()).c_str());
+
+  		// 	add_entry(_shapes_map.size() + 1, name, "Rectangle");
+
+  		// 	auto rectangle = new model::Rectangle(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2));
+
+  		// 	_shapes.push_back(*rectangle);
+
+  		// 	_shapes_map[_shapes_map.size() + 1] = rectangle;
+
+  		// 	return;
+  		// }
     }
+
+	void MainControl::add_entry(int id, std::string name, std::string type)
+	{
+	        Gtk::TreeModel::Row row = *(_ref_tree_model->append());
+	        row[_tree_model._column_id]   = id;
+	        row[_tree_model._column_name] = name;
+	        row[_tree_model._column_type] = type;
+	}
 
     void MainControl::up()
     {
@@ -333,7 +426,7 @@ namespace control
         // else
         // {
         //     //! Build T
-        //     _tree_map[_select]->transformation(T);
+        //     _shapes_map[_select]->transformation(T);
         // }
     }
 
@@ -351,7 +444,7 @@ namespace control
         // else
         // {
         //     //! Build T
-        //     _tree_map[_select]->transformation(T);
+        //     _shapes_map[_select]->transformation(T);
         // }
     }
 
@@ -368,7 +461,7 @@ namespace control
         // else
         // {
         //     //! Build T
-        //     _tree_map[_select]->transformation(T);
+        //     _shapes_map[_select]->transformation(T);
         // }
     }
 
@@ -385,7 +478,7 @@ namespace control
         // else
         // {
         //     //! Build T
-        //     _tree_map[_select]->transformation(T);
+        //     _shapes_map[_select]->transformation(T);
         // }
     }
 
@@ -402,7 +495,7 @@ namespace control
         // else
         // {
         //     //! Build T
-        //     _tree_map[_select]->transformation(T);
+        //     _shapes_map[_select]->transformation(T);
         // }
     }
 
