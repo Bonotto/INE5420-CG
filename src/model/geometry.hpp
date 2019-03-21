@@ -72,8 +72,9 @@ namespace model
 		double& operator[](const int position);
 		const double& operator[](int position) const;
 
-		Vector operator*(const Matrix& M) const;
+		double operator*(const Vector& v) const;
 		Vector operator*(const double scalar) const;
+		Vector operator*(const Matrix& M) const;
 	
 	private:
 		std::vector<double> _coordinates;
@@ -109,6 +110,8 @@ namespace model
 		
 		~Matrix() = default;
 
+		Matrix column_oriented() const;
+
 		MatrixLine& operator[](const int position);
 		const MatrixLine& operator[](const int position) const;
 
@@ -132,17 +135,13 @@ namespace model
 		return _coordinates.at(position);
 	}
 
-	Vector Vector::operator*(const Matrix& M) const
+	double Vector::operator*(const Vector& v) const
 	{
-		Vector v;
-
-		for (int j = 0; j < dimension; ++j)
-			for (int i = 0; i < dimension; ++i)
-				v[i] += _coordinates.at(i) * M[i][j];
-		
-		return v;
+		return _coordinates[0] * v[0]
+		     + _coordinates[1] * v[1]
+			 + _coordinates[2] * v[2]
+			 + _coordinates[3] * v[3];
 	}
-
 
 	Vector Vector::operator*(const double scalar) const
 	{
@@ -154,9 +153,30 @@ namespace model
 		return v;
 	}
 
+	Vector Vector::operator*(const Matrix& M) const
+	{
+		Vector v;
+
+		for (int j = 0; j < dimension; ++j)
+			for (int i = 0; i < dimension; ++i)
+				v[i] += _coordinates.at(i) * M[i][j];
+		
+		return v;
+	}
+
 /*================================================================================*/
 /*                                   Matrix                                       */
 /*================================================================================*/
+
+	Matrix Matrix::column_oriented() const
+	{
+		return Matrix(
+			{_vectors[0][0], _vectors[1][0], _vectors[2][0], _vectors[3][0]},
+			{_vectors[0][1], _vectors[1][1], _vectors[2][1], _vectors[3][1]},
+			{_vectors[0][2], _vectors[1][2], _vectors[2][2], _vectors[3][2]},
+			{_vectors[0][3], _vectors[1][3], _vectors[2][3], _vectors[3][3]}
+		);
+	}
 	
 	Matrix::MatrixLine& Matrix::operator[](const int position)
 	{
@@ -170,12 +190,22 @@ namespace model
 
     Matrix Matrix::operator*(const Matrix& M) const
     {
-        Matrix R; //! Result
+		// Matrix C = M.column_oriented();
+		Matrix R( //! Result
+			{0, 0, 0, 0},
+			{0, 0, 0, 0},
+			{0, 0, 0, 0},
+			{0, 0, 0, 0}
+		);
 
         for (int h = 0; h < dimension; ++h)
             for (int j = 0; j < dimension; ++j)
                 for (int i = 0; i < dimension; ++i)
                     R[h][j] += _vectors[h][i] * M[i][j];
+
+		// for (int i = 0; i < dimension; ++i)
+		// 	for (int j = 0; j < dimension; ++j)
+		// 		R[i][j] += _vectors[i] * C[j];
 
         return R;
     }

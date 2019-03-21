@@ -210,17 +210,33 @@ namespace control
         std::cout << "Up step = " << spin->get_value() << std::endl;
 
         double step = spin->get_value();
-        auto T = model::transformations::translation(model::Vector(0, step));
+        auto T = model::transformations::translation(model::Vector(0, step, 1, 1));
 
-        // if (_select == _window_row)
-        // {
-        //     _window_row->transformation(T);
-        // }
-        // else
-        // {
-        //     //! Build T
-        //     _tree_map[_select]->transformation(T);
-        // }
+		std::cout << "Transformation" << std::endl;
+		for (int i = 0; i < T.dimension; i++) {
+			for (int j = 0; j < T.dimension; j++)
+				std::cout << T[i][j] << ", ";
+            std::cout << std::endl;
+        }
+
+
+		std::cout << "AAAAAAA" << std::endl;
+        model::Vector a(0,0,1,1);
+        a = a * T;
+        for (int i = 0; i < T.dimension; i++) {
+            std::cout << a[i]<< ", ";
+        }
+            std::cout << std::endl;
+
+        std::string selected(_tree_selection->get_selected()->get_value(_tree_model._column_name));
+        
+        if (selected == "Window")
+            _window->transformation(T);
+        else if (selected != "")
+            _shapes_map[selected]->transformation(T);
+        
+        std::cout << "UPDATE" << std::endl;
+        _viewport->update();
     }
 
     void MainControl::left()

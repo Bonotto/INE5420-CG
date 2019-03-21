@@ -71,6 +71,19 @@ namespace control
 
 		auto T = _window.transformation();
 
+//! FIX PROJECTION ???
+		// auto alloc = _draw_area.get_allocation();
+		// auto width = alloc.get_width();
+		// auto height = alloc.get_height();
+
+        // Matrix P(
+        //     {(width/2),           0, 0, 0},
+        //     {        0, (-height/2), 0, 0},
+        //     {        0,           0, 1, 0},
+        //     {(width/2),  (height/2), 0, 1}
+        // );
+//! FIX PROJECTION ???
+
 		std::cout << "Size=" << _shapes.size() << std::endl;
 		for (int i = 0; i < T.dimension; i++)
 			for (int j = 0; j < T.dimension; j++)

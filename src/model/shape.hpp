@@ -63,7 +63,8 @@ namespace model
 
 		~Shape() = default;
 
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
+        virtual void transformation(const Matrix & T);
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
         std::string name();
         virtual std::string type();
@@ -73,11 +74,28 @@ namespace model
 		std::vector<Vector> _vectors{{0, 0}};
 	};
 
-    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
+	void Shape::transformation(const Matrix & T)
+	{
+		for (auto & v : _vectors)
+			v = v * T;
+	}
+
+    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
     {
 		std::cout << type() << std::endl;
 
 		Vector v0 = _vectors[0] * T;
+
+		
+
+		std::cout << "v0"  << std::endl;  
+		for (int i = 0; i < T.dimension; i++)
+			std::cout << "[" << i <<  "] = " << v0[i] << std::endl;  
+
+		// std::cout << "DRAW"  << std::endl;  
+		// for (int i = 0; i < T.dimension; i++)
+		// 	for (int j = 0; j < T.dimension; j++)
+				// std::cout << "[" << i << ", " << j << "] = " << T[i][j] << std::endl;  
 
 		/* First point */
 		cr->move_to(v0[0], v0[1]);
