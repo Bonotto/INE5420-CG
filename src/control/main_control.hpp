@@ -379,34 +379,17 @@ namespace control
     {
         Gtk::SpinButton *spin;
         _builder->get_widget("spin_step", spin);
-        std::cout << "Up step = " << spin->get_value() << std::endl;
 
         double step = spin->get_value();
-        auto T = model::transformations::translation(model::Vector(0, step, 1, 1));
-
-		std::cout << "Transformation" << std::endl;
-		for (int i = 0; i < T.dimension; i++) {
-			for (int j = 0; j < T.dimension; j++)
-				std::cout << T[i][j] << ", ";
-            std::cout << std::endl;
-        }
-
-		std::cout << "AAAAAAA" << std::endl;
-        model::Vector a(0,0,1,1);
-        a = a * T;
-        for (int i = 0; i < T.dimension; i++) {
-            std::cout << a[i]<< ", ";
-        }
-            std::cout << std::endl;
-
         int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
+
+        auto T = model::transformations::translation(model::Vector(0, step));
         
         if (!selected)
             _window->transformation(T);
         else
             _shapes_map[selected]->transformation(T);
-        
-        std::cout << "UPDATE" << std::endl;
+
         _viewport->update();
     }
 
@@ -414,87 +397,102 @@ namespace control
     {
         Gtk::SpinButton *spin;
         _builder->get_widget("spin_step", spin);
-        std::cout << "Left step = " << spin->get_value() << std::endl;
 
-        // if (_select == _window_row)
-        // {
-        //     //! Build T
-        //     _window_row->transformation(T);
-        // }
-        // else
-        // {
-        //     //! Build T
-        //     _shapes_map[_select]->transformation(T);
-        // }
+        double step = spin->get_value();
+        int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
+
+        auto T = model::transformations::translation(model::Vector(-step, 0));
+        
+        if (!selected)
+            _window->transformation(T);
+        else
+            _shapes_map[selected]->transformation(T);
+
+        _viewport->update();
     }
 
     void MainControl::right()
     {
         Gtk::SpinButton *spin;
         _builder->get_widget("spin_step", spin);
-        std::cout << "Right step = " << spin->get_value() << std::endl;
 
-        // if (_select == _window_row)
-        // {
-        //     //! Build T
-        //     _window_row->transformation(T);
-        // }
-        // else
-        // {
-        //     //! Build T
-        //     _shapes_map[_select]->transformation(T);
-        // }
+        double step = spin->get_value();
+        int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
+
+        auto T = model::transformations::translation(model::Vector(step, 0));
+        
+        if (!selected)
+            _window->transformation(T);
+        else
+            _shapes_map[selected]->transformation(T);
+
+        _viewport->update();
     }
 
     void MainControl::down()
     {
         Gtk::SpinButton *spin;
         _builder->get_widget("spin_step", spin);
-        std::cout << "Down step = " << spin->get_value() << std::endl;
-        // if (_select == _window_row)
-        // {
-        //     //! Build T
-        //     _window_row->transformation(T);
-        // }
-        // else
-        // {
-        //     //! Build T
-        //     _shapes_map[_select]->transformation(T);
-        // }
+
+        double step = spin->get_value();
+        int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
+
+        auto T = model::transformations::translation(model::Vector(0, -step));
+        
+        if (!selected)
+            _window->transformation(T);
+        else
+            _shapes_map[selected]->transformation(T);
+
+        _viewport->update();
     }
 
     void MainControl::zoom_in()
     {
         Gtk::SpinButton *spin;
         _builder->get_widget("spin_step", spin);
-        std::cout << "Zoom in step = " << spin->get_value() << std::endl;
-        // if (_select == _window_row)
-        // {
-        //     //! Build T
-        //     _window_row->transformation(T);
-        // }
-        // else
-        // {
-        //     //! Build T
-        //     _shapes_map[_select]->transformation(T);
-        // }
+
+        double step = spin->get_value();
+        int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
+        
+        if (!selected)
+        {
+            auto mass_center = _window->mass_center();
+            auto T = model::transformations::scheduling(step, mass_center);
+            _window->transformation(T);
+        }
+        else
+        {
+            auto mass_center = _shapes_map[selected]->mass_center();
+            auto T = model::transformations::scheduling(step, mass_center);
+            _shapes_map[selected]->transformation(T);
+        }
+
+        _viewport->update();
     }
 
     void MainControl::zoom_out()
     {
         Gtk::SpinButton *spin;
         _builder->get_widget("spin_step", spin);
-        std::cout << "Zoom out step = " << spin->get_value() << std::endl;
-        // if (_select == _window_row)
-        // {
-        //     //! Build T
-        //     _window_row->transformation(T);
-        // }
-        // else
-        // {
-        //     //! Build T
-        //     _shapes_map[_select]->transformation(T);
-        // }
+
+        double step = spin->get_value();
+        int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
+        
+        if (!selected)
+        {
+            auto mass_center = _window->mass_center();
+            auto T = model::transformations::scheduling(step, mass_center);
+            _window->transformation(T);
+        }
+        else
+        {
+            auto mass_center = _shapes_map[selected]->mass_center();
+            auto T = model::transformations::scheduling(step, mass_center);
+            _shapes_map[selected]->transformation(T);
+        }
+
+        _viewport->update();
     }
 
 

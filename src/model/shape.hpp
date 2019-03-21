@@ -63,6 +63,7 @@ namespace model
 
 		~Shape() = default;
 
+		virtual Vector mass_center() const;
         virtual void transformation(const Matrix & T);
         virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
@@ -73,6 +74,28 @@ namespace model
 		std::string _name{"Shape"};
 		std::vector<Vector> _vectors{{0, 0}};
 	};
+
+
+	Vector Shape::mass_center() const
+	{
+		int total = _vectors.size();
+		int x = 0, y = 0, z = 0, w = 0;
+		
+		for (const auto &v : _vectors)
+		{
+			x += v[0];
+			y += v[1];
+			z += v[2];
+			w += v[3];
+		}
+
+		return Vector(
+			x/total,
+			y/total,
+			z/total,
+			w/total
+		);
+	}
 
 	void Shape::transformation(const Matrix & T)
 	{

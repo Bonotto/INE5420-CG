@@ -63,7 +63,8 @@ namespace model
         const double height();
 
         void transformation(const Matrix& M);
-        Matrix transformation() const;
+        const Matrix& transformation() const;
+        Vector mass_center() const;
 
 	private:
 		Vector _lower, _upper;
@@ -86,9 +87,17 @@ namespace model
         _dimensions = _dimensions * T;
     }
 
-    Matrix Window::transformation() const
+    const Matrix& Window::transformation() const
     {
         return _dimensions;
+    }
+
+    Vector Window::mass_center() const
+    {
+        return Vector(
+            (_lower[0] + _upper[0])/2,
+            (_lower[1] + _upper[1])/2
+        );
     }
 
 } //! namespace model

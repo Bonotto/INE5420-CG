@@ -145,7 +145,7 @@ namespace model
 
 	Vector Vector::operator*(const double scalar) const
 	{
-		Vector v;
+		Vector v(0, 0, 0, 0);
 
 		for (int i = 0; i < dimension; ++i)
 			v[i] = scalar * _coordinates.at(i);
@@ -155,11 +155,11 @@ namespace model
 
 	Vector Vector::operator*(const Matrix& M) const
 	{
-		Vector v;
+		Vector v(0, 0, 0, 0);
 
 		for (int j = 0; j < dimension; ++j)
 			for (int i = 0; i < dimension; ++i)
-				v[i] += _coordinates.at(i) * M[i][j];
+				v[j] += _coordinates.at(i) * M[i][j];
 		
 		return v;
 	}
@@ -240,17 +240,17 @@ namespace model
 			}
 		}
 
-		Matrix scheduling(Vector& mass_center, Vector& factor)
+		Matrix scheduling(const double factor, const Vector& mass_center)
 		{
 			auto to_origin = translation(mass_center * -1);
 			auto go_back   = translation(mass_center);
 
 			return to_origin
 			* Matrix(
-				{factor[0], 0, 0, 0},
-				{0, factor[1], 0, 0},
-				{0, 0, factor[2], 0},
-				{0, 0, 0, factor[3]}
+				{factor, 0, 0, 0},
+				{0, factor, 0, 0},
+				{0, 0, factor, 0},
+				{0, 0, 0, factor}
 			)
 			* go_back;
 		}
