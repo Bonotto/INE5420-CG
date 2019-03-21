@@ -28,6 +28,7 @@
 #include <iostream>
 #include <gtkmm.h>
 
+#include "../model/point.hpp"
 #include "../model/geometry.hpp"
 #include "../model/shape.hpp"
 #include "../model/window.hpp"
@@ -112,7 +113,6 @@ namespace control
         Glib::RefPtr<Gtk::Builder> _builder;
         Glib::RefPtr<Gtk::ListStore> _ref_tree_model;
         Glib::RefPtr<Gtk::TreeSelection> _tree_selection;
-        Glib::RefPtr<Gtk::Builder>& _builder;
         // Gtk::Entry * _step;
         // Gtk::Row * _window_row;
 	};
@@ -167,7 +167,7 @@ namespace control
         row[_tree_model._column_name]   = "L1";
         row[_tree_model._column_type]   = "Line";
 
-        _shapes_map["L1"] = _shapes.back();
+        _shapes_map[1] = _shapes.back();
 /* End Line TEST */
 
         std::cout << "## " << row.get_value(_tree_model._column_name) << std::endl;
@@ -279,7 +279,7 @@ namespace control
   			double x, y, z;
 
   			_builder->get_widget("entry_point_x", entry);
-  			x = atof(((std::string) entry->get_text()).c_str());
+  			x = atof(std::string(entry->get_text()).c_str());
 
   			_builder->get_widget("entry_point_y", entry);
   			y = atof(((std::string) entry->get_text()).c_str());
@@ -289,11 +289,9 @@ namespace control
 
   			add_entry(_shapes_map.size() + 1, name, "Point");
 
-  			auto point = new model::Point(name, model::Vector(x, y));
+  			_shapes.emplace_back(new model::Point(name));
 
-  			_shapes.push_back(*point);
-
-  			_shapes_map[_shapes_map.size() + 1] = point;
+  			// _shapes_map[_shapes_map.size() + 1] = _shapes.back();
 
   			return;
   		}
@@ -401,11 +399,11 @@ namespace control
         }
             std::cout << std::endl;
 
-        std::string selected(_tree_selection->get_selected()->get_value(_tree_model._column_name));
+        int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
         
-        if (selected == "Window")
+        if (!selected)
             _window->transformation(T);
-        else if (selected != "")
+        else
             _shapes_map[selected]->transformation(T);
         
         std::cout << "UPDATE" << std::endl;

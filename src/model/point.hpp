@@ -38,7 +38,7 @@ namespace model
 		{}
 
 		Point(std::string name, const Vector& v) :
-			Shape(name, v)
+			Shape(name, {v})
 		{}
 		
 		Point(std::string name, double x, double y, double z = Vector::z, double w = Vector::w) :
@@ -50,7 +50,7 @@ namespace model
         virtual std::string type();
 	};
 
-	std::string type()
+	std::string Point::type()
 	{
 		return "Point";
 	}
