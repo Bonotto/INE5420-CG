@@ -56,15 +56,14 @@ namespace control
 	public:
 
 		MainControl(Glib::RefPtr<Gtk::Builder>& builder) :
-            _shapes(),
-            _builder(builder)
-		{            
+			_builder(builder)
+		{
+            build_movements();
             build_window(builder);
             build_viewport(builder);
             build_tree_view(builder);
             build_connection(builder);
-
-            build_movements();
+            build_new_objects(builder);
 		}
 
 		~MainControl()
@@ -81,13 +80,17 @@ namespace control
         void zoom_out();
 
         void on_item_selected();
+        void on_radio_clicked();
+        void on_new_object_clicked();
+        void on_dialog_exit_clicked();
+        void on_dialog_ok_clicked();
 	
 	private:
 		void build_window(Glib::RefPtr<Gtk::Builder>& builder);
         void build_viewport(Glib::RefPtr<Gtk::Builder>& builder);
         void build_tree_view(Glib::RefPtr<Gtk::Builder>& builder);
-        void build_connection(Glib::RefPtr<Gtk::Builder>& builder);
-        
+        void build_connection(Glib::RefPtr<Gtk::Builder>& builder);        
+        void build_new_objects(Glib::RefPtr<Gtk::Builder>& builder);
         void build_movements();
 
         //! OUR
@@ -102,6 +105,7 @@ namespace control
 
         //! GTK
         Gtk::TreeView * _tree;
+        Glib::RefPtr<Gtk::Builder> _builder;
         Glib::RefPtr<Gtk::ListStore> _ref_tree_model;
         Glib::RefPtr<Gtk::TreeSelection> _tree_selection;
 
@@ -164,7 +168,37 @@ namespace control
 
     void MainControl::build_connection(Glib::RefPtr<Gtk::Builder>& builder)
     {
+    }
 
+    void MainControl::build_new_objects(Glib::RefPtr<Gtk::Builder>& builder)
+    {
+    	Gtk::Button* button;
+    	Gtk::RadioButton* radio1;
+    	Gtk::RadioButton* radio2;
+
+    	builder->get_widget("button_new_object", button);
+    	button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_new_object_clicked));
+
+    	builder->get_widget("dialog_button_cancel", button);
+    	button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_exit_clicked));
+
+    	builder->get_widget("dialog_button_ok", button);
+    	button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_ok_clicked));
+
+    	builder->get_widget("radio_point", radio1);
+    	radio1->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+
+    	builder->get_widget("radio_line", radio2);
+    	radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+    	radio2->join_group(*radio1);
+
+    	builder->get_widget("radio_rectangle", radio2);
+    	radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+    	radio2->join_group(*radio1);
+
+    	builder->get_widget("radio_polygon", radio2);
+    	radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+    	radio2->join_group(*radio1);
     }
 
     void MainControl::on_item_selected()
@@ -172,6 +206,7 @@ namespace control
         std::cout << "UI " << _tree_selection->get_selected()->get_value(_tree_model._column_name) << std::endl;
     }
 
+<<<<<<< 42093e524922c0d8695981df1544b2d2f7d8a4e8
     void MainControl::build_movements()
     {
         Gtk::SpinButton *spin;
@@ -203,6 +238,52 @@ namespace control
         btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::zoom_out));
     }
 
+    void MainControl::on_new_object_clicked()
+    {
+    	Gtk::Dialog* dialog;
+    	_builder->get_widget("window_dialog", dialog);
+  		dialog->run();
+    }
+
+    void MainControl::on_radio_clicked()
+    {
+    	// std::cout << "AI" << std::endl;
+    }
+
+    void MainControl::on_dialog_exit_clicked()
+    {
+    	Gtk::Dialog* dialog;
+    	_builder->get_widget("window_dialog", dialog);
+  		dialog->close();
+    }
+
+    void MainControl::on_dialog_ok_clicked()
+    {
+    	Gtk::RadioButton* radio;
+    	Gtk::Entry* entry;
+
+    	_builder->get_widget("radio_point", radio);
+  		
+  		if (radio->activate()) {
+  			double x, y, z;
+
+  			_builder->get_widget("entry_point_x", entry);
+  			x = atof(((std::string) entry->get_text()).c_str());
+
+  			_builder->get_widget("entry_point_y", entry);
+  			y = atof(((std::string) entry->get_text()).c_str());
+
+  			_builder->get_widget("entry_point_z", entry);
+  			z = atof(((std::string) entry->get_text()).c_str());
+
+  			/*
+  				CRIAR UM MÉTODO PARA INSERIR O OBJETO NA TREEVIEW
+  				CRIAR UM MÉTODO PARA CRIAR O OBJETO, INSERIR NA LISTA E DESENHÁ-LO NA WINDOW
+  			*/
+
+  		}
+    }
+
     void MainControl::up()
     {
         Gtk::SpinButton *spin;
@@ -218,7 +299,6 @@ namespace control
 				std::cout << T[i][j] << ", ";
             std::cout << std::endl;
         }
-
 
 		std::cout << "AAAAAAA" << std::endl;
         model::Vector a(0,0,1,1);
