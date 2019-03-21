@@ -34,7 +34,8 @@ namespace control
 
 namespace model
 {
-    class Vector;   
+    class Vector;
+    class Matrix;
 } //! namespace model
 
 namespace view

@@ -21,72 +21,67 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_VECTOR_HPP
-#define MODEL_VECTOR_HPP
+#ifndef MODEL_MATRIX_HPP
+#define MODEL_MATRIX_HPP
 
-#include <vector>
 #include "../config/traits.hpp"
-#include "matrix.hpp"
 
 namespace model
 {
-	
-	class Vector
+	class Matrix
 	{
 	public:
-		const static int _x = Traits<Vector>::x;
-		const static int _y = Traits<Vector>::y;
-		const static int _z = Traits<Vector>::z;
-		const static int _w = Traits<Vector>::w;
+        using MatrixLine = Vector;
+
+		const static MatrixLine _l0{Vector::_x, Vector::_x, Vector::_x, Vector::_x};
+		const static MatrixLine _l1{Vector::_y, Vector::_y, Vector::_y, Vector::_y};
+		const static MatrixLine _l2{Vector::_z, Vector::_z, Vector::_z, Vector::_z};
+		const static MatrixLine _l3{Vector::_w, Vector::_w, Vector::_w, Vector::_w};
 	
-		const static int dimension = Traits<Vector>::dimension;
+		const static int dimension = MatrixLine::dimension;
 
-		Vector() :
-			_coordinates{_x, _y, _z, _w}
-		{
-		}
 
-		Vector(const Vector& v) :
-			_coordinates{v._coordinates}
-		{
-		}
-
-		Vector(Vector&& v) :
-			_coordinates{v._coordinates}
+		Matrix() :
+            _vectors{_l0, _l1, _l2, _l3}
+        {}
+		
+		Matrix(const MatrixLine& l0,
+               const MatrixLine& l1,
+               const MatrixLine& l2 = _l2,
+               const MatrixLine& l2 = _l3) :
+			_coordinates{l0, l1, l2, l3}
 		{
 		}
 		
-		Vector(double x, double y, double z = _z, double w = _w) :
-			_coordinates{x, y, z, w}
-		{
-		}
-		
-		~Vector() = default;
+		~Matrix() = default;
 
-		double& operator[](int position);
+		InnerMatrix& operator[](int position);
 
-		Vector&& operator*(const Matrix& M);
+		Matrix&& operator*(const Matrix& M1);
 	
 	private:
-		std::vector<double> _coordinates;
+		std::vector<MatrixLine> _vectors;
 	};
 
-	double& Vector::operator[](int position)
+	Matrix::MatrixLine& Matrix::operator[](int position)
 	{
-		return _coordinates[position];
+		return _vectors[position];
 	}
 
-	Vector&& operator*(const Matrix& M)
-	{
-		Vector v;
 
-		for (int j = 0; j < dimension; ++j)
-			for (int i = 0; i < dimension; ++i)
-				v[i] += _coordinates[i] * M[i][j];
-		
-		return v;
-	}
+    Matrix::Matrix&& operator*(const Matrix& M)
+    {
+        Matrix R; //! Result
+
+        for (int h = 0; h < dimension; ++h)
+            for (int j = 0; j < dimension; ++j)
+                for (int i = 0; i < dimension; ++i)
+                    R[h][j] += _vectors[h][i] * M[i][j];
+
+        return R;
+    }
+	
 
 } //! namespace model
 
-#endif  // MODEL_VECTOR_HPP
+#endif  // MODEL_MATRIX_HPP

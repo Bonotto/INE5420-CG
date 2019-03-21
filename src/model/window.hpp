@@ -21,72 +21,55 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_VECTOR_HPP
-#define MODEL_VECTOR_HPP
+#ifndef MODEL_WINDOW_HPP
+#define MODEL_WINDOW_HPP
 
-#include <vector>
-#include "../config/traits.hpp"
+#include "vector.hpp"
 #include "matrix.hpp"
 
 namespace model
 {
-	
-	class Vector
+
+	class Window
 	{
 	public:
-		const static int _x = Traits<Vector>::x;
-		const static int _y = Traits<Vector>::y;
-		const static int _z = Traits<Vector>::z;
-		const static int _w = Traits<Vector>::w;
-	
-		const static int dimension = Traits<Vector>::dimension;
-
-		Vector() :
-			_coordinates{_x, _y, _z, _w}
+		Window(Vector & lower, Vector & upper) :
+			_lower(lower),
+            _upper(upper)
 		{
 		}
 
-		Vector(const Vector& v) :
-			_coordinates{v._coordinates}
-		{
-		}
+		~Window() = default;
 
-		Vector(Vector&& v) :
-			_coordinates{v._coordinates}
-		{
-		}
-		
-		Vector(double x, double y, double z = _z, double w = _w) :
-			_coordinates{x, y, z, w}
-		{
-		}
-		
-		~Vector() = default;
+        const double width() const;
+        const double height() const;
 
-		double& operator[](int position);
+        Matrix transformation() const;
 
-		Vector&& operator*(const Matrix& M);
-	
 	private:
-		std::vector<double> _coordinates;
+		Vector _lower, _upper;
 	};
 
-	double& Vector::operator[](int position)
-	{
-		return _coordinates[position];
-	}
+    const double Window::width() const
+    {
+        return _upper[0] - _lower[0];
+    }
 
-	Vector&& operator*(const Matrix& M)
-	{
-		Vector v;
+    const double Window::height() const
+    {
+        return _upper[1] - _lower[1];
+    }
 
-		for (int j = 0; j < dimension; ++j)
-			for (int i = 0; i < dimension; ++i)
-				v[i] += _coordinates[i] * M[i][j];
-		
-		return v;
-	}
+    Matrix Window::transformation() const
+    {
+        return {
+            {1, 0, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 1, 0},
+            {_lower    }
+        };
+    }
 
 } //! namespace model
 
-#endif  // MODEL_VECTOR_HPP
+#endif  // MODEL_WINDOW_HPP
