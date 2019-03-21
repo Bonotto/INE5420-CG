@@ -96,9 +96,14 @@ namespace control
         void build_new_objects(Glib::RefPtr<Gtk::Builder>& builder);
         void build_movements();
 
+        void insert_point(std::string name);
+        void insert_polygon(std::string name);
+        void insert_object(std::string name, std::string type);
+
         void add_entry(int id, std::string name, std::string type);
 
         //! OUR
+        int _objects_control{0};
 		control::Viewport * _viewport;
 		model::Window * _window;
         
@@ -106,9 +111,9 @@ namespace control
         std::vector<std::shared_ptr<model::Shape>> _shapes;
         std::map<int, std::shared_ptr<model::Shape>> _shapes_map;
 
-        ModelColumns _tree_model;
 
         //! GTK
+        ModelColumns _tree_model;
         Gtk::TreeView * _tree;
         Glib::RefPtr<Gtk::Builder> _builder;
         Glib::RefPtr<Gtk::ListStore> _ref_tree_model;
@@ -158,17 +163,6 @@ namespace control
         row[_tree_model._column_id]     = 0;
         row[_tree_model._column_name]   = "Window";
         row[_tree_model._column_type]   = "View";
-
-/* Line TEST */
-        _shapes.emplace_back(new model::Line("L1", model::Vector(0, 0), model::Vector(100, 100)));
-        std::cout << "Size=" << _shapes.size() << std::endl;
-
-        row = *(_ref_tree_model->append());
-        row[_tree_model._column_name]   = "L1";
-        row[_tree_model._column_type]   = "Line";
-
-        _shapes_map[1] = _shapes.back();
-/* End Line TEST */
 
         std::cout << "## " << row.get_value(_tree_model._column_name) << std::endl;
     }
@@ -268,104 +262,107 @@ namespace control
     	Gtk::RadioButton* radio;
     	Gtk::Entry* entry;
 
+    	_builder->get_widget("radio_point", radio);
 		_builder->get_widget("entry_name", entry);
 
-  		std::string name = (std::string) entry->get_text();
+  		std::string name = std::string(entry->get_text());
     	
-    	_builder->get_widget("radio_point", radio);
-  		
-  		if (radio->activate())
+  		if (radio->get_active()) {
+  			insert_point(name);
+  		}
+  		else
   		{
-  			double x, y, z;
+    		_builder->get_widget("radio_line", radio);
 
-  			_builder->get_widget("entry_point_x", entry);
-  			x = atof(std::string(entry->get_text()).c_str());
+	    	if (radio->get_active()) {
+	  			insert_object(name, "Line");
+	    	}
+	  		else
+	  		{
+	    		_builder->get_widget("radio_rectangle", radio);
 
-  			_builder->get_widget("entry_point_y", entry);
-  			y = atof(((std::string) entry->get_text()).c_str());
-
-  			_builder->get_widget("entry_point_z", entry);
-  			z = atof(((std::string) entry->get_text()).c_str());
-
-  			add_entry(_shapes_map.size() + 1, name, "Point");
-
-  			_shapes.emplace_back(new model::Point(name));
-
-  			// _shapes_map[_shapes_map.size() + 1] = _shapes.back();
-
-  			return;
+		    	if (radio->get_active())
+		  			insert_object(name, "Rectangle");
+		  		else
+		  			insert_polygon(name);
+	  		}
   		}
 
-    	// 	_builder->get_widget("radio_line", radio);
+		_viewport->update();
+	}
 
-  		// if (radio->activate())
-  		// {
-  		// 	double x1, y1, z1, x2, y2, z2;
+	void MainControl::insert_point(std::string name)
+	{
+		Gtk::Entry* entry;
+		double x, y, z;
 
-  		// 	_builder->get_widget("entry_line_x1", entry);
-  		// 	x1 = atof(((std::string) entry->get_text()).c_str());
+		_builder->get_widget("entry_point_x", entry);
+		x = atof(std::string(entry->get_text()).c_str());
 
-  		// 	_builder->get_widget("entry_line_y1", entry);
-  		// 	y1 = atof(((std::string) entry->get_text()).c_str());
+		_builder->get_widget("entry_point_y", entry);
+		y = atof(std::string(entry->get_text()).c_str());
 
-  		// 	_builder->get_widget("entry_line_z1", entry);
-  		// 	z1 = atof(((std::string) entry->get_text()).c_str());
+		if (model::Vector::dimension == 4)
+		{
+			_builder->get_widget("entry_point_z", entry);
+			z = atof(std::string(entry->get_text()).c_str());
+		}
+		else
+			z = model::Vector::z;
 
-  		// 	_builder->get_widget("entry_line_x2", entry);
-  		// 	x2 = atof(((std::string) entry->get_text()).c_str());
+		add_entry(++_objects_control, name, "Point");
 
-  		// 	_builder->get_widget("entry_line_y2", entry);
-  		// 	y2 = atof(((std::string) entry->get_text()).c_str());
+		_shapes.emplace_back(new model::Point(name, x, y, z));
 
-  		// 	_builder->get_widget("entry_line_z2", entry);
-  		// 	z2 = atof(((std::string) entry->get_text()).c_str());
+		_shapes_map[_objects_control] = _shapes.back();
+	}
 
-  		// 	add_entry(_shapes_map.size() + 1, name, "Line");
+	void MainControl::insert_object(std::string name, std::string type)
+	{
+		Gtk::Entry* entry;
+		double x1, y1, z1, x2, y2, z2;
 
-  		// 	auto line = new model::Line(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2));
+		_builder->get_widget("entry_line_x1", entry);
+		x1 = atof(std::string(entry->get_text()).c_str());
 
-  		// 	_shapes.push_back(*line);
+		_builder->get_widget("entry_line_y1", entry);
+		y1 = atof(std::string(entry->get_text()).c_str());
 
-  		// 	_shapes_map[_shapes_map.size() + 1] = line;
+		_builder->get_widget("entry_line_z1", entry);
+		z1 = atof(std::string(entry->get_text()).c_str());
 
-  		// 	return;
-  		// }
+		_builder->get_widget("entry_line_x2", entry);
+		x2 = atof(std::string(entry->get_text()).c_str());
 
-    // 	_builder->get_widget("radio_rectangle", radio);
+		_builder->get_widget("entry_line_y2", entry);
+		y2 = atof(std::string(entry->get_text()).c_str());
 
-  		// if (radio->activate())
-  		// {
-  		// 	double x1, y1, z1, x2, y2, z2;
+		if (model::Vector::dimension == 4)
+		{
+			_builder->get_widget("entry_line_z1", entry);
+			z1 = atof(std::string(entry->get_text()).c_str());
 
-  		// 	_builder->get_widget("entry_rectangle_x1", entry);
-  		// 	x1 = atof(((std::string) entry->get_text()).c_str());
 
-  		// 	_builder->get_widget("entry_rectangle_y1", entry);
-  		// 	y1 = atof(((std::string) entry->get_text()).c_str());
+			_builder->get_widget("entry_line_z2", entry);
+			z2 = atof(std::string(entry->get_text()).c_str());
+		}
+		else
+			z1 = z2 = model::Vector::z;
 
-  		// 	_builder->get_widget("entry_rectangle_z1", entry);
-  		// 	z1 = atof(((std::string) entry->get_text()).c_str());
+		add_entry(++_objects_control, name, type);
 
-  		// 	_builder->get_widget("entry_rectangle_x2", entry);
-  		// 	x2 = atof(((std::string) entry->get_text()).c_str());
+		if (!type.compare("Line"))
+			_shapes.emplace_back(new model::Line(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2)));
+		else
+			_shapes.emplace_back(new model::Rectangle(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2)));
 
-  		// 	_builder->get_widget("entry_rectangle_y2", entry);
-  		// 	y2 = atof(((std::string) entry->get_text()).c_str());
+		_shapes_map[_objects_control] = _shapes.back();
+	}
 
-  		// 	_builder->get_widget("entry_rectangle_z2", entry);
-  		// 	z2 = atof(((std::string) entry->get_text()).c_str());
+	void MainControl::insert_polygon(std::string name)
+	{
 
-  		// 	add_entry(_shapes_map.size() + 1, name, "Rectangle");
-
-  		// 	auto rectangle = new model::Rectangle(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2));
-
-  		// 	_shapes.push_back(*rectangle);
-
-  		// 	_shapes_map[_shapes_map.size() + 1] = rectangle;
-
-  		// 	return;
-  		// }
-    }
+	}
 
 	void MainControl::add_entry(int id, std::string name, std::string type)
 	{

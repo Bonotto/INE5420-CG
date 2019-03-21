@@ -49,10 +49,10 @@ namespace model
 
         virtual std::string type();
 
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 	};
 
-    void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
+    void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
     {
     	Vector vo = _vectors[0] * T;
 

@@ -44,7 +44,7 @@ namespace model
 		~Rectangle() = default;
 
 		virtual Vector mass_center() const;
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
         virtual std::string type();
 	};
@@ -57,11 +57,13 @@ namespace model
         );
 	}
 
-    void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
+    void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
     {
+
+    	std::cout << _name << std::endl;
+
     	Vector v0 = _vectors[0] * T;
     	Vector v1 = _vectors[1] * T;
-
 
 		/* First point */
 		cr->move_to(v0[0], v0[1]);
