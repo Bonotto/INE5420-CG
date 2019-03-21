@@ -27,6 +27,7 @@
 #include <iostream>
 #include <gtkmm/drawingarea.h>
 
+#include "../model/geometry.hpp"
 #include "../model/point.hpp"
 #include "../model/line.hpp"
 #include "../model/rectangle.hpp"
@@ -62,7 +63,7 @@ namespace control
 		cr->set_line_cap(Cairo::LINE_CAP_ROUND); //! Line config
 		cr->set_source_rgb(0, 0, 0);             //! Line color
 
-		model::Rectangle p(100, 100);
+		model::Rectangle p;
 
 		p.draw(cr);
 

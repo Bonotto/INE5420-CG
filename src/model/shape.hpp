@@ -25,7 +25,7 @@
 #define MODEL_SHAPE_HPP
 
 #include <gtkmm/drawingarea.h>
-#include "vector.hpp"
+#include "geometry.hpp"
 
 namespace model
 {
@@ -39,7 +39,7 @@ namespace model
 			_vectors{{v}}
 		{}
 		
-		Shape(double x, double y, double z = Vector::_z, double w = Vector::_w) :
+		Shape(double x, double y, double z = Vector::x, double w = Vector::w) :
 			_vectors{{x, y, z, w}}
 		{}
 		

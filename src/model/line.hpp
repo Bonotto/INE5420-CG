@@ -32,12 +32,6 @@ namespace model
 	
 	class Line : public Shape
 	{
-	private:
-		const static int _x = Vector::_x;
-		const static int _y = Vector::_y;
-		const static int _z = Vector::_z;
-		const static int _w = Vector::_w;
-
 	public:
 		Line() :
 			Shape({Vector(), Vector()})

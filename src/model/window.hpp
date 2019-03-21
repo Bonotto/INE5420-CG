@@ -24,7 +24,7 @@
 #ifndef MODEL_WINDOW_HPP
 #define MODEL_WINDOW_HPP
 
-#include "vector.hpp"
+#include "geometry.hpp"
 #include "matrix.hpp"
 
 namespace model

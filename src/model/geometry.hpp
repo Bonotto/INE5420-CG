@@ -21,8 +21,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_VECTOR_HPP
-#define MODEL_VECTOR_HPP
+#ifndef MODEL_GEOMETRY_HPP
+#define MODEL_GEOMETRY_HPP
 
 #include <vector>
 #include "../config/traits.hpp"
@@ -30,6 +30,10 @@
 namespace model
 {
 	
+/*================================================================================*/
+/*                                   Vector                                       */
+/*================================================================================*/
+
 	class Vector
 	{
 	public:
@@ -70,7 +74,39 @@ namespace model
 		std::vector<double> _coordinates;
 	};
 
-	#include "matrix.hpp"
+/*================================================================================*/
+/*                                   Matrix                                       */
+/*================================================================================*/
+
+	class Matrix
+	{
+	public:
+        using MatrixLine = Vector;
+		const static int dimension = Traits<Vector>::dimension;
+
+	public:
+
+		Matrix(const MatrixLine& l0 = {1, 0, 0, 0},
+               const MatrixLine& l1 = {0, 1, 0, 0},
+               const MatrixLine& l2 = {0, 0, 1, 0},
+               const MatrixLine& l3 = {0, 0, 0, 1}) :
+			_vectors{l0, l1, l2, l3}
+		{
+		}
+		
+		~Matrix() = default;
+
+		MatrixLine& operator[](int position);
+
+		Matrix&& operator*(Matrix& M);
+	
+	private:
+		std::vector<MatrixLine> _vectors;
+	};
+
+/*================================================================================*/
+/*                                   Vector                                       */
+/*================================================================================*/
 
 	double& Vector::operator[](int position)
 	{
@@ -88,6 +124,27 @@ namespace model
 		return std::move(v);
 	}
 
+/*================================================================================*/
+/*                                   Matrix                                       */
+/*================================================================================*/
+
+	Matrix::MatrixLine& Matrix::operator[](int position)
+	{
+		return _vectors[position];
+	}
+
+    Matrix&& Matrix::operator*(Matrix& M)
+    {
+        Matrix R; //! Result
+
+        for (int h = 0; h < dimension; ++h)
+            for (int j = 0; j < dimension; ++j)
+                for (int i = 0; i < dimension; ++i)
+                    R[h][j] += _vectors[h][i] * M[i][j];
+
+        return std::move(R);
+    }
+
 } //! namespace model
 
-#endif  // MODEL_VECTOR_HPP
+#endif  // MODEL_GEOMETRY_HPP

@@ -32,22 +32,14 @@ namespace model
 	
 	class Point : public Shape
 	{
-	private:
-		const static int _x = Vector::_x;
-		const static int _y = Vector::_y;
-		const static int _z = Vector::_z;
-		const static int _w = Vector::_w;
-
 	public:
-		Point() :
-			Shape(Vector(_x, _y, _z, _w))
-		{}
+		Point() = default;
 
 		Point(const Vector& v) :
 			Shape(v)
 		{}
 		
-		Point(double x, double y, double z = _z, double w = _w) :
+		Point(double x, double y, double z = Vector::z, double w = Vector::w) :
 			Shape(Vector(x, y, z, w))
 		{}
 
