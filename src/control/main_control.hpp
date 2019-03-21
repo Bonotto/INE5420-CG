@@ -50,15 +50,28 @@ namespace control
             delete _window;
             delete _viewport;
         }
+
+        void up();
+        void left();
+        void right();
+        void down();
+        void zoom_in();
+        void zoom_out();
 	
 	private:
 		void build_window(Glib::RefPtr<Gtk::Builder>& builder);
         void build_viewport(Glib::RefPtr<Gtk::Builder>& builder);
         void build_connection(Glib::RefPtr<Gtk::Builder>& builder);
 
+        //! OUR
 		control::Viewport * _viewport;
-		view::Window * _window;
+		model::Window * _window;
         std::vector<model::Shape> _shapes;
+
+        //! GTK
+        Gtk::Entry * _step;
+        Gtk::Row * _window_row;
+        std::map<Gtk::Row *, model::Shape*> _tree_map;
 	};
 
     void MainControl::build_window(Glib::RefPtr<Gtk::Builder>& builder)
@@ -76,6 +89,90 @@ namespace control
     void MainControl::build_connection(Glib::RefPtr<Gtk::Builder>& builder)
     {
 
+    }
+
+    void MainControl::up()
+    {
+        if (_select == _window_row)
+        {
+            //! Build T
+            _window_row->transformation(T);
+        }
+        else
+        {
+            //! Build T
+            _tree_map[_select]->transformation(T);
+        }
+    }
+
+    void MainControl::left()
+    {
+        if (_select == _window_row)
+        {
+            //! Build T
+            _window_row->transformation(T);
+        }
+        else
+        {
+            //! Build T
+            _tree_map[_select]->transformation(T);
+        }
+    }
+
+    void MainControl::right()
+    {
+        if (_select == _window_row)
+        {
+            //! Build T
+            _window_row->transformation(T);
+        }
+        else
+        {
+            //! Build T
+            _tree_map[_select]->transformation(T);
+        }
+    }
+
+    void MainControl::down()
+    {
+        if (_select == _window_row)
+        {
+            //! Build T
+            _window_row->transformation(T);
+        }
+        else
+        {
+            //! Build T
+            _tree_map[_select]->transformation(T);
+        }
+    }
+
+    void MainControl::zoom_in()
+    {
+        if (_select == _window_row)
+        {
+            //! Build T
+            _window_row->transformation(T);
+        }
+        else
+        {
+            //! Build T
+            _tree_map[_select]->transformation(T);
+        }
+    }
+
+    void MainControl::zoom_out()
+    {
+        if (_select == _window_row)
+        {
+            //! Build T
+            _window_row->transformation(T);
+        }
+        else
+        {
+            //! Build T
+            _tree_map[_select]->transformation(T);
+        }
     }
 
 
