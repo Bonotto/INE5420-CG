@@ -25,7 +25,6 @@
 #define MODEL_WINDOW_HPP
 
 #include "geometry.hpp"
-#include "matrix.hpp"
 
 namespace model
 {
@@ -33,7 +32,7 @@ namespace model
 	class Window
 	{
 	public:
-		Window(Vector & lower, Vector & upper) :
+		Window(const Vector & lower, const Vector & upper) :
 			_lower(lower),
             _upper(upper)
 		{
@@ -59,11 +58,11 @@ namespace model
 
 		~Window() = default;
 
-        const double width() const;
-        const double height() const;
+        const double width();
+        const double height();
 
-
-        void transformation(Matrix & M);
+        template<typename M>
+        void transformation(M && matrix);
         Matrix transformation() const;
 
 	private:
@@ -71,20 +70,20 @@ namespace model
         Matrix _dimensions;
 	};
 
-    const double Window::width() const
+    const double Window::width()
     {
         return _upper[0] - _lower[0]; //! Need Euclidean distance!
     }
 
-    const double Window::height() const
+    const double Window::height()
     {
         return _upper[1] - _lower[1]; //! Need Euclidean distance!
     }
 
-
-    void transformation(Matrix & M)
+    template<typename M>
+    void Window::transformation(M && matrix)
     {
-        _dimensions = _dimensions * M;
+        _dimensions = _dimensions * matrix;
     }
 
     Matrix Window::transformation() const

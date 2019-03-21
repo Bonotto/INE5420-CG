@@ -21,82 +21,58 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_SHAPE_HPP
-#define MODEL_SHAPE_HPP
+#ifndef MODEL_POLYGON_HPP
+#define MODEL_POLYGON_HPP
 
-#include <string>
-#include <gtkmm/drawingarea.h>
-#include "geometry.hpp"
+#include "../config/traits.hpp"
+#include "shape.hpp"
 
 namespace model
 {
 	
-	class Shape
+	class Polygon : public Shape
 	{
 	public:
-		Shape()  = default;
-
-		Shape(std::string name) :
-			_name{name}
+		Polygon(std::string name) :
+			Shape(name)
 		{}
 
-		Shape(std::string name, const Vector& v) :
-			_name{name},
-			_vectors{{v}}
-		{}
-		
-		Shape(std::string name, double x, double y, double z = Vector::x, double w = Vector::w) :
-			_name{name},
-			_vectors{{x, y, z, w}}
-		{}
-		
-		Shape(std::string name, std::initializer_list<Vector>& vs) :
-			_name{name},
-			_vectors{vs}
+		Polygon(std::string name, std::initializer_list<Vector>& vs) :
+			Shape(name, vs)
 		{}
 
-		Shape(std::string name, std::initializer_list<Vector>&& vs) :
-			_name{name},
-			_vectors{vs}
+		Polygon(std::string name, std::initializer_list<Vector>&& vs) :
+			Shape(name, vs)
 		{}
 
-		~Shape() = default;
+		~Polygon() = default;
+
+        virtual std::string type();
 
         virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
-
-        std::string name();
-        virtual std::string type();
-	
-	protected:
-		std::string _name{"Shape"};
-		std::vector<Vector> _vectors{{0, 0}};
 	};
 
-    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
+    void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
     {
-    	Vector v0 = _vectors[0] * T;
+    	Vector vo = _vectors[0] * T;
 
 		/* First point */
 		cr->move_to(v0[0], v0[1]);
 
 		// Draw all other points
-		for (Vector& v : _vectors)
-		{
+		for (Vector& v : _vectors) {
 			Vector vi = v * T;
 			cr->line_to(vi[0], vi[1]);
 		}
+
+		cr->line_to(v0[0], v0[1]);
     }
 
-    std::string Shape::name()
+    std::string Polygon::type()
     {
-    	return _name;
-    }
-
-    std::string Shape::type()
-    {
-    	return "Shape_t";
+    	return "Polygon";
     }
 
 } //! namespace model
 
-#endif  // MODEL_SHAPE_HPP
+#endif  // MODEL_POLYGON_HPP

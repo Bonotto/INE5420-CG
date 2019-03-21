@@ -35,6 +35,21 @@
 namespace control
 {
 
+    class ModelColumns : public Gtk::TreeModel::ColumnRecord
+    {
+        public:
+
+        ModelColumns()
+        {
+            add(_column_name);
+            add(_column_type);
+        }
+
+        Gtk::TreeModelColumn<Glib::ustring> _column_name;
+        Gtk::TreeModelColumn<Glib::ustring> _column_type;
+    };
+
+
 	class MainControl
 	{
 	public:
@@ -42,6 +57,7 @@ namespace control
 		{
             build_window(builder);
             build_viewport(builder);
+            build_tree_view(builder);
             build_connection(builder);
 		}
 
@@ -61,29 +77,44 @@ namespace control
 	private:
 		void build_window(Glib::RefPtr<Gtk::Builder>& builder);
         void build_viewport(Glib::RefPtr<Gtk::Builder>& builder);
+        void build_tree_view(Glib::RefPtr<Gtk::Builder>& builder);
         void build_connection(Glib::RefPtr<Gtk::Builder>& builder);
 
         //! OUR
 		control::Viewport * _viewport;
 		model::Window * _window;
         std::vector<model::Shape> _shapes;
+        ModelColumns _tree_model;
 
         //! GTK
-        Gtk::Entry * _step;
-        Gtk::Row * _window_row;
-        std::map<Gtk::Row *, model::Shape*> _tree_map;
+        Gtk::TreeView * _tree;
+        Glib::RefPtr<Gtk::ListStore> _ref_tree_model;
+        // Gtk::Entry * _step;
+        // Gtk::Row * _window_row;
+        // std::map<Gtk::Row *, model::Shape*> _tree_map;
 	};
 
     void MainControl::build_window(Glib::RefPtr<Gtk::Builder>& builder)
     {
-        _window = new model::Window(/* draw area points */);
+        _window = new model::Window(model::Vector(0,0), model::Vector(100,100));
     }
 
     void MainControl::build_viewport(Glib::RefPtr<Gtk::Builder>& builder)
     {
         Gtk::DrawingArea *draw;
-        refBuilder->get_widget("area_draw", draw);
+        builder->get_widget("area_draw", draw);
         _viewport = new control::Viewport(*_window, _shapes, *draw);
+    }
+
+    void MainControl::build_tree_view(Glib::RefPtr<Gtk::Builder>& builder)
+    {
+        builder->get_widget("tree_objects", _tree);
+
+        _ref_tree_model = Gtk::ListStore::create(_tree_model);
+        _tree->set_model(_ref_tree_model);
+
+        _tree->append_column("Name", _tree_model._column_name);
+        _tree->append_column("Type", _tree_model._column_type);
     }
 
     void MainControl::build_connection(Glib::RefPtr<Gtk::Builder>& builder)
@@ -93,86 +124,86 @@ namespace control
 
     void MainControl::up()
     {
-        if (_select == _window_row)
-        {
-            //! Build T
-            _window_row->transformation(T);
-        }
-        else
-        {
-            //! Build T
-            _tree_map[_select]->transformation(T);
-        }
+        // if (_select == _window_row)
+        // {
+        //     //! Build T
+        //     _window_row->transformation(T);
+        // }
+        // else
+        // {
+        //     //! Build T
+        //     _tree_map[_select]->transformation(T);
+        // }
     }
 
     void MainControl::left()
     {
-        if (_select == _window_row)
-        {
-            //! Build T
-            _window_row->transformation(T);
-        }
-        else
-        {
-            //! Build T
-            _tree_map[_select]->transformation(T);
-        }
+        // if (_select == _window_row)
+        // {
+        //     //! Build T
+        //     _window_row->transformation(T);
+        // }
+        // else
+        // {
+        //     //! Build T
+        //     _tree_map[_select]->transformation(T);
+        // }
     }
 
     void MainControl::right()
     {
-        if (_select == _window_row)
-        {
-            //! Build T
-            _window_row->transformation(T);
-        }
-        else
-        {
-            //! Build T
-            _tree_map[_select]->transformation(T);
-        }
+        // if (_select == _window_row)
+        // {
+        //     //! Build T
+        //     _window_row->transformation(T);
+        // }
+        // else
+        // {
+        //     //! Build T
+        //     _tree_map[_select]->transformation(T);
+        // }
     }
 
     void MainControl::down()
     {
-        if (_select == _window_row)
-        {
-            //! Build T
-            _window_row->transformation(T);
-        }
-        else
-        {
-            //! Build T
-            _tree_map[_select]->transformation(T);
-        }
+        // if (_select == _window_row)
+        // {
+        //     //! Build T
+        //     _window_row->transformation(T);
+        // }
+        // else
+        // {
+        //     //! Build T
+        //     _tree_map[_select]->transformation(T);
+        // }
     }
 
     void MainControl::zoom_in()
     {
-        if (_select == _window_row)
-        {
-            //! Build T
-            _window_row->transformation(T);
-        }
-        else
-        {
-            //! Build T
-            _tree_map[_select]->transformation(T);
-        }
+        // if (_select == _window_row)
+        // {
+        //     //! Build T
+        //     _window_row->transformation(T);
+        // }
+        // else
+        // {
+        //     //! Build T
+        //     _tree_map[_select]->transformation(T);
+        // }
     }
 
     void MainControl::zoom_out()
     {
-        if (_select == _window_row)
-        {
-            //! Build T
-            _window_row->transformation(T);
-        }
-        else
-        {
-            //! Build T
-            _tree_map[_select]->transformation(T);
-        }
+        // if (_select == _window_row)
+        // {
+        //     //! Build T
+        //     _window_row->transformation(T);
+        // }
+        // else
+        // {
+        //     //! Build T
+        //     _tree_map[_select]->transformation(T);
+        // }
     }
 
 

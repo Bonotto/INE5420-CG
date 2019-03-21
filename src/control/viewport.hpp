@@ -40,7 +40,7 @@ namespace control
 	class Viewport
 	{
 	public:
-		Viewport(Window & window, std::vector<Shape> & shapes, Gtk::DrawingArea& draw_area) :
+		Viewport(model::Window & window, std::vector<model::Shape> & shapes, Gtk::DrawingArea& draw_area) :
 			_window(window),
 			_shapes(shapes),
 			_draw_area(draw_area)
@@ -54,8 +54,8 @@ namespace control
 		void update();
 	
 	private:
-		Window & _window;
-		std::vector<Shape> _shapes;
+		model::Window & _window;
+		std::vector<model::Shape> _shapes;
 		Gtk::DrawingArea &_draw_area;
 	};
 

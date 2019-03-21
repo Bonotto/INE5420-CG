@@ -36,8 +36,7 @@ int main(int argc, char **argv)
 	refBuilder->get_widget("window_main", main_window);
 	if (main_window)
 	{
-
-		main_control = new MainControl(refBuilder);
+		main_control = new control::MainControl(refBuilder);
 
 		main_window->show_all();
 		app->run(*main_window);

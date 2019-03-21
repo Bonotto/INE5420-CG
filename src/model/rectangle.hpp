@@ -33,29 +33,36 @@ namespace model
 	class Rectangle : public Shape
 	{
 	public:
-		Rectangle() :
-			Shape({Vector(50, 50), Vector(200, 200)})
+		Rectangle(std::string name) :
+			Shape(name, {Vector(), Vector()})
 		{}
 
-		Rectangle(const Vector& v1, const Vector& v2) :
-			Shape({v1, v2})
+		Rectangle(std::string name, const Vector& v1, const Vector& v2) :
+			Shape(name, {v1, v2})
 		{}
 
 		~Rectangle() = default;
 
         virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
 
-        std::string type();
+        virtual std::string type();
 	};
 
     void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
     {
+    	Vector v0 = _vectors[0] * T;
+    	Vector v1 = _vectors[1] * T;
+
+
 		/* First point */
-		cr->move_to(_vectors[0][0], _vectors[0][1]);
+		cr->move_to(v0[0], v0[1]);
 
 		// Draw all other points
-		for (Vector& v : _vectors)
-			cr->line_to(v[0], v[1]);
+		cr->line_to(v0[0], v0[1]);
+		cr->line_to(v0[0], v1[1]);
+		cr->line_to(v1[0], v1[1]);
+		cr->line_to(v1[0], v0[1]);
+		cr->line_to(v0[0], v0[1]);
     }
 
     std::string Rectangle::type()

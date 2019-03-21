@@ -63,6 +63,9 @@ namespace model
 			_coordinates{x0, y0, z0, w0}
 		{
 		}
+
+	    Vector &operator=(const Vector &) = default;
+	    Vector &operator=(Vector &&) = default;
 		
 		~Vector() = default;
 
@@ -94,12 +97,20 @@ namespace model
 			_vectors{l0, l1, l2, l3}
 		{
 		}
+
+		Matrix(MatrixLine&& l0,
+               MatrixLine&& l1,
+               MatrixLine&& l2,
+               MatrixLine&& l3) :
+			_vectors{l0, l1, l2, l3}
+		{
+		}
 		
 		~Matrix() = default;
 
 		MatrixLine& operator[](int position);
 
-		Matrix&& operator*(Matrix& M);
+		Matrix&& operator*(Matrix&& M);
 	
 	private:
 		std::vector<MatrixLine> _vectors;
@@ -145,7 +156,7 @@ namespace model
 		return _vectors[position];
 	}
 
-    Matrix&& Matrix::operator*(Matrix& M)
+    Matrix&& Matrix::operator*(Matrix&& M)
     {
         Matrix R; //! Result
 
@@ -165,37 +176,38 @@ namespace model
 	namespace transformations
 	{
 
-		Matrix&& translation(Vector * factor)
+		template<typename V>
+		Matrix translation(V && factor)
 		{
 			if (Traits<Vector>::dimension == 3)
 			{
-				return {
+				return Matrix(
 					{1, 0, 0, 0},
 					{0, 1, 0, 0},
 					factor,
-					{0, 0, 0, 1},
-				};
+					{0, 0, 0, 1}
+				);
 			}
 			else
 			{
-				return {
+				return Matrix(
 					{1, 0, 0, 0},
 					{0, 1, 0, 0},
 					{0, 0, 1, 0},
-					factor,
-				};
+					factor
+				);
 			}
 		}
 
-		Matrix&& scheduling(Vector& mass_center, Vector& factor)
+		Matrix scheduling(Vector& mass_center, Vector& factor)
 		{
-			return translation(-1 * mass_center)
-			* {
+			return translation(mass_center * -1)
+			* Matrix(
 				{factor[0], 0, 0, 0},
 				{0, factor[1], 0, 0},
 				{0, 0, factor[2], 0},
-				{0, 0, 0, factor[3]},
-			}
+				{0, 0, 0, factor[3]}
+			)
 			* translation(mass_center);
 		}
 		
