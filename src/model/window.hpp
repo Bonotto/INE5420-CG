@@ -32,9 +32,10 @@ namespace model
 	class Window
 	{
 	public:
-		Window(const Vector & lower, const Vector & upper) :
+		Window(const Vector & lower, const Vector & upper, Gtk::DrawingArea& draw_area) :
 			_lower(lower),
-            _upper(upper)
+            _upper(upper),
+            _draw_area(draw_area)
 		{
             if (Traits<model::Vector>::dimension == 3)
             {
@@ -61,13 +62,13 @@ namespace model
         const double width();
         const double height();
 
-        template<typename M>
-        void transformation(M && matrix);
+        void transformation(const Matrix& M);
         Matrix transformation() const;
 
 	private:
 		Vector _lower, _upper;
         Matrix _dimensions;
+        Gtk::DrawingArea& _draw_area;
 	};
 
     const double Window::width()
@@ -80,14 +81,31 @@ namespace model
         return _upper[1] - _lower[1]; //! Need Euclidean distance!
     }
 
-    template<typename M>
-    void Window::transformation(M && matrix)
+    void Window::transformation(const Matrix& matrix)
     {
         _dimensions = _dimensions * matrix;
     }
 
     Matrix Window::transformation() const
     {
+        auto alloc = _draw_area.get_allocation();
+		auto width = alloc.get_width();
+		auto height = alloc.get_height();
+
+        // Matrix P(
+        //     {(width/2),           0, 0, 0},
+        //     {        0, (-height/2), 0, 0},
+        //     {        0,           0, 1, 0},
+        //     {(width/2),  (height/2), 0, 1}
+        // );
+
+        // Matrix P(
+        //     {1, 0, 0, 0},
+        //     {0, 1, 0, 0},
+        //     {0, 0, 1, 0},
+        //     {0, 0, 0, 1}
+        // );
+
         return _dimensions;
     }
 

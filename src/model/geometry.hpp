@@ -69,10 +69,11 @@ namespace model
 		
 		~Vector() = default;
 
-		double& operator[](int position);
+		double& operator[](const int position);
+		const double& operator[](int position) const;
 
-		Vector&& operator*(Matrix& M);
-		Vector&& operator*(double scalar);
+		Vector operator*(const Matrix& M) const;
+		Vector operator*(const double scalar) const;
 	
 	private:
 		std::vector<double> _coordinates;
@@ -108,9 +109,10 @@ namespace model
 		
 		~Matrix() = default;
 
-		MatrixLine& operator[](int position);
+		MatrixLine& operator[](const int position);
+		const MatrixLine& operator[](const int position) const;
 
-		Matrix&& operator*(Matrix&& M);
+		Matrix operator*(const Matrix& M) const;
 	
 	private:
 		std::vector<MatrixLine> _vectors;
@@ -120,43 +122,53 @@ namespace model
 /*                                   Vector                                       */
 /*================================================================================*/
 
-	double& Vector::operator[](int position)
+	double& Vector::operator[](const int position)
 	{
 		return _coordinates[position];
 	}
 
-	Vector&& Vector::operator*(Matrix& M)
+	const double& Vector::operator[](const int position) const
+	{
+		return _coordinates.at(position);
+	}
+
+	Vector Vector::operator*(const Matrix& M) const
 	{
 		Vector v;
 
 		for (int j = 0; j < dimension; ++j)
 			for (int i = 0; i < dimension; ++i)
-				v[i] += _coordinates[i] * M[i][j];
+				v[i] += _coordinates.at(i) * M[i][j];
 		
-		return std::move(v);
+		return v;
 	}
 
 
-	Vector&& Vector::operator*(double scalar)
+	Vector Vector::operator*(const double scalar) const
 	{
 		Vector v;
 
 		for (int i = 0; i < dimension; ++i)
-			v[i] = scalar * _coordinates[i];
+			v[i] = scalar * _coordinates.at(i);
 		
-		return std::move(v);
+		return v;
 	}
 
 /*================================================================================*/
 /*                                   Matrix                                       */
 /*================================================================================*/
-
-	Matrix::MatrixLine& Matrix::operator[](int position)
+	
+	Matrix::MatrixLine& Matrix::operator[](const int position)
 	{
 		return _vectors[position];
 	}
 
-    Matrix&& Matrix::operator*(Matrix&& M)
+	const Matrix::MatrixLine& Matrix::operator[](const int position) const
+	{
+		return _vectors.at(position);
+	}
+
+    Matrix Matrix::operator*(const Matrix& M) const
     {
         Matrix R; //! Result
 
@@ -165,7 +177,7 @@ namespace model
                 for (int i = 0; i < dimension; ++i)
                     R[h][j] += _vectors[h][i] * M[i][j];
 
-        return std::move(R);
+        return R;
     }
 
 
@@ -176,8 +188,7 @@ namespace model
 	namespace transformations
 	{
 
-		template<typename V>
-		Matrix translation(V && factor)
+		Matrix translation(const Vector& factor)
 		{
 			if (Traits<Vector>::dimension == 3)
 			{
@@ -201,14 +212,17 @@ namespace model
 
 		Matrix scheduling(Vector& mass_center, Vector& factor)
 		{
-			return translation(mass_center * -1)
+			auto to_origin = translation(mass_center * -1);
+			auto go_back   = translation(mass_center);
+
+			return to_origin
 			* Matrix(
 				{factor[0], 0, 0, 0},
 				{0, factor[1], 0, 0},
 				{0, 0, factor[2], 0},
 				{0, 0, 0, factor[3]}
 			)
-			* translation(mass_center);
+			* go_back;
 		}
 		
 	} //! namespace operations

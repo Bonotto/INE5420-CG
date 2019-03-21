@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 -->
+<!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
   <object class="GtkDialog" id="window_dialog">
     <property name="can_focus">False</property>
     <property name="type_hint">dialog</property>
+    <child>
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog_box_main">
         <property name="can_focus">False</property>
@@ -57,11 +60,18 @@
     <property name="can_focus">False</property>
     <property name="window_position">center</property>
     <child>
+      <placeholder/>
+    </child>
+    <child>
       <object class="GtkBox" id="box_main">
+        <property name="width_request">800</property>
+        <property name="height_request">600</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="margin_left">3</property>
+        <property name="margin_right">3</property>
         <property name="margin_top">3</property>
+        <property name="margin_bottom">3</property>
         <property name="spacing">5</property>
         <child>
           <object class="GtkBox" id="box_menu">
@@ -174,6 +184,7 @@
                     <property name="spacing">3</property>
                     <child>
                       <object class="GtkLabel" id="label_step">
+                        <property name="width_request">40</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Step </property>
@@ -185,7 +196,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="entry_step">
+                      <object class="GtkSpinButton" id="spin_step">
+                        <property name="width_request">155</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                       </object>
@@ -320,7 +332,7 @@
             </child>
             <child>
               <object class="GtkTextView" id="textview2">
-                <property name="height_request">300</property>
+                <property name="height_request">200</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="indent">-7</property>
@@ -340,7 +352,6 @@
         </child>
         <child>
           <object class="GtkDrawingArea" id="area_draw">
-            <property name="width_request">500</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
           </object>

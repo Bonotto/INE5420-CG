@@ -24,6 +24,10 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+
+template<class C>
+using UniquePointer = std::unique_ptr<C>;
+
 /* General */
 class Debug;
 

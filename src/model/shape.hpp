@@ -24,6 +24,7 @@
 #ifndef MODEL_SHAPE_HPP
 #define MODEL_SHAPE_HPP
 
+#include <iostream>
 #include <string>
 #include <gtkmm/drawingarea.h>
 #include "geometry.hpp"
@@ -74,7 +75,9 @@ namespace model
 
     void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
     {
-    	Vector v0 = _vectors[0] * T;
+		std::cout << type() << std::endl;
+
+		Vector v0 = _vectors[0] * T;
 
 		/* First point */
 		cr->move_to(v0[0], v0[1]);

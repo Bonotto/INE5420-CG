@@ -40,7 +40,7 @@ namespace control
 	class Viewport
 	{
 	public:
-		Viewport(model::Window & window, std::vector<model::Shape> & shapes, Gtk::DrawingArea& draw_area) :
+		Viewport(model::Window & window, std::vector<std::shared_ptr<model::Shape>> & shapes, Gtk::DrawingArea& draw_area) :
 			_window(window),
 			_shapes(shapes),
 			_draw_area(draw_area)
@@ -55,7 +55,7 @@ namespace control
 	
 	private:
 		model::Window & _window;
-		std::vector<model::Shape> _shapes;
+		std::vector<std::shared_ptr<model::Shape>>& _shapes;
 		Gtk::DrawingArea &_draw_area;
 	};
 
@@ -71,8 +71,13 @@ namespace control
 
 		auto T = _window.transformation();
 
+		std::cout << "Size=" << _shapes.size() << std::endl;
+		for (int i = 0; i < T.dimension; i++)
+			for (int j = 0; j < T.dimension; j++)
+				std::cout << "[" << i << ", " << j << "] = " << T[i][j] << std::endl;  
+
 		for (auto & shape : _shapes)
-			shape.draw(cr, T);
+			shape->draw(cr, T);
 
 		cr->stroke();
 

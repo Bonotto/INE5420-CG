@@ -20,6 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+##############################################################################
+#                               Executable                                   #
+##############################################################################
+
 # Defines
 CXX      = g++
 CPPFLAGS = -std=c++11 -Wall `pkg-config --cflags gtkmm-3.0`
@@ -29,7 +33,6 @@ LDLIBS   = `pkg-config --libs gtkmm-3.0 `
 PHONY: main clean
 
 # CPP Source Files
-# C Source Files
 CPP_SRC = $(wildcard main.cpp)             \
           $(wildcard src/control/*.cpp)    \
           $(wildcard src/model/util/*.cpp) \
@@ -52,10 +55,19 @@ main: $(OBJ)
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c $< -o $@
 
+
+##############################################################################
+#                                Clean                                       #
+##############################################################################
+
 # Cleans All Object Files
 clean:
-	rm -rf $(OBJ)
-	rm main
+	rm -f $(OBJ)
+	rm -f main
+
+##############################################################################
+#                                Ignore                                      #
+##############################################################################
 
 cmd:
 	g++ $(CPP_SRC) -o main `pkg-config gtkmm-3.0 --cflags --libs`
