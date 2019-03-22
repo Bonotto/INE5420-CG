@@ -1,17 +1,17 @@
 /* The MIT License
- * 
+ *
  * Copyright (c) 2019 João Vicente Souto and Bruno Izaias Bonotto
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,16 +24,20 @@
 #ifndef MODEL_GEOMETRY_HPP
 #define MODEL_GEOMETRY_HPP
 
+/* External includes */
 #include <vector>
+
+/* Local includes */
 #include "../config/traits.hpp"
 
 namespace model
 {
-	
+
 /*================================================================================*/
-/*                                   Vector                                       */
+/*                                   Definitions                                  */
 /*================================================================================*/
 
+/*--------------------------------     Vector     --------------------------------*/
 	class Vector
 	{
 	public:
@@ -41,7 +45,7 @@ namespace model
 		static const int y = Traits<Vector>::y;
 		static const int z = Traits<Vector>::z;
 		static const int w = Traits<Vector>::w;
-	
+
 		const static int dimension = Traits<Vector>::dimension;
 
 		Vector() :
@@ -58,15 +62,15 @@ namespace model
 			_coordinates{v._coordinates}
 		{
 		}
-		
+
 		Vector(double x0, double y0, double z0 = z, double w0 = w) :
 			_coordinates{x0, y0, z0, w0}
 		{
 		}
 
-	    Vector &operator=(const Vector &) = default;
-	    Vector &operator=(Vector &&) = default;
-		
+		Vector &operator=(const Vector &) = default;
+		Vector &operator=(Vector &&) = default;
+
 		~Vector() = default;
 
 		double& operator[](const int position);
@@ -75,39 +79,37 @@ namespace model
 		double operator*(const Vector& v) const;
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
-	
+
 	private:
 		std::vector<double> _coordinates;
 	};
 
-/*================================================================================*/
-/*                                   Matrix                                       */
-/*================================================================================*/
+/*-------------------------------     Matrix     -------------------------------*/
 
 	class Matrix
 	{
 	public:
-        using MatrixLine = Vector;
+		using MatrixLine = Vector;
 		const static int dimension = Traits<Vector>::dimension;
 
 	public:
 
 		Matrix(const MatrixLine& l0 = {1, 0, 0, 0},
-               const MatrixLine& l1 = {0, 1, 0, 0},
-               const MatrixLine& l2 = {0, 0, 1, 0},
-               const MatrixLine& l3 = {0, 0, 0, 1}) :
+			   const MatrixLine& l1 = {0, 1, 0, 0},
+			   const MatrixLine& l2 = {0, 0, 1, 0},
+			   const MatrixLine& l3 = {0, 0, 0, 1}) :
 			_vectors{l0, l1, l2, l3}
 		{
 		}
 
 		Matrix(MatrixLine&& l0,
-               MatrixLine&& l1,
-               MatrixLine&& l2,
-               MatrixLine&& l3) :
+			   MatrixLine&& l1,
+			   MatrixLine&& l2,
+			   MatrixLine&& l3) :
 			_vectors{l0, l1, l2, l3}
 		{
 		}
-		
+
 		~Matrix() = default;
 
 		Matrix column_oriented() const;
@@ -116,14 +118,30 @@ namespace model
 		const MatrixLine& operator[](const int position) const;
 
 		Matrix operator*(const Matrix& M) const;
-	
+
 	private:
 		std::vector<MatrixLine> _vectors;
 	};
 
+/*----------------------------     transformations     ---------------------------*/
+
+	namespace transformations
+	{
+		Matrix translation(const Vector& factor);
+		Matrix scheduling(const double factor, const Vector& mass_center);
+		Matrix viewport_transformation(
+			const Vector& vp_min,
+			const Vector& vp_max,
+			const Vector& win_min,
+			const Vector& win_max
+		);
+	} //! namespace transformations
+
 /*================================================================================*/
-/*                                   Vector                                       */
+/*                                  Implementaion                                 */
 /*================================================================================*/
+
+/*-------------------------------     Vector     -------------------------------*/
 
 	double& Vector::operator[](const int position)
 	{
@@ -138,7 +156,7 @@ namespace model
 	double Vector::operator*(const Vector& v) const
 	{
 		return _coordinates[0] * v[0]
-		     + _coordinates[1] * v[1]
+			 + _coordinates[1] * v[1]
 			 + _coordinates[2] * v[2]
 			 + _coordinates[3] * v[3];
 	}
@@ -149,7 +167,7 @@ namespace model
 
 		for (int i = 0; i < dimension-1; ++i)
 			v[i] = scalar * _coordinates.at(i);
-		
+
 		return v;
 	}
 
@@ -160,13 +178,11 @@ namespace model
 		for (int j = 0; j < dimension; ++j)
 			for (int i = 0; i < dimension; ++i)
 				v[j] += _coordinates.at(i) * M[i][j];
-		
+
 		return v;
 	}
 
-/*================================================================================*/
-/*                                   Matrix                                       */
-/*================================================================================*/
+/*-------------------------------     Matrix     -------------------------------*/
 
 	Matrix Matrix::column_oriented() const
 	{
@@ -177,7 +193,7 @@ namespace model
 			{_vectors[0][3], _vectors[1][3], _vectors[2][3], _vectors[3][3]}
 		);
 	}
-	
+
 	Matrix::MatrixLine& Matrix::operator[](const int position)
 	{
 		return _vectors[position];
@@ -188,8 +204,8 @@ namespace model
 		return _vectors.at(position);
 	}
 
-    Matrix Matrix::operator*(const Matrix& M) const
-    {
+	Matrix Matrix::operator*(const Matrix& M) const
+	{
 		// Matrix C = M.column_oriented();
 		Matrix R( //! Result
 			{0, 0, 0, 0},
@@ -198,63 +214,86 @@ namespace model
 			{0, 0, 0, 0}
 		);
 
-        for (int h = 0; h < dimension; ++h)
-            for (int j = 0; j < dimension; ++j)
-                for (int i = 0; i < dimension; ++i)
-                    R[h][j] += _vectors[h][i] * M[i][j];
+		for (int h = 0; h < dimension; ++h)
+			for (int j = 0; j < dimension; ++j)
+				for (int i = 0; i < dimension; ++i)
+					R[h][j] += _vectors[h][i] * M[i][j];
 
 		// for (int i = 0; i < dimension; ++i)
 		// 	for (int j = 0; j < dimension; ++j)
 		// 		R[i][j] += _vectors[i] * C[j];
 
-        return R;
-    }
+		return R;
+	}
 
 
-/*================================================================================*/
-/*                                Operations                                      */
-/*================================================================================*/
+/*-----------------------------     transformations    -----------------------------*/
 
-	namespace transformations
+	Matrix transformations::translation(const Vector& factor)
 	{
-
-		Matrix translation(const Vector& factor)
+		if (Traits<Vector>::dimension == 3)
 		{
-			if (Traits<Vector>::dimension == 3)
-			{
-				return Matrix(
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{factor[0], factor[1], 1},
-					{0, 0, 0, 1}
-				);
-			}
-			else
-			{
-				return Matrix(
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{0, 0, 1, 0},
-					factor
-				);
-			}
-		}
-
-		Matrix scheduling(const double factor, const Vector& mass_center)
-		{
-			auto to_origin = translation(mass_center * -1);
-			auto go_back   = translation(mass_center);
-			Matrix middle(
-				{factor, 0, 0, 0},
-				{0, factor, 0, 0},
-				{0, 0, 1, 0},
-				{0, 0, 0,      1}
+			return Matrix(
+				{1, 0, 0, 0},
+				{0, 1, 0, 0},
+				{factor[0], factor[1], 1},
+				{0, 0, 0, 1}
 			);
-
-			return (to_origin * middle) * go_back;
 		}
-		
-	} //! namespace operations
+		else
+		{
+			return Matrix(
+				{1, 0, 0, 0},
+				{0, 1, 0, 0},
+				{0, 0, 1, 0},
+				factor
+			);
+		}
+	}
+
+	Matrix transformations::scheduling(const double factor, const Vector& mass_center)
+	{
+		auto to_origin = translation(mass_center * -1);
+		auto go_back   = translation(mass_center);
+		Matrix middle(
+			{factor, 0, 0, 0},
+			{0, factor, 0, 0},
+			{0, 0, 1, 0},
+			{0, 0, 0,      1}
+		);
+
+		return (to_origin * middle) * go_back;
+	}
+
+	Matrix transformations::viewport_transformation(const Vector& vp_min, const Vector& vp_max, const Vector& win_min, const Vector& win_max)
+	{
+		double x_vp_div_win     = (vp_max[0] - vp_min[0]) / (win_max[0] - win_min[0]);
+		double independent_of_x = -(win_min[0] * x_vp_div_win);
+		double dependent_of_x   = x_vp_div_win;
+
+		double y_vp_div_win     = (vp_max[1] - vp_min[1]) / (win_max[1] - win_min[1]);
+		double independent_of_y = vp_max[1] - vp_min[1] + win_min[1] * y_vp_div_win;
+		double dependent_of_y   = (- y_vp_div_win);
+
+		if (Traits<Vector>::dimension == 3)
+		{
+			return Matrix(
+				{  dependent_of_x,                0, 0, 0},
+				{               0,   dependent_of_y, 0, 0},
+				{independent_of_x, independent_of_y, 1, 0},
+				{               0,                0, 0, 1}
+			);
+		}
+		else
+		{
+			return Matrix(
+				{  dependent_of_x,                0, 0, 0},
+				{               0,   dependent_of_y, 0, 0},
+				{               0,                0, 1, 0},
+				{independent_of_x, independent_of_y, 0, 1}
+			);
+		}
+	}
 
 } //! namespace model
 
