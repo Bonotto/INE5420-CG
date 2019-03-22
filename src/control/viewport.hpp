@@ -72,20 +72,17 @@ namespace control
 		auto T = _window.transformation();
 
 //! FIX PROJECTION ???
-		// auto alloc = _draw_area.get_allocation();
-		// auto width = alloc.get_width();
-		// auto height = alloc.get_height();
+		auto alloc = _draw_area.get_allocation();
+		double width = alloc.get_width();
+		double height = alloc.get_height();
 
-        // Matrix P(
-        //     {(width/2),           0, 0, 0},
-        //     {        0, (-height/2), 0, 0},
-        //     {        0,           0, 1, 0},
-        //     {(width/2),  (height/2), 0, 1}
-        // );
+		model::Vector vp_min(0, 0), vp_max(width, height);
+		model::Vector win_min = _window.min();
+		model::Vector win_max = _window.max();		
 //! FIX PROJECTION ???
 
 		for (auto & shape : _shapes)
-			shape->draw(cr, T);
+			shape->draw(cr, T, vp_min, vp_max, win_min, win_max);
 
 		cr->stroke();
 

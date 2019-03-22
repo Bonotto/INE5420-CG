@@ -44,7 +44,7 @@ namespace model
 		~Rectangle() = default;
 
 		virtual Vector mass_center() const;
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T, const Vector& vp_min, const Vector& vp_max, const Vector& win_min, const Vector& win_max);
 
         virtual std::string type();
 	};
@@ -57,7 +57,7 @@ namespace model
         );
 	}
 
-    void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
+    void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T, const Vector& vp_min, const Vector& vp_max, const Vector& win_min, const Vector& win_max)
     {
 
     	std::cout << _name << std::endl;
@@ -65,15 +65,30 @@ namespace model
     	Vector v0 = _vectors[0] * T;
     	Vector v1 = _vectors[1] * T;
 
+    	double v0_x = (v0[0] - win_min[0]) / (win_max[0] - win_min[0]) * (vp_max[0] - vp_min[0]);
+    	double v0_y = (1 - (v0[1] - win_min[1]) / (win_max[1] - win_min[1])) * (vp_max[1] - vp_min[1]);
+    	double v1_x = (v1[0] - win_min[0]) / (win_max[0] - win_min[0]) * (vp_max[0] - vp_min[0]);
+    	double v1_y = (1 - (v1[1] - win_min[1]) / (win_max[1] - win_min[1])) * (vp_max[1] - vp_min[1]);
+
+   //  	std::cout << "Ret" << std::endl;
+   //  	for (int i = 0; i < T.dimension; i++) {
+   //  		for (int j = 0; j < T.dimension; j++)
+   //  			std::cout << T[i][j] << " ";
+			// std::cout << std::endl;
+   //  	}
+
 		/* First point */
-		cr->move_to(v0[0], v0[1]);
+		cr->move_to(
+			(v0[0] - win_min[0]) / (win_max[0] - win_min[0]) * (vp_max[0] - vp_min[0]),
+			(1 - (v0[1] - win_min[1]) / (win_max[1] - win_min[1])) * (vp_max[1] - vp_min[1])
+		);
 
 		// Draw all other points
-		cr->line_to(v0[0], v0[1]);
-		cr->line_to(v0[0], v1[1]);
-		cr->line_to(v1[0], v1[1]);
-		cr->line_to(v1[0], v0[1]);
-		cr->line_to(v0[0], v0[1]);
+		cr->line_to(v0_x, v0_y);
+		cr->line_to(v0_x, v1_y);
+		cr->line_to(v1_x, v1_y);
+		cr->line_to(v1_x, v0_y);
+		cr->line_to(v0_x, v0_y);
     }
 
     std::string Rectangle::type()

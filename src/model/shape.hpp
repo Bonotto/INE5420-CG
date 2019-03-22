@@ -65,7 +65,7 @@ namespace model
 
 		virtual Vector mass_center() const;
         virtual void transformation(const Matrix & T);
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T, const Vector& vp_min, const Vector& vp_max, const Vector& win_min, const Vector& win_max);
 
         std::string name();
         virtual std::string type();
@@ -103,18 +103,24 @@ namespace model
 			v = v * T;
 	}
 
-    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
+    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T, const Vector& vp_min, const Vector& vp_max, const Vector& win_min, const Vector& win_max)
     {
 		Vector v0 = _vectors[0] * T;
 
 		/* First point */
-		cr->move_to(v0[0], v0[1]);
+		cr->move_to(
+			(v0[0] - win_min[0]) / (win_max[0] - win_min[0]) * (vp_max[0] - vp_min[0]),
+			(1 - (v0[1] - win_min[1]) / (win_max[1] - win_min[1])) * (vp_max[1] - vp_min[1])
+		);
 
 		// Draw all other points
 		for (Vector& v : _vectors)
 		{
 			Vector vi = v * T;
-			cr->line_to(vi[0], vi[1]);
+			cr->line_to(
+				(vi[0] - win_min[0]) / (win_max[0] - win_min[0]) * (vp_max[0] - vp_min[0]),
+				(1 - (vi[1] - win_min[1]) / (win_max[1] - win_min[1])) * (vp_max[1] - vp_min[1])
+			);
 		}
     }
 

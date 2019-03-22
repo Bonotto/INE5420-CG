@@ -49,23 +49,33 @@ namespace model
 
         virtual std::string type();
 
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
+        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T, const Vector& vp_min, const Vector& vp_max, const Vector& win_min, const Vector& win_max);
 	};
 
-    void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
+    void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T, const Vector& vp_min, const Vector& vp_max, const Vector& win_min, const Vector& win_max)
     {
     	Vector vo = _vectors[0] * T;
 
 		/* First point */
-		cr->move_to(v0[0], v0[1]);
+		cr->move_to(
+			(v0[0] - win_min[0]) / (win_max[0] - win_min[0]) * (vp_max[0] - vp_min[0]),
+			(1 - (v0[1] - win_min[1]) / (win_max[1] - win_min[1])) * (vp_max[1] - vp_min[1])
+		);
 
 		// Draw all other points
-		for (Vector& v : _vectors) {
+		for (Vector& v : _vectors)
+		{
 			Vector vi = v * T;
-			cr->line_to(vi[0], vi[1]);
+			cr->line_to(
+				(vi[0] - win_min[0]) / (win_max[0] - win_min[0]) * (vp_max[0] - vp_min[0]),
+				(1 - (vi[1] - win_min[1]) / (win_max[1] - win_min[1])) * (vp_max[1] - vp_min[1])
+			);
 		}
 
-		cr->line_to(v0[0], v0[1]);
+		cr->line_to(
+			(v0[0] - win_min[0]) / (win_max[0] - win_min[0]) * (vp_max[0] - vp_min[0]),
+			(1 - (v0[1] - win_min[1]) / (win_max[1] - win_min[1])) * (vp_max[1] - vp_min[1])
+		);
     }
 
     std::string Polygon::type()

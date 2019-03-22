@@ -147,7 +147,7 @@ namespace model
 	{
 		Vector v(0, 0, 0, 0);
 
-		for (int i = 0; i < dimension; ++i)
+		for (int i = 0; i < dimension-1; ++i)
 			v[i] = scalar * _coordinates.at(i);
 		
 		return v;
@@ -225,7 +225,7 @@ namespace model
 				return Matrix(
 					{1, 0, 0, 0},
 					{0, 1, 0, 0},
-					factor,
+					{factor[0], factor[1], 1},
 					{0, 0, 0, 1}
 				);
 			}
@@ -244,15 +244,14 @@ namespace model
 		{
 			auto to_origin = translation(mass_center * -1);
 			auto go_back   = translation(mass_center);
-
-			return to_origin
-			* Matrix(
+			Matrix middle(
 				{factor, 0, 0, 0},
 				{0, factor, 0, 0},
-				{0, 0, factor, 0},
+				{0, 0, 1, 0},
 				{0, 0, 0,      1}
-			)
-			* go_back;
+			);
+
+			return (to_origin * middle) * go_back;
 		}
 		
 	} //! namespace operations

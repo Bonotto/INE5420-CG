@@ -216,7 +216,7 @@ namespace control
         spin->set_digits(2);
         spin->set_range(0, 9999999);
         spin->set_increments(1, 100);
-        spin->set_value(100);
+        spin->set_value(2);
 
         Gtk::Button *btn;
         _builder->get_widget("button_up", btn);
@@ -344,8 +344,6 @@ namespace control
 		}
 		else
 			z1 = z2 = model::Vector::z;
-
-		std::cout << "coord: " << x1 << " " << x2 << " " << y1 << " " << y2 << std::endl;
 
 		add_entry(++_objects_control, name, type);
 

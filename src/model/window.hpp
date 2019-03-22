@@ -65,6 +65,8 @@ namespace model
         void transformation(const Matrix& M);
         const Matrix& transformation() const;
         Vector mass_center() const;
+        const Vector& min() const;
+        const Vector& max() const;
 
 	private:
 		Vector _lower, _upper;
@@ -98,6 +100,16 @@ namespace model
             (_lower[0] + _upper[0])/2,
             (_lower[1] + _upper[1])/2
         );
+    }
+
+    const Vector& Window::min() const
+    {
+        return _lower;
+    }
+
+    const Vector& Window::max() const
+    {
+        return _upper;
     }
 
 } //! namespace model
