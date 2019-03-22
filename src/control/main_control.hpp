@@ -322,32 +322,30 @@ namespace control
 		Gtk::Entry* entry;
 		double x1, y1, z1, x2, y2, z2;
 
-		_builder->get_widget("entry_line_x1", entry);
+		_builder->get_widget("entry_x1_" + type, entry);
 		x1 = atof(std::string(entry->get_text()).c_str());
 
-		_builder->get_widget("entry_line_y1", entry);
+		_builder->get_widget("entry_y1_" + type, entry);
 		y1 = atof(std::string(entry->get_text()).c_str());
 
-		_builder->get_widget("entry_line_z1", entry);
-		z1 = atof(std::string(entry->get_text()).c_str());
-
-		_builder->get_widget("entry_line_x2", entry);
+		_builder->get_widget("entry_x2_" + type, entry);
 		x2 = atof(std::string(entry->get_text()).c_str());
 
-		_builder->get_widget("entry_line_y2", entry);
+		_builder->get_widget("entry_y2_" + type, entry);
 		y2 = atof(std::string(entry->get_text()).c_str());
 
 		if (model::Vector::dimension == 4)
 		{
-			_builder->get_widget("entry_line_z1", entry);
+			_builder->get_widget("entry_z1_" + type, entry);
 			z1 = atof(std::string(entry->get_text()).c_str());
 
-
-			_builder->get_widget("entry_line_z2", entry);
+			_builder->get_widget("entry_z2_" + type, entry);
 			z2 = atof(std::string(entry->get_text()).c_str());
 		}
 		else
 			z1 = z2 = model::Vector::z;
+
+		std::cout << "coord: " << x1 << " " << x2 << " " << y1 << " " << y2 << std::endl;
 
 		add_entry(++_objects_control, name, type);
 
@@ -361,7 +359,14 @@ namespace control
 
 	void MainControl::insert_polygon(std::string name)
 	{
+		// Gtk::Box* box;
+		// Gtk::Entry* entry;
+		// int num_vectors;
 
+		// _builder->get_widget("entry_points_number", entry);
+		// num_vectors = atoi(std::string(entry->get_text()).c_str());
+
+		// _builder->get_widget("entry_points_number", entry);
 	}
 
 	void MainControl::add_entry(int id, std::string name, std::string type)
@@ -479,13 +484,13 @@ namespace control
         if (!selected)
         {
             auto mass_center = _window->mass_center();
-            auto T = model::transformations::scheduling(step, mass_center);
+            auto T = model::transformations::scheduling(1/step, mass_center);
             _window->transformation(T);
         }
         else
         {
             auto mass_center = _shapes_map[selected]->mass_center();
-            auto T = model::transformations::scheduling(step, mass_center);
+            auto T = model::transformations::scheduling(1/step, mass_center);
             _shapes_map[selected]->transformation(T);
         }
 

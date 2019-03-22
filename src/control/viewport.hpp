@@ -84,11 +84,6 @@ namespace control
         // );
 //! FIX PROJECTION ???
 
-		std::cout << "Size=" << _shapes.size() << std::endl;
-		for (int i = 0; i < T.dimension; i++)
-			for (int j = 0; j < T.dimension; j++)
-				std::cout << "[" << i << ", " << j << "] = " << T[i][j] << std::endl;  
-
 		for (auto & shape : _shapes)
 			shape->draw(cr, T);
 

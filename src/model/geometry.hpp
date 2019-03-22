@@ -250,7 +250,7 @@ namespace model
 				{factor, 0, 0, 0},
 				{0, factor, 0, 0},
 				{0, 0, factor, 0},
-				{0, 0, 0, factor}
+				{0, 0, 0,      1}
 			)
 			* go_back;
 		}
