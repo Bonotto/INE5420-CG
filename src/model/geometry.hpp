@@ -127,8 +127,12 @@ namespace model
 
 	namespace transformations
 	{
+		double euclidean_distance(const Vector& v1, const Vector& v2);
+
 		Matrix translation(const Vector& factor);
+
 		Matrix scheduling(const double factor, const Vector& mass_center);
+
 		Matrix viewport_transformation(
 			const Vector& vp_min,
 			const Vector& vp_max,
@@ -229,15 +233,24 @@ namespace model
 
 /*-----------------------------     transformations    -----------------------------*/
 
+	double transformations::euclidean_distance(const Vector& v0, const Vector& v1)
+	{
+		double sum = 0;
+		for (int i = 0; i < Vector::dimension; ++i)
+			sum += std::pow((v0[i] - v1[i]), 2);
+		
+		return std::sqrt(sum);
+	}
+
 	Matrix transformations::translation(const Vector& factor)
 	{
 		if (Traits<Vector>::dimension == 3)
 		{
 			return Matrix(
-				{1, 0, 0, 0},
-				{0, 1, 0, 0},
-				{factor[0], factor[1], 1},
-				{0, 0, 0, 1}
+				{        1,         0, 0, 0},
+				{        0,         1, 0, 0},
+				{factor[0], factor[1], 1, 0},
+				{        0,         0, 0, 1}
 			);
 		}
 		else
@@ -256,10 +269,10 @@ namespace model
 		auto to_origin = translation(mass_center * -1);
 		auto go_back   = translation(mass_center);
 		Matrix middle(
-			{factor, 0, 0, 0},
-			{0, factor, 0, 0},
-			{0, 0, 1, 0},
-			{0, 0, 0,      1}
+			{factor,      0, 0, 0},
+			{     0, factor, 0, 0},
+			{     0,      0, 1, 0},
+			{     0,      0, 0, 1}
 		);
 
 		return (to_origin * middle) * go_back;

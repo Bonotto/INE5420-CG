@@ -87,12 +87,12 @@ namespace model
 
 	const double Window::width()
 	{
-		return _upper[0] - _lower[0]; //! Need Euclidean distance!
+		return transformations::euclidean_distance({_upper[0], 0}, {_lower[0], 0});
 	}
 
 	const double Window::height()
 	{
-		return _upper[1] - _lower[1]; //! Need Euclidean distance!
+		return transformations::euclidean_distance({0, _upper[1]}, {0, _lower[1]});
 	}
 
 	void Window::transformation(const Matrix& T)
