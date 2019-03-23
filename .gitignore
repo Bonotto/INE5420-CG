@@ -35,6 +35,7 @@
 
 # Temp Files
 *.glade~
+*\#*.glade\#
 
 # Config Files
 .vscode

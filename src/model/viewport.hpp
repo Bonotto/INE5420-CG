@@ -21,14 +21,20 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_RECTANGLE_HPP
-#define MODEL_RECTANGLE_HPP
+#ifndef MODEL_VIEWPORT_HPP
+#define MODEL_VIEWPORT_HPP
 
 /* External includes */
+#include <iostream>
+#include <gtkmm/drawingarea.h>
 
 /* Local includes */
-#include "../config/traits.hpp"
+#include "geometry.hpp"
 #include "shape.hpp"
+#include "point.hpp"
+#include "line.hpp"
+#include "rectangle.hpp"
+#include "window.hpp"
 
 namespace model
 {
@@ -37,58 +43,73 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class Rectangle : public Shape
+	class Viewport
 	{
 	public:
-		Rectangle(std::string name) :
-			Shape(name, {Vector(), Vector()})
-		{}
+		Viewport(
+			model::Window & window,
+			std::vector<std::shared_ptr<model::Shape>> & shapes,
+			Gtk::DrawingArea& draw_area
+		) :
+			_window(window),
+			_shapes(shapes),
+			_draw_area(draw_area)
+		{
+			_draw_area.signal_draw().connect(sigc::mem_fun(*this, &Viewport::on_draw));
+		}
 
-		Rectangle(std::string name, const Vector& v1, const Vector& v2) :
-			Shape(name, {v1, v2})
-		{}
+		~Viewport() = default;
 
-		~Rectangle() = default;
+		void update();
+		const bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 
-		virtual Vector mass_center() const;
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
-
-		virtual std::string type();
+	private:
+		model::Window & _window;
+		std::vector<std::shared_ptr<model::Shape>>& _shapes;
+		Gtk::DrawingArea &_draw_area;
 	};
-
-	Vector Rectangle::mass_center() const
-	{
-		return Vector(
-			(_vectors[0][0] + _vectors[1][0]) / 2,
-			(_vectors[0][1] + _vectors[1][1]) / 2
-		);
-	}
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-	void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
+	void Viewport::update()
 	{
-		Vector v0 = _vectors[0] * T;
-		Vector v1 = _vectors[1] * T;
-
-		/* First point */
-		cr->move_to(v0[0], v0[1]);
-
-		// Draw all other points
-		cr->line_to(v0[0], v0[1]);
-		cr->line_to(v0[0], v1[1]);
-		cr->line_to(v1[0], v1[1]);
-		cr->line_to(v1[0], v0[1]);
-		cr->line_to(v0[0], v0[1]);
+		_draw_area.queue_draw();
 	}
 
-	std::string Rectangle::type()
+	const bool Viewport::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 	{
-		return "Rectangle";
+		std::cout << "model::Viewport::on_draw()" << std::endl;
+
+		/* Test Paints background (Values range [0.0-1.0]). */
+		cr->set_source_rgb(1, 1, 1);
+		cr->paint();
+
+		/* Line configuration */
+		cr->set_line_cap(Cairo::LINE_CAP_ROUND);
+		cr->set_source_rgb(0, 0, 0);
+
+		/* Build transformation matrix. */
+		auto alloc = _draw_area.get_allocation();
+		model::Vector vp_min(0, 0);
+		model::Vector vp_max(alloc.get_width(), alloc.get_height());
+		model::Vector win_min = _window.min();
+		model::Vector win_max = _window.max();
+
+		auto T = _window.transformation();
+		auto P = model::transformations::viewport_transformation(vp_min, vp_max, win_min, win_max);
+
+		/* Draw all shapes. */
+		for (auto & shape : _shapes)
+			shape->draw(cr, T * P);
+
+		/* Commit a drawing. */
+		cr->stroke();
+
+		return true;
 	}
 
 } //! namespace model
 
-#endif  // MODEL_RECTANGLE_HPP
+#endif  // MODEL_VIEWPORT_HPP

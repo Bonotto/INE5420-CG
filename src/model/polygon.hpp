@@ -1,17 +1,17 @@
 /* The MIT License
- * 
+ *
  * Copyright (c) 2019 João Vicente Souto and Bruno Izaias Bonotto
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,12 +24,19 @@
 #ifndef MODEL_POLYGON_HPP
 #define MODEL_POLYGON_HPP
 
+/* External includes */
+
+/* Local includes */
 #include "../config/traits.hpp"
 #include "shape.hpp"
 
 namespace model
 {
-	
+
+/*================================================================================*/
+/*                                   Definitions                                  */
+/*================================================================================*/
+
 	class Polygon : public Shape
 	{
 	public:
@@ -47,31 +54,28 @@ namespace model
 
 		~Polygon() = default;
 
-        virtual std::string type();
+		virtual std::string type();
 
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
+		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 	};
 
-    void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
-    {
-    	Vector vo = _vectors[0] * T;
+/*================================================================================*/
+/*                                 Implementaions                                 */
+/*================================================================================*/
 
-		/* First point */
-		cr->move_to(v0[0], v0[1]);
+	void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
+	{
+		//! Base draw
+		Shape::draw(cr, T);
 
-		// Draw all other points
-		for (Vector& v : _vectors) {
-			Vector vi = v * T;
-			cr->line_to(vi[0], vi[1]);
-		}
+		//! Complete polygon
+		cr->close_path();
+	}
 
-		cr->line_to(v0[0], v0[1]);
-    }
-
-    std::string Polygon::type()
-    {
-    	return "Polygon";
-    }
+	std::string Polygon::type()
+	{
+		return "Polygon";
+	}
 
 } //! namespace model
 

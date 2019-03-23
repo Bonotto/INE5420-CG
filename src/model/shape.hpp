@@ -1,17 +1,17 @@
 /* The MIT License
- * 
+ *
  * Copyright (c) 2019 João Vicente Souto and Bruno Izaias Bonotto
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,13 +24,20 @@
 #ifndef MODEL_SHAPE_HPP
 #define MODEL_SHAPE_HPP
 
+/* External includes */
 #include <string>
 #include <gtkmm/drawingarea.h>
+
+/* Local includes */
 #include "geometry.hpp"
 
 namespace model
 {
-	
+
+/*================================================================================*/
+/*                                   Definitions                                  */
+/*================================================================================*/
+
 	class Shape
 	{
 	public:
@@ -44,12 +51,12 @@ namespace model
 			_name{name},
 			_vectors{{v}}
 		{}
-		
+
 		Shape(std::string name, double x, double y, double z = Vector::x, double w = Vector::w) :
 			_name{name},
 			_vectors{{x, y, z, w}}
 		{}
-		
+
 		Shape(std::string name, std::initializer_list<Vector>& vs) :
 			_name{name},
 			_vectors{vs}
@@ -62,19 +69,52 @@ namespace model
 
 		~Shape() = default;
 
-        virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T);
+		virtual Vector mass_center() const;
+		virtual void transformation(const Matrix & T);
+		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
-        std::string name();
-        virtual std::string type();
-	
+		std::string name();
+		virtual std::string type();
+
 	protected:
 		std::string _name{"Shape"};
 		std::vector<Vector> _vectors{{0, 0}};
 	};
 
-    void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, Matrix & T)
-    {
-    	Vector v0 = _vectors[0] * T;
+/*================================================================================*/
+/*                                 Implementaions                                 */
+/*================================================================================*/
+
+	Vector Shape::mass_center() const
+	{
+		int total = _vectors.size();
+		int x = 0, y = 0, z = 0, w = 0;
+
+		for (const auto &v : _vectors)
+		{
+			x += v[0];
+			y += v[1];
+			z += v[2];
+			w += v[3];
+		}
+
+		return Vector(
+			x/total,
+			y/total,
+			z/total,
+			w/total
+		);
+	}
+
+	void Shape::transformation(const Matrix & T)
+	{
+		for (auto & v : _vectors)
+			v = v * T;
+	}
+
+	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
+	{
+		Vector v0 = _vectors[0] * T;
 
 		/* First point */
 		cr->move_to(v0[0], v0[1]);
@@ -85,17 +125,17 @@ namespace model
 			Vector vi = v * T;
 			cr->line_to(vi[0], vi[1]);
 		}
-    }
+	}
 
-    std::string Shape::name()
-    {
-    	return _name;
-    }
+	std::string Shape::name()
+	{
+		return _name;
+	}
 
-    std::string Shape::type()
-    {
-    	return "Shape_t";
-    }
+	std::string Shape::type()
+	{
+		return "Shape_t";
+	}
 
 } //! namespace model
 
