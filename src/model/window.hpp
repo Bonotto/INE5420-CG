@@ -39,29 +39,28 @@ namespace model
 	class Window
 	{
 	public:
-		Window(const Vector & lower, const Vector & upper, Gtk::DrawingArea& draw_area) :
-			_lower(lower),
-			_upper(upper),
+		Window(const Vector & min, const Vector & max, Gtk::DrawingArea& draw_area) :
+			_min(min),
+			_max(max),
 			_draw_area(draw_area)
 		{
-			if (Traits<model::Vector>::dimension == 3)
+			Vector l0(1, 0, 0, 0);
+			Vector l1(0, 1, 0, 0);
+			Vector l2;
+			Vector l3;
+
+			if (Vector::dimension == 3)
 			{
-				_dimensions = {
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{_lower    },
-					{0, 0, 0, 1}
-				};
+				l2 = Vector(_min[0], _min[1], 1, 0);
+				l3 = Vector(0, 0, 0, 1);
 			}
 			else
 			{
-				_dimensions = {
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{0, 0, 1, 0},
-					{_lower    }
-				};
+				l2 = Vector(0, 0, 1, 0);
+				l3 = Vector(_min[0], _min[1], _min[2], 1);
 			}
+
+			_dimensions = Matrix(l0, l1, l2, l3);
 		}
 
 		~Window() = default;
@@ -76,23 +75,23 @@ namespace model
 		const Vector& max() const;
 
 	private:
-		Vector _lower, _upper;
+		Vector _min, _max;
 		Matrix _dimensions;
 		Gtk::DrawingArea& _draw_area;
 	};
 
 /*================================================================================*/
-/*                                  Implementaion                                 */
+/*                                 Implementaions                                 */
 /*================================================================================*/
 
 	const double Window::width()
 	{
-		return transformations::euclidean_distance({_upper[0], 0}, {_lower[0], 0});
+		return transformations::euclidean_distance({_max[0], 0}, {_min[0], 0});
 	}
 
 	const double Window::height()
 	{
-		return transformations::euclidean_distance({0, _upper[1]}, {0, _lower[1]});
+		return transformations::euclidean_distance({0, _max[1]}, {0, _min[1]});
 	}
 
 	void Window::transformation(const Matrix& T)
@@ -108,19 +107,19 @@ namespace model
 	Vector Window::mass_center() const
 	{
 		return Vector(
-			(_lower[0] + _upper[0])/2,
-			(_lower[1] + _upper[1])/2
+			(_min[0] + _max[0]) / 2,
+			(_min[1] + _max[1]) / 2
 		);
 	}
 
 	const Vector& Window::min() const
 	{
-		return _lower;
+		return _min;
 	}
 
 	const Vector& Window::max() const
 	{
-		return _upper;
+		return _max;
 	}
 
 } //! namespace model

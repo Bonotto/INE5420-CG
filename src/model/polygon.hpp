@@ -60,27 +60,16 @@ namespace model
 	};
 
 /*================================================================================*/
-/*                                  Implementaion                                 */
+/*                                 Implementaions                                 */
 /*================================================================================*/
 
 	void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
 	{
-		Vector vo = _vectors[0] * T;
+		//! Base draw
+		Shape::draw(cr, T);
 
-		/* First point */
-		Vector v0 = _vectors[0] * T;
-
-		/* First point */
-		cr->move_to(v0[0], v0[1]);
-
-		// Draw all other points
-		for (Vector& v : _vectors)
-		{
-			Vector vi = v * T;
-			cr->line_to(vi[0], vi[1]);
-		}
-
-		cr->line_to(v0[0], v0[1]);
+		//! Complete polygon
+		cr->close_path();
 	}
 
 	std::string Polygon::type()

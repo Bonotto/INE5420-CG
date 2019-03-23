@@ -37,7 +37,10 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-/*--------------------------------     Vector     --------------------------------*/
+/*--------------------------------------------------------------------------------*/
+/*                                     Vector                                     */
+/*--------------------------------------------------------------------------------*/
+
 	class Vector
 	{
 	public:
@@ -84,13 +87,15 @@ namespace model
 		std::vector<double> _coordinates;
 	};
 
-/*-------------------------------     Matrix     -------------------------------*/
+/*--------------------------------------------------------------------------------*/
+/*                                    Matrix                                      */
+/*--------------------------------------------------------------------------------*/
 
 	class Matrix
 	{
 	public:
 		using MatrixLine = Vector;
-		const static int dimension = Traits<Vector>::dimension;
+		const static int dimension = Vector::dimension;
 
 	public:
 
@@ -123,7 +128,9 @@ namespace model
 		std::vector<MatrixLine> _vectors;
 	};
 
-/*----------------------------     transformations     ---------------------------*/
+/*--------------------------------------------------------------------------------*/
+/*                                transformations                                 */
+/*--------------------------------------------------------------------------------*/
 
 	namespace transformations
 	{
@@ -142,10 +149,12 @@ namespace model
 	} //! namespace transformations
 
 /*================================================================================*/
-/*                                  Implementaion                                 */
+/*                                 Implementaions                                 */
 /*================================================================================*/
 
-/*-------------------------------     Vector     -------------------------------*/
+/*--------------------------------------------------------------------------------*/
+/*                                    Vector                                      */
+/*--------------------------------------------------------------------------------*/
 
 	double& Vector::operator[](const int position)
 	{
@@ -175,6 +184,12 @@ namespace model
 		return v;
 	}
 
+	//! Alow scalar * Vector operation
+	static Vector operator*(const double scalar, const Vector v)
+	{
+		return v * scalar;
+	}
+
 	Vector Vector::operator*(const Matrix& M) const
 	{
 		Vector v(0, 0, 0, 0);
@@ -186,7 +201,9 @@ namespace model
 		return v;
 	}
 
-/*-------------------------------     Matrix     -------------------------------*/
+/*--------------------------------------------------------------------------------*/
+/*                                    Matrix                                      */
+/*--------------------------------------------------------------------------------*/
 
 	Matrix Matrix::column_oriented() const
 	{
@@ -230,55 +247,63 @@ namespace model
 		return R;
 	}
 
-
-/*-----------------------------     transformations    -----------------------------*/
+/*--------------------------------------------------------------------------------*/
+/*                                transformations                                 */
+/*--------------------------------------------------------------------------------*/
 
 	double transformations::euclidean_distance(const Vector& v0, const Vector& v1)
 	{
 		double sum = 0;
 		for (int i = 0; i < Vector::dimension; ++i)
 			sum += std::pow((v0[i] - v1[i]), 2);
-		
+
 		return std::sqrt(sum);
 	}
 
 	Matrix transformations::translation(const Vector& factor)
 	{
-		if (Traits<Vector>::dimension == 3)
+		Vector l0(1, 0, 0, 0);
+		Vector l1(0, 1, 0, 0);
+		Vector l2;
+		Vector l3;
+
+		if (Vector::dimension == 3)
 		{
-			return Matrix(
-				{        1,         0, 0, 0},
-				{        0,         1, 0, 0},
-				{factor[0], factor[1], 1, 0},
-				{        0,         0, 0, 1}
-			);
+			l2 = Vector(factor[0], factor[1], 1, 0);
+			l3 = Vector(0, 0, 0, 1);
 		}
 		else
 		{
-			return Matrix(
-				{1, 0, 0, 0},
-				{0, 1, 0, 0},
-				{0, 0, 1, 0},
-				factor
-			);
+			l2 = Vector(0, 0, 1, 0);
+			l3 = Vector(factor[0], factor[1], factor[2], 1);
 		}
+
+		return Matrix(l0, l1, l2, l3);
 	}
 
 	Matrix transformations::scheduling(const double factor, const Vector& mass_center)
 	{
-		auto to_origin = translation(mass_center * -1);
+		double factor_z = Vector::dimension == 3 ? 1 : factor;
+
+		auto to_origin = translation(-1 * mass_center);
 		auto go_back   = translation(mass_center);
-		Matrix middle(
-			{factor,      0, 0, 0},
-			{     0, factor, 0, 0},
-			{     0,      0, 1, 0},
-			{     0,      0, 0, 1}
+
+		Matrix scalling(
+			{factor,      0,        0, 0},
+			{     0, factor,        0, 0},
+			{     0,      0, factor_z, 0},
+			{     0,      0,        0, 1}
 		);
 
-		return (to_origin * middle) * go_back;
+		return (to_origin * scalling) * go_back;
 	}
 
-	Matrix transformations::viewport_transformation(const Vector& vp_min, const Vector& vp_max, const Vector& win_min, const Vector& win_max)
+	Matrix transformations::viewport_transformation(
+		const Vector& vp_min,
+		const Vector& vp_max,
+		const Vector& win_min,
+		const Vector& win_max
+	)
 	{
 		double x_vp_div_win     = (vp_max[0] - vp_min[0]) / (win_max[0] - win_min[0]);
 		double independent_of_x = -(win_min[0] * x_vp_div_win);
@@ -288,24 +313,23 @@ namespace model
 		double independent_of_y = vp_max[1] - vp_min[1] + win_min[1] * y_vp_div_win;
 		double dependent_of_y   = (- y_vp_div_win);
 
-		if (Traits<Vector>::dimension == 3)
+		Vector l0(dependent_of_x, 0, 0, 0);
+		Vector l1(0, dependent_of_y, 0, 0);
+		Vector l2;
+		Vector l3;
+
+		if (Vector::dimension == 3)
 		{
-			return Matrix(
-				{  dependent_of_x,                0, 0, 0},
-				{               0,   dependent_of_y, 0, 0},
-				{independent_of_x, independent_of_y, 1, 0},
-				{               0,                0, 0, 1}
-			);
+			l2 = Vector(independent_of_x, independent_of_y, 1, 0);
+			l3 = Vector(0, 0, 0, 1);
 		}
 		else
 		{
-			return Matrix(
-				{  dependent_of_x,                0, 0, 0},
-				{               0,   dependent_of_y, 0, 0},
-				{               0,                0, 1, 0},
-				{independent_of_x, independent_of_y, 0, 1}
-			);
+			l2 = Vector(0, 0, 1, 0);
+			l3 = Vector(independent_of_x, independent_of_y, 0, 1);
 		}
+
+		return Matrix(l0, l1, l2, l3);
 	}
 
 } //! namespace model

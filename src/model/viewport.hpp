@@ -21,22 +21,22 @@
  * THE SOFTWARE.
  */
 
-#ifndef CONTROL_VIEWPORT_HPP
-#define CONTROL_VIEWPORT_HPP
+#ifndef MODEL_VIEWPORT_HPP
+#define MODEL_VIEWPORT_HPP
 
 /* External includes */
 #include <iostream>
 #include <gtkmm/drawingarea.h>
 
 /* Local includes */
-#include "../model/geometry.hpp"
-#include "../model/shape.hpp"
-#include "../model/point.hpp"
-#include "../model/line.hpp"
-#include "../model/rectangle.hpp"
-#include "../model/window.hpp"
+#include "geometry.hpp"
+#include "shape.hpp"
+#include "point.hpp"
+#include "line.hpp"
+#include "rectangle.hpp"
+#include "window.hpp"
 
-namespace control
+namespace model
 {
 
 /*================================================================================*/
@@ -46,7 +46,11 @@ namespace control
 	class Viewport
 	{
 	public:
-		Viewport(model::Window & window, std::vector<std::shared_ptr<model::Shape>> & shapes, Gtk::DrawingArea& draw_area) :
+		Viewport(
+			model::Window & window,
+			std::vector<std::shared_ptr<model::Shape>> & shapes,
+			Gtk::DrawingArea& draw_area
+		) :
 			_window(window),
 			_shapes(shapes),
 			_draw_area(draw_area)
@@ -66,7 +70,7 @@ namespace control
 	};
 
 /*================================================================================*/
-/*                                  Implementaion                                 */
+/*                                 Implementaions                                 */
 /*================================================================================*/
 
 	void Viewport::update()
@@ -76,7 +80,7 @@ namespace control
 
 	const bool Viewport::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 	{
-		std::cout << "control::Viewport::on_draw()" << std::endl;
+		std::cout << "model::Viewport::on_draw()" << std::endl;
 
 		/* Test Paints background (Values range [0.0-1.0]). */
 		cr->set_source_rgb(1, 1, 1);
@@ -106,6 +110,6 @@ namespace control
 		return true;
 	}
 
-} //! namespace control
+} //! namespace model
 
-#endif  // CONTROL_VIEWPORT_HPP
+#endif  // MODEL_VIEWPORT_HPP

@@ -30,11 +30,12 @@
 #include <gtkmm.h>
 
 /* local includes */
-#include "../model/point.hpp"
 #include "../model/geometry.hpp"
 #include "../model/shape.hpp"
+#include "../model/point.hpp"
+#include "../model/polygon.hpp"
 #include "../model/window.hpp"
-#include "viewport.hpp"
+#include "../model/viewport.hpp"
 
 namespace control
 {
@@ -45,7 +46,7 @@ namespace control
 
 	class ModelColumns : public Gtk::TreeModel::ColumnRecord
 	{
-		public:
+	public:
 
 		ModelColumns()
 		{
@@ -66,12 +67,11 @@ namespace control
 		MainControl(Glib::RefPtr<Gtk::Builder>& builder) :
 			_builder(builder)
 		{
+			build_window();
+			build_viewport();
+			build_tree_view();
+			build_new_objects();
 			build_movements();
-			build_window(builder);
-			build_viewport(builder);
-			build_tree_view(builder);
-			build_connection(builder);
-			build_new_objects(builder);
 		}
 
 		~MainControl()
@@ -94,11 +94,10 @@ namespace control
 		void on_dialog_ok_clicked();
 
 	private:
-		void build_window(Glib::RefPtr<Gtk::Builder>& builder);
-		void build_viewport(Glib::RefPtr<Gtk::Builder>& builder);
-		void build_tree_view(Glib::RefPtr<Gtk::Builder>& builder);
-		void build_connection(Glib::RefPtr<Gtk::Builder>& builder);
-		void build_new_objects(Glib::RefPtr<Gtk::Builder>& builder);
+		void build_window();
+		void build_viewport();
+		void build_tree_view();
+		void build_new_objects();
 		void build_movements();
 
 		void insert_point(std::string name);
@@ -108,9 +107,12 @@ namespace control
 		void add_entry(int id, std::string name, std::string type);
 
 		/* Control */
+		int _row_selected{0};
 		int _objects_control{0};
-		control::Viewport * _viewport;
-		model::Window * _window;
+
+		/* Model */
+		model::Window   *_window{nullptr};
+		model::Viewport *_viewport{nullptr};
 
 		/* Shapes */
 		std::vector<std::shared_ptr<model::Shape>> _shapes;
@@ -118,23 +120,22 @@ namespace control
 
 		/* Gtk */
 		ModelColumns _tree_model;
-		Gtk::TreeView * _tree;
 		Glib::RefPtr<Gtk::Builder> _builder;
 		Glib::RefPtr<Gtk::ListStore> _ref_tree_model;
 		Glib::RefPtr<Gtk::TreeSelection> _tree_selection;
 	};
 
 /*================================================================================*/
-/*                                  Implementaion                                 */
+/*                                 Implementaions                                 */
 /*================================================================================*/
 
-	void MainControl::build_window(Glib::RefPtr<Gtk::Builder>& builder)
+	void MainControl::build_window()
 	{
 		Gtk::DrawingArea *draw;
 		Gtk::Allocation alloc;
 		double width, height;
 
-		builder->get_widget("area_draw", draw);
+		_builder->get_widget("area_draw", draw);
 
 		draw->set_hexpand(true);
 		alloc = draw->get_allocation();
@@ -144,73 +145,68 @@ namespace control
 		_window = new model::Window(model::Vector(0, 0), model::Vector(width, height), *draw);
 	}
 
-	void MainControl::build_viewport(Glib::RefPtr<Gtk::Builder>& builder)
+	void MainControl::build_viewport()
 	{
 		Gtk::DrawingArea *draw;
-		builder->get_widget("area_draw", draw);
-		_viewport = new control::Viewport(*_window, _shapes, *draw);
+		_builder->get_widget("area_draw", draw);
+		_viewport = new model::Viewport(*_window, _shapes, *draw);
 	}
 
-	void MainControl::build_tree_view(Glib::RefPtr<Gtk::Builder>& builder)
+	void MainControl::build_tree_view()
 	{
-		builder->get_widget("tree_objects", _tree);
+		Gtk::TreeView * tree;
 
+		_builder->get_widget("tree_objects", tree);
 		_ref_tree_model = Gtk::ListStore::create(_tree_model);
-		_tree->set_model(_ref_tree_model);
 
-		_tree->append_column("ID", _tree_model._column_id);
-		_tree->append_column("Name", _tree_model._column_name);
-		_tree->append_column("Type", _tree_model._column_type);
+		tree->set_model(_ref_tree_model);
+		tree->append_column("ID", _tree_model._column_id);
+		tree->append_column("Name", _tree_model._column_name);
+		tree->append_column("Type", _tree_model._column_type);
 
-		_tree_selection = _tree->get_selection();
+		_tree_selection = tree->get_selection();
 		_tree_selection->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_item_selected));
 
 		Gtk::TreeModel::Row row         = *(_ref_tree_model->append());
 		row[_tree_model._column_id]     = 0;
 		row[_tree_model._column_name]   = "Window";
 		row[_tree_model._column_type]   = "View";
-
-		std::cout << "## " << row.get_value(_tree_model._column_name) << std::endl;
 	}
 
-	void MainControl::build_connection(Glib::RefPtr<Gtk::Builder>& builder)
-	{
-	}
-
-	void MainControl::build_new_objects(Glib::RefPtr<Gtk::Builder>& builder)
+	void MainControl::build_new_objects()
 	{
 		Gtk::Button* button;
 		Gtk::RadioButton* radio1;
 		Gtk::RadioButton* radio2;
 
-		builder->get_widget("button_new_object", button);
+		_builder->get_widget("button_new_object", button);
 		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_new_object_clicked));
 
-		builder->get_widget("dialog_button_cancel", button);
+		_builder->get_widget("dialog_button_cancel", button);
 		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_exit_clicked));
 
-		builder->get_widget("dialog_button_ok", button);
+		_builder->get_widget("dialog_button_ok", button);
 		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_ok_clicked));
 
-		builder->get_widget("radio_point", radio1);
+		_builder->get_widget("radio_point", radio1);
 		radio1->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 
-		builder->get_widget("radio_line", radio2);
+		_builder->get_widget("radio_line", radio2);
 		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 		radio2->join_group(*radio1);
 
-		builder->get_widget("radio_rectangle", radio2);
+		_builder->get_widget("radio_rectangle", radio2);
 		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 		radio2->join_group(*radio1);
 
-		builder->get_widget("radio_polygon", radio2);
+		_builder->get_widget("radio_polygon", radio2);
 		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 		radio2->join_group(*radio1);
 	}
 
 	void MainControl::on_item_selected()
 	{
-		std::cout << "UI " << _tree_selection->get_selected()->get_value(_tree_model._column_name) << std::endl;
+		_row_selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
 	}
 
 	void MainControl::build_movements()
@@ -219,7 +215,7 @@ namespace control
 
 		_builder->get_widget("spin_step", spin);
 
-		spin->set_digits(2);
+		spin->set_digits(5);
 		spin->set_range(0, 9999999);
 		spin->set_increments(1, 100);
 		spin->set_value(2);
@@ -387,14 +383,13 @@ namespace control
 		_builder->get_widget("spin_step", spin);
 
 		double step = spin->get_value();
-		int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
 
 		auto T = model::transformations::translation(model::Vector(0, step));
 
-		if (!selected)
+		if (!_row_selected)
 			_window->transformation(T);
 		else
-			_shapes_map[selected]->transformation(T);
+			_shapes_map[_row_selected]->transformation(T);
 
 		_viewport->update();
 	}
@@ -405,14 +400,13 @@ namespace control
 		_builder->get_widget("spin_step", spin);
 
 		double step = spin->get_value();
-		int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
 
 		auto T = model::transformations::translation(model::Vector(-step, 0));
 
-		if (!selected)
+		if (!_row_selected)
 			_window->transformation(T);
 		else
-			_shapes_map[selected]->transformation(T);
+			_shapes_map[_row_selected]->transformation(T);
 
 		_viewport->update();
 	}
@@ -423,14 +417,13 @@ namespace control
 		_builder->get_widget("spin_step", spin);
 
 		double step = spin->get_value();
-		int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
 
 		auto T = model::transformations::translation(model::Vector(step, 0));
 
-		if (!selected)
+		if (!_row_selected)
 			_window->transformation(T);
 		else
-			_shapes_map[selected]->transformation(T);
+			_shapes_map[_row_selected]->transformation(T);
 
 		_viewport->update();
 	}
@@ -441,14 +434,13 @@ namespace control
 		_builder->get_widget("spin_step", spin);
 
 		double step = spin->get_value();
-		int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
 
 		auto T = model::transformations::translation(model::Vector(0, -step));
 
-		if (!selected)
+		if (!_row_selected)
 			_window->transformation(T);
 		else
-			_shapes_map[selected]->transformation(T);
+			_shapes_map[_row_selected]->transformation(T);
 
 		_viewport->update();
 	}
@@ -459,9 +451,8 @@ namespace control
 		_builder->get_widget("spin_step", spin);
 
 		double step = spin->get_value();
-		int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
 
-		if (!selected)
+		if (!_row_selected)
 		{
 			auto mass_center = _window->mass_center();
 			auto T = model::transformations::scheduling(step, mass_center);
@@ -469,9 +460,9 @@ namespace control
 		}
 		else
 		{
-			auto mass_center = _shapes_map[selected]->mass_center();
+			auto mass_center = _shapes_map[_row_selected]->mass_center();
 			auto T = model::transformations::scheduling(step, mass_center);
-			_shapes_map[selected]->transformation(T);
+			_shapes_map[_row_selected]->transformation(T);
 		}
 
 		_viewport->update();
@@ -483,9 +474,8 @@ namespace control
 		_builder->get_widget("spin_step", spin);
 
 		double step = spin->get_value();
-		int selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
 
-		if (!selected)
+		if (!_row_selected)
 		{
 			auto mass_center = _window->mass_center();
 			auto T = model::transformations::scheduling(1/step, mass_center);
@@ -493,9 +483,9 @@ namespace control
 		}
 		else
 		{
-			auto mass_center = _shapes_map[selected]->mass_center();
+			auto mass_center = _shapes_map[_row_selected]->mass_center();
 			auto T = model::transformations::scheduling(1/step, mass_center);
-			_shapes_map[selected]->transformation(T);
+			_shapes_map[_row_selected]->transformation(T);
 		}
 
 		_viewport->update();

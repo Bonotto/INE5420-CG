@@ -59,13 +59,13 @@ namespace model
 	Vector Rectangle::mass_center() const
 	{
 		return Vector(
-			(_vectors[0][0] + _vectors[1][0])/2,
-			(_vectors[0][1] + _vectors[1][1])/2
+			(_vectors[0][0] + _vectors[1][0]) / 2,
+			(_vectors[0][1] + _vectors[1][1]) / 2
 		);
 	}
 
 /*================================================================================*/
-/*                                  Implementaion                                 */
+/*                                 Implementaions                                 */
 /*================================================================================*/
 
 	void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
