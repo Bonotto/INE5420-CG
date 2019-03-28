@@ -39,10 +39,9 @@ namespace model
 	class Window
 	{
 	public:
-		Window(const Vector & min, const Vector & max, Gtk::DrawingArea& draw_area) :
+		Window(const Vector & min, const Vector & max) :
 			_min(min),
-			_max(max),
-			_draw_area(draw_area)
+			_max(max)
 		{
 			Vector l0(1, 0, 0, 0);
 			Vector l1(0, 1, 0, 0);
@@ -77,7 +76,6 @@ namespace model
 	private:
 		Vector _min, _max;
 		Matrix _dimensions;
-		Gtk::DrawingArea& _draw_area;
 	};
 
 /*================================================================================*/

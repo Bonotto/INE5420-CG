@@ -98,11 +98,11 @@ namespace model
 		model::Vector win_max = _window.max();
 
 		auto T = _window.transformation();
-		auto P = model::transformations::viewport_transformation(vp_min, vp_max, win_min, win_max);
+		T = T * model::transformations::viewport_transformation(vp_min, vp_max, win_min, win_max);
 
 		/* Draw all shapes. */
 		for (auto & shape : _shapes)
-			shape->draw(cr, T * P);
+			shape->draw(cr, T);
 
 		/* Commit a drawing. */
 		cr->stroke();

@@ -142,7 +142,7 @@ namespace control
 		width = alloc.get_width();
 		height = alloc.get_height();
 
-		_window = new model::Window(model::Vector(0, 0), model::Vector(width, height), *draw);
+		_window = new model::Window(model::Vector(0, 0), model::Vector(width, height));
 	}
 
 	void MainControl::build_viewport()

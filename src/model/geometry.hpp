@@ -298,6 +298,21 @@ namespace model
 		return (to_origin * scalling) * go_back;
 	}
 
+	Matrix transformations::rotation(const double angle, const Vector& mass_center)
+	{
+		auto to_origin = translation(-1 * mass_center);
+		auto go_back   = translation(mass_center);
+
+		Matrix rotating(
+			{ std::cos(angle), std::sin(angle), 0, 0},
+			{-std::sin(angle), std::cos(angle), 0, 0},
+			{               0,               0, 1, 0},
+			{               0,               0, 0, 1}
+		);
+
+		return (to_origin * rotating) * go_back;
+	}
+
 	Matrix transformations::viewport_transformation(
 		const Vector& vp_min,
 		const Vector& vp_max,
