@@ -44,11 +44,11 @@ namespace model
 			Shape(name)
 		{}
 
-		Polygon(std::string name, std::initializer_list<Vector>& vs) :
+		Polygon(std::string name, const std::initializer_list<Vector>& vs) :
 			Shape(name, vs)
 		{}
 
-		Polygon(std::string name, std::initializer_list<Vector>&& vs) :
+		Polygon(std::string name, const std::vector<Vector>& vs) :
 			Shape(name, vs)
 		{}
 

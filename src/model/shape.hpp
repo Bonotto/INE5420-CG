@@ -57,12 +57,12 @@ namespace model
 			_vectors{{x, y, z, w}}
 		{}
 
-		Shape(std::string name, std::initializer_list<Vector>& vs) :
+		Shape(std::string name, const std::initializer_list<Vector>& vs) :
 			_name{name},
 			_vectors{vs}
 		{}
 
-		Shape(std::string name, std::initializer_list<Vector>&& vs) :
+		Shape(std::string name, const std::vector<Vector>& vs) :
 			_name{name},
 			_vectors{vs}
 		{}

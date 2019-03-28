@@ -44,11 +44,11 @@ namespace control
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class ModelColumns : public Gtk::TreeModel::ColumnRecord
+	class ModelColumnsObjects : public Gtk::TreeModel::ColumnRecord
 	{
 	public:
 
-		ModelColumns()
+		ModelColumnsObjects()
 		{
 			add(_column_id);
 			add(_column_name);
@@ -60,6 +60,24 @@ namespace control
 		Gtk::TreeModelColumn<Glib::ustring> _column_type;
 	};
 
+	class ModelColumnsVectors : public Gtk::TreeModel::ColumnRecord
+	{
+	public:
+
+		ModelColumnsVectors()
+		{
+			add(_column_id);
+			add(_column_x);
+			add(_column_y);
+			add(_column_z);
+		}
+
+		Gtk::TreeModelColumn<int> _column_id;
+		Gtk::TreeModelColumn<double> _column_x;
+		Gtk::TreeModelColumn<double> _column_y;
+		Gtk::TreeModelColumn<double> _column_z;
+	};
+
 	class MainControl
 	{
 	public:
@@ -69,7 +87,7 @@ namespace control
 		{
 			build_window();
 			build_viewport();
-			build_tree_view();
+			build_tree_views();
 			build_new_objects();
 			build_movements();
 		}
@@ -89,14 +107,15 @@ namespace control
 
 		void on_item_selected();
 		void on_radio_clicked();
+		void on_dialog_ok_clicked();
 		void on_new_object_clicked();
 		void on_dialog_exit_clicked();
-		void on_dialog_ok_clicked();
+		void on_dialog_insert_clicked();
 
 	private:
 		void build_window();
 		void build_viewport();
-		void build_tree_view();
+		void build_tree_views();
 		void build_new_objects();
 		void build_movements();
 
@@ -104,11 +123,13 @@ namespace control
 		void insert_polygon(std::string name);
 		void insert_object(std::string name, std::string type);
 
+		void add_entry(int id, double x, double y, double z);
 		void add_entry(int id, std::string name, std::string type);
 
 		/* Control */
 		int _row_selected{0};
 		int _objects_control{0};
+		int _vectors_control{0};
 
 		/* Model */
 		model::Window   *_window{nullptr};
@@ -119,10 +140,11 @@ namespace control
 		std::map<int, std::shared_ptr<model::Shape>> _shapes_map;
 
 		/* Gtk */
-		ModelColumns _tree_model;
 		Glib::RefPtr<Gtk::Builder> _builder;
-		Glib::RefPtr<Gtk::ListStore> _ref_tree_model;
-		Glib::RefPtr<Gtk::TreeSelection> _tree_selection;
+		ModelColumnsObjects _tree_model_objects;
+		ModelColumnsObjects _tree_model_vectors;
+		Glib::RefPtr<Gtk::ListStore> _ref_tree_model_objects;
+		Glib::RefPtr<Gtk::ListStore> _ref_tree_model_vectors;
 	};
 
 /*================================================================================*/
@@ -152,25 +174,35 @@ namespace control
 		_viewport = new model::Viewport(*_window, _shapes, *draw);
 	}
 
-	void MainControl::build_tree_view()
+	void MainControl::build_tree_views()
 	{
 		Gtk::TreeView * tree;
+		Gtk::TreeSelection selected;
 
 		_builder->get_widget("tree_objects", tree);
-		_ref_tree_model = Gtk::ListStore::create(_tree_model);
+		_ref_tree_model_objects = Gtk::ListStore::create(_tree_model_objects);
 
-		tree->set_model(_ref_tree_model);
-		tree->append_column("ID", _tree_model._column_id);
-		tree->append_column("Name", _tree_model._column_name);
-		tree->append_column("Type", _tree_model._column_type);
+		tree->set_model(_ref_tree_model_objects);
+		tree->append_column("ID", _tree_model_objects._column_id);
+		tree->append_column("Name", _tree_model_objects._column_name);
+		tree->append_column("Type", _tree_model_objects._column_type);
 
-		_tree_selection = tree->get_selection();
-		_tree_selection->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_item_selected));
+		selected = tree->get_selection();
+		selected->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_item_selected));
 
-		Gtk::TreeModel::Row row         = *(_ref_tree_model->append());
-		row[_tree_model._column_id]     = 0;
-		row[_tree_model._column_name]   = "Window";
-		row[_tree_model._column_type]   = "View";
+		Gtk::TreeModel::Row row         = *(_ref_tree_model_objects->append());
+		row[_tree_model_objects._column_id]     = 0;
+		row[_tree_model_objects._column_name]   = "Window";
+		row[_tree_model_objects._column_type]   = "View";
+
+		_builder->get_widget("tree_vectors", tree);
+		_ref_tree_model_vectors = Gtk::ListStore::create(_tree_model_vectors);
+
+		tree->set_model(_ref_tree_model_vectors);
+		tree->append_column("ID", _tree_model_vectors._column_id);
+		tree->append_column("X", _tree_model_vectors._column_x);
+		tree->append_column("Y", _tree_model_vectors._column_y);
+		tree->append_column("Z", _tree_model_vectors._column_z);
 	}
 
 	void MainControl::build_new_objects()
@@ -187,6 +219,9 @@ namespace control
 
 		_builder->get_widget("dialog_button_ok", button);
 		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_ok_clicked));
+
+		_builder->get_widget("dialog_button_insert_vector", button);
+		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_insert_clicked));
 
 		_builder->get_widget("radio_point", radio1);
 		radio1->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
@@ -206,7 +241,8 @@ namespace control
 
 	void MainControl::on_item_selected()
 	{
-		_row_selected = _tree_selection->get_selected()->get_value(_tree_model._column_id);
+		Gtk::TreeSelection selected;
+		_row_selected = selected->get_selected()->get_value(_tree_model_objects._column_id);
 	}
 
 	void MainControl::build_movements()
@@ -293,6 +329,28 @@ namespace control
 		_viewport->update();
 	}
 
+	void MainControl::on_dialog_insert_clicked()
+	{
+		Gtk::Entry* entry;
+		double x, y, z;
+
+		_builder->get_widget("entry_polygon_x", entry);
+		x = atof(std::string(entry->get_text()).c_str());
+
+		_builder->get_widget("entry_polygon_y", entry);
+		y = atof(std::string(entry->get_text()).c_str());
+
+		if (model::Vector::dimension == 4)
+		{
+			_builder->get_widget("entry_polygon_z", entry);
+			z = atof(std::string(entry->get_text()).c_str());
+		}
+		else
+			z = model::Vector::z;
+
+		add_entry(_vectors_control++, x, y, z);
+	}
+
 	void MainControl::insert_point(std::string name)
 	{
 		Gtk::Entry* entry;
@@ -359,22 +417,47 @@ namespace control
 
 	void MainControl::insert_polygon(std::string name)
 	{
-		// Gtk::Box* box;
-		// Gtk::Entry* entry;
-		// int num_vectors;
+		Gtk::TreeView* tree;
+		std::vector<model::Vector> vectors;
+		typedef Gtk::TreeModel::Children type_children;
 
-		// _builder->get_widget("entry_points_number", entry);
-		// num_vectors = atoi(std::string(entry->get_text()).c_str());
+		builder->get_widget("tree_vectors", tree);
 
-		// _builder->get_widget("entry_points_number", entry);
+		type_children children = _ref_tree_model_vectors->children();
+		for(type_children::iterator iter = children.begin(); iter != children.end(); ++iter)
+		{
+			Gtk::TreeModel::Row row = *iter;
+
+			if (model::Vector::dimension == 4)
+		  		vectors.push_back(model::Vector(row[1], row[2], row[3]));
+			else
+		  		vectors.push_back(model::Vector(row[1], row[2]));
+
+			std::cout << row[0] << " " << row[1] << " " << row[2] << " " << row[3] << std::endl;
+		}
+
+		add_entry(++_objects_control, name, "Polygon");
+
+		_shapes.emplace_back(new model::Polygon(name, vectors));
+
+		_shapes_map[_objects_control] = _shapes.back();
 	}
 
 	void MainControl::add_entry(int id, std::string name, std::string type)
 	{
-			Gtk::TreeModel::Row row = *(_ref_tree_model->append());
-			row[_tree_model._column_id]   = id;
-			row[_tree_model._column_name] = name;
-			row[_tree_model._column_type] = type;
+			Gtk::TreeModel::Row row = *(_ref_tree_model_objects->append());
+			row[_tree_model_objects._column_id]   = id;
+			row[_tree_model_objects._column_name] = name;
+			row[_tree_model_objects._column_type] = type;
+	}
+
+	void MainControl::add_entry(int id, double x, double y, double z)
+	{
+			Gtk::TreeModel::Row row = *(_ref_tree_model_vectors->append());
+			row[_tree_model_vectors._column_id]   = id;
+			row[_tree_model_vectors._column_x] = x;
+			row[_tree_model_vectors._column_y] = y;
+			row[_tree_model_vectors._column_z] = z;
 	}
 
 	void MainControl::up()
