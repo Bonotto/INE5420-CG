@@ -475,7 +475,7 @@ namespace control
 		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
-		double step = spin->get_value();
+		double step = (_row_selected ? 1 : -1) * spin->get_value();
 
 		auto T = model::transformations::translation(model::Vector(0, step));
 
@@ -492,7 +492,7 @@ namespace control
 		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
-		double step = spin->get_value();
+		double step = (_row_selected ? 1 : -1) * spin->get_value();
 
 		auto T = model::transformations::translation(model::Vector(-step, 0));
 
@@ -509,7 +509,7 @@ namespace control
 		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
-		double step = spin->get_value();
+		double step = (_row_selected ? 1 : -1) * spin->get_value();
 
 		auto T = model::transformations::translation(model::Vector(step, 0));
 
@@ -526,7 +526,7 @@ namespace control
 		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
-		double step = spin->get_value();
+		double step = (_row_selected ? 1 : -1) * spin->get_value();
 
 		auto T = model::transformations::translation(model::Vector(0, -step));
 
