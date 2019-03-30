@@ -140,6 +140,8 @@ namespace model
 
 		Matrix scheduling(const double factor, const Vector& mass_center);
 
+		Matrix rotation(const double angle, const Vector& mass_center);
+
 		Matrix viewport_transformation(
 			const Vector& vp_min,
 			const Vector& vp_max,
