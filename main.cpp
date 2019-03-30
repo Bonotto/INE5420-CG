@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 
 	auto app = Gtk::Application::create(argc, argv, "org.gtkmm.example");
 
-	auto refBuilder = Gtk::Builder::create();
+    auto refBuilder = Gtk::Builder::create_from_file("src/view/interface.glade");
 
 	refBuilder->get_widget("window_main", main_window);
 	if (main_window)
