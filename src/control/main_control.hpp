@@ -143,8 +143,8 @@ namespace control
 		Glib::RefPtr<Gtk::Builder> _builder;
 		ModelColumnsObjects _tree_model_objects;
 		ModelColumnsVectors _tree_model_vectors;
-		Glib::RefPtr<Gtk::ListStore> _ref_tree_model_objects;
-		Glib::RefPtr<Gtk::ListStore> _ref_tree_model_vectors;
+		Glib::RefPtr<Gtk::ListStore> _list_model_objects;
+		Glib::RefPtr<Gtk::ListStore> _list_model_vectors;
 	};
 
 /*================================================================================*/
@@ -179,24 +179,24 @@ namespace control
 		Gtk::TreeView * tree;
 
 		_builder->get_widget("tree_objects", tree);
-		_ref_tree_model_objects = Gtk::ListStore::create(_tree_model_objects);
+		_list_model_objects = Gtk::ListStore::create(_tree_model_objects);
 
-		tree->set_model(_ref_tree_model_objects);
+		tree->set_model(_list_model_objects);
 		tree->append_column("ID", _tree_model_objects._column_id);
 		tree->append_column("Name", _tree_model_objects._column_name);
 		tree->append_column("Type", _tree_model_objects._column_type);
 
         tree->get_selection()->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_item_selected));
 
-		Gtk::TreeModel::Row row = *(_ref_tree_model_objects->append());
+		Gtk::TreeModel::Row row = *(_list_model_objects->append());
 		row[_tree_model_objects._column_id]   = 0;
 		row[_tree_model_objects._column_name] = "Window";
 		row[_tree_model_objects._column_type] = "View";
 
 		_builder->get_widget("tree_vectors", tree);
-		_ref_tree_model_vectors = Gtk::ListStore::create(_tree_model_vectors);
+		_list_model_vectors = Gtk::ListStore::create(_tree_model_vectors);
 
-		tree->set_model(_ref_tree_model_vectors);
+		tree->set_model(_list_model_vectors);
 		tree->append_column("ID", _tree_model_vectors._column_id);
 		tree->append_column("X", _tree_model_vectors._column_x);
 		tree->append_column("Y", _tree_model_vectors._column_y);
@@ -419,15 +419,11 @@ namespace control
 	{
 		Gtk::TreeView * tree;
 		std::vector<model::Vector> vectors;
-		typedef Gtk::TreeModel::Children type_children;
 
 		_builder->get_widget("tree_vectors", tree);
 
-		type_children children = _ref_tree_model_vectors->children();
-		for(type_children::iterator iter = children.begin(); iter != children.end(); ++iter)
+		for (auto row : _list_model_vectors->children())
 		{
-			Gtk::TreeModel::Row row = *iter;
-
 			if (model::Vector::dimension == 4)
 		  		vectors.push_back(model::Vector(
 					row[_tree_model_vectors._column_x],
@@ -439,23 +435,17 @@ namespace control
 					row[_tree_model_vectors._column_x],
 					row[_tree_model_vectors._column_y]
 				));
-
-			std::cout << row[_tree_model_vectors._column_id] << " " \
-			          << row[_tree_model_vectors._column_x]  << " " \
-			          << row[_tree_model_vectors._column_y]  << " " \
-			          << row[_tree_model_vectors._column_z]  << std::endl;
 		}
 
 		add_entry(++_objects_control, name, "Polygon");
 
 		_shapes.emplace_back(new model::Polygon(name, vectors));
-
 		_shapes_map[_objects_control] = _shapes.back();
 	}
 
 	void MainControl::add_entry(int id, std::string name, std::string type)
 	{
-			Gtk::TreeModel::Row row = *(_ref_tree_model_objects->append());
+			Gtk::TreeModel::Row row = *(_list_model_objects->append());
 			row[_tree_model_objects._column_id]   = id;
 			row[_tree_model_objects._column_name] = name;
 			row[_tree_model_objects._column_type] = type;
@@ -463,7 +453,7 @@ namespace control
 
 	void MainControl::add_entry(int id, double x, double y, double z)
 	{
-			Gtk::TreeModel::Row row = *(_ref_tree_model_vectors->append());
+			Gtk::TreeModel::Row row = *(_list_model_vectors->append());
 			row[_tree_model_vectors._column_id]   = id;
 			row[_tree_model_vectors._column_x] = x;
 			row[_tree_model_vectors._column_y] = y;
@@ -583,7 +573,6 @@ namespace control
 
 		_viewport->update();
 	}
-
 
 } //! namespace control
 
