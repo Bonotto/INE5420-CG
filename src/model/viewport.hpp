@@ -80,7 +80,7 @@ namespace model
 
 	const bool Viewport::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 	{
-		std::cout << "model::Viewport::on_draw()" << std::endl;
+		db<Viewport>(TRC) << "model::Viewport::on_draw()" << std::endl;
 
 		/* Test Paints background (Values range [0.0-1.0]). */
 		cr->set_source_rgb(1, 1, 1);

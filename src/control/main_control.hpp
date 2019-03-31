@@ -30,6 +30,7 @@
 #include <gtkmm.h>
 
 /* local includes */
+#include "../config/traits.hpp"
 #include "../model/geometry.hpp"
 #include "../model/shape.hpp"
 #include "../model/point.hpp"
@@ -160,6 +161,8 @@ namespace control
 
 	void MainControl::build_window()
 	{
+		db<MainControl>(TRC) << "Build window" << std::endl;
+
 		Gtk::DrawingArea *draw{nullptr};
 		Gtk::Allocation alloc;
 		double width{0}, height{0};
@@ -178,6 +181,8 @@ namespace control
 
 	void MainControl::build_viewport()
 	{
+		db<MainControl>(TRC) << "Build viewport" << std::endl;
+
 		Gtk::DrawingArea *draw{nullptr};
 		_builder->get_widget("area_draw", draw);
 		_viewport = new model::Viewport(*_window, _shapes, *draw);
@@ -185,6 +190,8 @@ namespace control
 
 	void MainControl::build_tree_views()
 	{
+		db<MainControl>(TRC) << "Build tree views" << std::endl;
+
 		Gtk::TreeView *tree{nullptr};
 
 		_builder->get_widget("tree_objects", tree);
@@ -214,6 +221,8 @@ namespace control
 
 	void MainControl::build_new_objects()
 	{
+		db<MainControl>(TRC) << "Build buttons" << std::endl;
+
 		Gtk::Button      *button{nullptr};
 		Gtk::RadioButton *radio1{nullptr};
 		Gtk::RadioButton *radio2{nullptr};
@@ -248,15 +257,20 @@ namespace control
 
 	void MainControl::on_item_selected()
 	{
+		db<MainControl>(TRC) << "MainControl::on_item_selected()" << std::endl;
+
 		Gtk::TreeView *tree{nullptr};
 		_builder->get_widget("tree_objects", tree);
 
 		_shape_selected = tree->get_selection()->get_selected()->get_value(_tree_model_objects._column_id);
-		std::cout << "Shape selected: " << _shape_selected << std::endl;
+
+		db<MainControl>(INF) << "Shape selected: " << _shape_selected << std::endl;
 	}
 
 	void MainControl::build_movements()
 	{
+		db<MainControl>(TRC) << "Build movements" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 
 		_builder->get_widget("spin_step", spin);
@@ -288,6 +302,8 @@ namespace control
 
 	void MainControl::build_numeric_entrys()
 	{
+		db<MainControl>(TRC) << "Build numeric entrys" << std::endl;
+
 		Gtk::Entry *entry{nullptr};
 		std::vector<std::string> entry_names{
 			"entry_point_x", "entry_point_y", "entry_point_z",
@@ -329,6 +345,8 @@ namespace control
 
 	void MainControl::disable_unused_entrys()
 	{
+		db<MainControl>(TRC) << "Disable unused entrys" << std::endl;
+
 		Gtk::Entry *entry{nullptr};
 		std::vector<std::string> entry_names{
 			"entry_point_z",
@@ -348,6 +366,8 @@ namespace control
 
 	void MainControl::on_new_object_clicked()
 	{
+		db<MainControl>(TRC) << "MainControl::on_new_object_clicked()" << std::endl;
+
 		Gtk::Dialog *dialog{nullptr};
 		_builder->get_widget("window_dialog", dialog);
   		dialog->run();
@@ -355,11 +375,13 @@ namespace control
 
 	void MainControl::on_radio_clicked()
 	{
-		// std::cout << "AI" << std::endl;
+		db<MainControl>(TRC) << "MainControl::on_radio_clicked()" << std::endl;
 	}
 
 	void MainControl::on_dialog_exit_clicked()
 	{
+		db<MainControl>(TRC) << "MainControl::on_dialog_exit_clicked()" << std::endl;
+
 		Gtk::Dialog *dialog{nullptr};
 		_builder->get_widget("window_dialog", dialog);
   		dialog->close();
@@ -367,6 +389,8 @@ namespace control
 
 	void MainControl::on_dialog_ok_clicked()
 	{
+		db<MainControl>(TRC) << "MainControl::on_dialog_ok_clicked()" << std::endl;
+
 		Gtk::RadioButton *radio{nullptr};
 		Gtk::Entry *entry{nullptr};
 
@@ -399,6 +423,8 @@ namespace control
 
 	void MainControl::on_dialog_insert_clicked()
 	{
+		db<MainControl>(TRC) << "MainControl::on_dialog_insert_clicked()" << std::endl;
+
 		Gtk::Entry *entry{nullptr};
 		double x{0}, y{0}, z{0};
 
@@ -421,6 +447,8 @@ namespace control
 
 	void MainControl::insert_point(std::string name)
 	{
+		db<MainControl>(TRC) << "MainControl::insert_point()" << std::endl;
+
 		Gtk::Entry *entry{nullptr};
 		double x{0}, y{0}, z{0};
 
@@ -447,6 +475,8 @@ namespace control
 
 	void MainControl::insert_object(std::string name, std::string type)
 	{
+		db<MainControl>(TRC) << "MainControl::insert_object()" << std::endl;
+
 		Gtk::Entry *entry{nullptr};
 		double x1{0}, y1{0}, z1{0}, x2{0}, y2{0}, z2{0};
 
@@ -485,6 +515,8 @@ namespace control
 
 	void MainControl::insert_polygon(std::string name)
 	{
+		db<MainControl>(TRC) << "MainControl::insert_polygon()" << std::endl;
+
 		Gtk::TreeView *tree{nullptr};
 		std::vector<model::Vector> vectors;
 
@@ -513,23 +545,29 @@ namespace control
 
 	void MainControl::add_entry(int id, std::string name, std::string type)
 	{
-			Gtk::TreeModel::Row row = *(_list_model_objects->append());
-			row[_tree_model_objects._column_id]   = id;
-			row[_tree_model_objects._column_name] = name;
-			row[_tree_model_objects._column_type] = type;
+		db<MainControl>(TRC) << "MainControl::add_entry() - object" << std::endl;
+	
+		Gtk::TreeModel::Row row = *(_list_model_objects->append());
+		row[_tree_model_objects._column_id]   = id;
+		row[_tree_model_objects._column_name] = name;
+		row[_tree_model_objects._column_type] = type;
 	}
 
 	void MainControl::add_entry(int id, double x, double y, double z)
 	{
-			Gtk::TreeModel::Row row = *(_list_model_vectors->append());
-			row[_tree_model_vectors._column_id]   = id;
-			row[_tree_model_vectors._column_x] = x;
-			row[_tree_model_vectors._column_y] = y;
-			row[_tree_model_vectors._column_z] = z;
+		db<MainControl>(TRC) << "MainControl::add_entry() - vector" << std::endl;
+	
+		Gtk::TreeModel::Row row = *(_list_model_vectors->append());
+		row[_tree_model_vectors._column_id]   = id;
+		row[_tree_model_vectors._column_x] = x;
+		row[_tree_model_vectors._column_y] = y;
+		row[_tree_model_vectors._column_z] = z;
 	}
 
 	void MainControl::up()
 	{
+		db<MainControl>(TRC) << "MainControl::up()" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
@@ -543,6 +581,8 @@ namespace control
 
 	void MainControl::left()
 	{
+		db<MainControl>(TRC) << "MainControl::left()" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
@@ -556,6 +596,8 @@ namespace control
 
 	void MainControl::right()
 	{
+		db<MainControl>(TRC) << "MainControl::right()" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
@@ -569,6 +611,8 @@ namespace control
 
 	void MainControl::down()
 	{
+		db<MainControl>(TRC) << "MainControl::down()" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
@@ -582,6 +626,8 @@ namespace control
 
 	void MainControl::zoom_in()
 	{
+		db<MainControl>(TRC) << "MainControl::zoom_in()" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
@@ -596,6 +642,8 @@ namespace control
 
 	void MainControl::zoom_out()
 	{
+		db<MainControl>(TRC) << "MainControl::zoom_out()" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
@@ -610,6 +658,8 @@ namespace control
 
 	void MainControl::clockwise()
 	{
+		db<MainControl>(TRC) << "MainControl::clockwise()" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_clock", spin);
 
@@ -624,6 +674,8 @@ namespace control
 
 	void MainControl::counterclockwise()
 	{
+		db<MainControl>(TRC) << "MainControl::counterclockwise()" << std::endl;
+
 		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_clock", spin);
 

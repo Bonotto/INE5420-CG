@@ -49,12 +49,10 @@ run: main
 # Builds Main Executable
 main: $(OBJ)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
-	# $(CXX) $(CPPFLAGS) $(OBJ) -o main $(LDFLAGS) $(LDLIBS)
 
 # Builds a CPP Source file
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c $< -o $@
-
 
 ##############################################################################
 #                                Clean                                       #
@@ -64,16 +62,3 @@ main: $(OBJ)
 clean:
 	rm -f $(OBJ)
 	rm -f main
-
-##############################################################################
-#                                Ignore                                      #
-##############################################################################
-
-cmd:
-	g++ $(CPP_SRC) -o main `pkg-config gtkmm-3.0 --cflags --libs`
-
-example:
-	g++ -std=c++11 -o example example.cpp
-
-run-example: example
-	@./example
