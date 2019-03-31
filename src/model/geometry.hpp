@@ -83,6 +83,18 @@ namespace model
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
 
+		friend Debug & operator<<(Debug & db, const Vector & v)
+		{
+			db << "[" << v._coordinates[0];
+
+			for (auto i = 0; i < Vector::dimension; ++i)
+				db << ", " << v._coordinates[i];
+
+			db << "]";
+
+			return db;
+		}
+
 	private:
 		std::vector<double> _coordinates;
 	};
@@ -123,6 +135,14 @@ namespace model
 		const MatrixLine& operator[](const int position) const;
 
 		Matrix operator*(const Matrix& M) const;
+
+		friend Debug & operator<<(Debug & db, const Matrix & M)
+		{
+			for (auto i = 0; i < Vector::dimension; ++i)
+				db << M._vectors[i] << std::endl;
+
+			return db;
+		}
 
 	private:
 		std::vector<MatrixLine> _vectors;
