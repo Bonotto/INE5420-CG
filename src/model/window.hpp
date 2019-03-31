@@ -28,6 +28,7 @@
 
 /* Local includes */
 #include "geometry.hpp"
+#include "rectangle.hpp"
 
 namespace model
 {
@@ -36,12 +37,13 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class Window
+	class Window : public Rectangle
 	{
 	public:
 		Window(const Vector & min, const Vector & max) :
-			_min(min),
-			_max(max)
+			Rectangle{"window", min, max},
+			_min{_vectors[0]},
+			_max{_vectors[1]}
 		{
 			Vector l0(1, 0, 0, 0);
 			Vector l1(0, 1, 0, 0);
@@ -67,14 +69,14 @@ namespace model
 		const double width();
 		const double height();
 
-		void transformation(const Matrix& M);
+		virtual void transformation(const Matrix& T);
+		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 		const Matrix& transformation() const;
-		Vector mass_center() const;
 		const Vector& min() const;
 		const Vector& max() const;
 
 	private:
-		Vector _min, _max;
+		Vector &_min, &_max;
 		Matrix _dimensions;
 	};
 
@@ -84,12 +86,12 @@ namespace model
 
 	const double Window::width()
 	{
-		return transformations::euclidean_distance({_max[0], 0}, {_min[0], 0});
+		return calculation::euclidean_distance({_max[0], 0}, {_min[0], 0});
 	}
 
 	const double Window::height()
 	{
-		return transformations::euclidean_distance({0, _max[1]}, {0, _min[1]});
+		return calculation::euclidean_distance({0, _max[1]}, {0, _min[1]});
 	}
 
 	void Window::transformation(const Matrix& T)
@@ -97,17 +99,14 @@ namespace model
 		_dimensions = _dimensions * T;
 	}
 
+	void Window::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
+	{
+		/* Do not draw the window for now. */
+	}
+
 	const Matrix& Window::transformation() const
 	{
 		return _dimensions;
-	}
-
-	Vector Window::mass_center() const
-	{
-		return Vector(
-			(_min[0] + _max[0]) / 2,
-			(_min[1] + _max[1]) / 2
-		);
 	}
 
 	const Vector& Window::min() const

@@ -50,19 +50,10 @@ namespace model
 
 		~Rectangle() = default;
 
-		virtual Vector mass_center() const;
 		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
 		virtual std::string type();
 	};
-
-	Vector Rectangle::mass_center() const
-	{
-		return Vector(
-			(_vectors[0][0] + _vectors[1][0]) / 2,
-			(_vectors[0][1] + _vectors[1][1]) / 2
-		);
-	}
 
 /*================================================================================*/
 /*                                 Implementaions                                 */

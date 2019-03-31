@@ -90,11 +90,14 @@ namespace control
 			build_tree_views();
 			build_new_objects();
 			build_movements();
+			build_numeric_entrys();
+
+			if (model::Vector::dimension == 3)
+				disable_unused_entrys();
 		}
 
 		~MainControl()
 		{
-			delete _window;
 			delete _viewport;
 		}
 
@@ -104,6 +107,8 @@ namespace control
 		void down();
 		void zoom_in();
 		void zoom_out();
+		void clockwise();
+		void counterclockwise();
 
 		void on_item_selected();
 		void on_radio_clicked();
@@ -118,6 +123,8 @@ namespace control
 		void build_tree_views();
 		void build_new_objects();
 		void build_movements();
+		void build_numeric_entrys();
+		void disable_unused_entrys();
 
 		void insert_point(std::string name);
 		void insert_polygon(std::string name);
@@ -127,12 +134,12 @@ namespace control
 		void add_entry(int id, std::string name, std::string type);
 
 		/* Control */
-		int _row_selected{0};
+		int _shape_selected{0};
 		int _objects_control{0};
 		int _vectors_control{0};
 
 		/* Model */
-		model::Window   *_window{nullptr};
+		model::Window   *_window{nullptr};   //! Associate with shared_ptr
 		model::Viewport *_viewport{nullptr};
 
 		/* Shapes */
@@ -153,9 +160,9 @@ namespace control
 
 	void MainControl::build_window()
 	{
-		Gtk::DrawingArea *draw;
+		Gtk::DrawingArea *draw{nullptr};
 		Gtk::Allocation alloc;
-		double width, height;
+		double width{0}, height{0};
 
 		_builder->get_widget("area_draw", draw);
 
@@ -165,18 +172,20 @@ namespace control
 		height = alloc.get_height();
 
 		_window = new model::Window(model::Vector(0, 0), model::Vector(width, height));
+		_shapes.emplace_back(_window);
+		_shapes_map[_objects_control++] = _shapes.back();
 	}
 
 	void MainControl::build_viewport()
 	{
-		Gtk::DrawingArea *draw;
+		Gtk::DrawingArea *draw{nullptr};
 		_builder->get_widget("area_draw", draw);
 		_viewport = new model::Viewport(*_window, _shapes, *draw);
 	}
 
 	void MainControl::build_tree_views()
 	{
-		Gtk::TreeView * tree;
+		Gtk::TreeView *tree{nullptr};
 
 		_builder->get_widget("tree_objects", tree);
 		_list_model_objects = Gtk::ListStore::create(_tree_model_objects);
@@ -205,9 +214,9 @@ namespace control
 
 	void MainControl::build_new_objects()
 	{
-		Gtk::Button* button;
-		Gtk::RadioButton* radio1;
-		Gtk::RadioButton* radio2;
+		Gtk::Button      *button{nullptr};
+		Gtk::RadioButton *radio1{nullptr};
+		Gtk::RadioButton *radio2{nullptr};
 
 		_builder->get_widget("button_new_object", button);
 		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_new_object_clicked));
@@ -239,15 +248,16 @@ namespace control
 
 	void MainControl::on_item_selected()
 	{
-		Gtk::TreeView * tree;
+		Gtk::TreeView *tree{nullptr};
 		_builder->get_widget("tree_objects", tree);
 
-		_row_selected = tree->get_selection()->get_selected()->get_value(_tree_model_objects._column_id);
+		_shape_selected = tree->get_selection()->get_selected()->get_value(_tree_model_objects._column_id);
+		std::cout << "Shape selected: " << _shape_selected << std::endl;
 	}
 
 	void MainControl::build_movements()
 	{
-		Gtk::SpinButton *spin;
+		Gtk::SpinButton *spin{nullptr};
 
 		_builder->get_widget("spin_step", spin);
 
@@ -276,9 +286,69 @@ namespace control
 		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::zoom_out));
 	}
 
+	void MainControl::build_numeric_entrys()
+	{
+		Gtk::Entry *entry{nullptr};
+		std::vector<std::string> entry_names{
+			"entry_point_x", "entry_point_y", "entry_point_z",
+			"entry_x1_Line", "entry_y1_Line", "entry_z1_Line",
+			"entry_x2_Line", "entry_y2_Line", "entry_z2_Line",
+			"entry_x1_Rectangle", "entry_y1_Rectangle", "entry_z1_Rectangle",
+			"entry_x2_Rectangle", "entry_y2_Rectangle", "entry_z2_Rectangle",
+			"entry_polygon_x", "entry_polygon_y", "entry_polygon_z"
+		};
+
+		((void) entry);
+
+		//! Not working
+
+		// for (auto name : entry_names)
+		// {
+		// 	_builder->get_widget(name, entry);
+		// 	entry->signal_insert_text().connect(
+		// 		[entry](const Glib::ustring &text, int *position)
+		// 		{
+		// 			bool only_number = text.length() != 0;
+
+		// 			for (unsigned int i = 0; i < text.length(); i++)
+		// 				only_number &= Glib::Unicode::isdigit(text[i]);
+					
+		// 			std::string old = entry->get_text();
+
+		// 			if (old.size() <= *position)
+		// 				old += text;
+		// 			else
+		// 				old[*position] = text[0];
+					
+		// 			if (only_number)
+		// 				entry->set_text(old);
+		// 		}
+		// 	);
+		// }
+	}
+
+	void MainControl::disable_unused_entrys()
+	{
+		Gtk::Entry *entry{nullptr};
+		std::vector<std::string> entry_names{
+			"entry_point_z",
+			"entry_z1_Line",
+			"entry_z2_Line",
+			"entry_z1_Rectangle",
+			"entry_z2_Rectangle",
+			"entry_polygon_z"
+		};
+
+		for (auto name : entry_names)
+		{
+			_builder->get_widget(name, entry);
+			entry->set_sensitive(false);
+		}
+	}
+
 	void MainControl::on_new_object_clicked()
 	{
-		Gtk::Dialog* dialog;
+		Gtk::Dialog *dialog{nullptr};
 		_builder->get_widget("window_dialog", dialog);
   		dialog->run();
 	}
@@ -290,31 +360,29 @@ namespace control
 
 	void MainControl::on_dialog_exit_clicked()
 	{
-		Gtk::Dialog* dialog;
+		Gtk::Dialog *dialog{nullptr};
 		_builder->get_widget("window_dialog", dialog);
   		dialog->close();
 	}
 
 	void MainControl::on_dialog_ok_clicked()
 	{
-		Gtk::RadioButton* radio;
-		Gtk::Entry* entry;
+		Gtk::RadioButton *radio{nullptr};
+		Gtk::Entry *entry{nullptr};
 
 		_builder->get_widget("radio_point", radio);
 		_builder->get_widget("entry_name", entry);
 
   		std::string name = std::string(entry->get_text());
 
-  		if (radio->get_active()) {
+  		if (radio->get_active())
   			insert_point(name);
-  		}
   		else
   		{
 			_builder->get_widget("radio_line", radio);
 
-			if (radio->get_active()) {
+			if (radio->get_active())
 	  			insert_object(name, "Line");
-			}
 	  		else
 	  		{
 				_builder->get_widget("radio_rectangle", radio);
@@ -331,8 +399,8 @@ namespace control
 
 	void MainControl::on_dialog_insert_clicked()
 	{
-		Gtk::Entry* entry;
-		double x, y, z;
+		Gtk::Entry *entry{nullptr};
+		double x{0}, y{0}, z{0};
 
 		_builder->get_widget("entry_polygon_x", entry);
 		x = atof(std::string(entry->get_text()).c_str());
@@ -353,8 +421,8 @@ namespace control
 
 	void MainControl::insert_point(std::string name)
 	{
-		Gtk::Entry* entry;
-		double x, y, z;
+		Gtk::Entry *entry{nullptr};
+		double x{0}, y{0}, z{0};
 
 		_builder->get_widget("entry_point_x", entry);
 		x = atof(std::string(entry->get_text()).c_str());
@@ -370,17 +438,17 @@ namespace control
 		else
 			z = model::Vector::z;
 
-		add_entry(++_objects_control, name, "Point");
+		add_entry(_objects_control, name, "Point");
 
 		_shapes.emplace_back(new model::Point(name, x, y, z));
 
-		_shapes_map[_objects_control] = _shapes.back();
+		_shapes_map[_objects_control++] = _shapes.back();
 	}
 
 	void MainControl::insert_object(std::string name, std::string type)
 	{
-		Gtk::Entry* entry;
-		double x1, y1, z1, x2, y2, z2;
+		Gtk::Entry *entry{nullptr};
+		double x1{0}, y1{0}, z1{0}, x2{0}, y2{0}, z2{0};
 
 		_builder->get_widget("entry_x1_" + type, entry);
 		x1 = atof(std::string(entry->get_text()).c_str());
@@ -405,19 +473,19 @@ namespace control
 		else
 			z1 = z2 = model::Vector::z;
 
-		add_entry(++_objects_control, name, type);
+		add_entry(_objects_control, name, type);
 
 		if (!type.compare("Line"))
 			_shapes.emplace_back(new model::Line(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2)));
 		else
 			_shapes.emplace_back(new model::Rectangle(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2)));
 
-		_shapes_map[_objects_control] = _shapes.back();
+		_shapes_map[_objects_control++] = _shapes.back();
 	}
 
 	void MainControl::insert_polygon(std::string name)
 	{
-		Gtk::TreeView * tree;
+		Gtk::TreeView *tree{nullptr};
 		std::vector<model::Vector> vectors;
 
 		_builder->get_widget("tree_vectors", tree);
@@ -437,10 +505,10 @@ namespace control
 				));
 		}
 
-		add_entry(++_objects_control, name, "Polygon");
+		add_entry(_objects_control, name, "Polygon");
 
 		_shapes.emplace_back(new model::Polygon(name, vectors));
-		_shapes_map[_objects_control] = _shapes.back();
+		_shapes_map[_objects_control++] = _shapes.back();
 	}
 
 	void MainControl::add_entry(int id, std::string name, std::string type)
@@ -462,115 +530,109 @@ namespace control
 
 	void MainControl::up()
 	{
-		Gtk::SpinButton *spin;
+		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
-		double step = (_row_selected ? 1 : -1) * spin->get_value();
+		double step = (_shape_selected ? 1 : -1) * spin->get_value();
 
-		auto T = model::transformations::translation(model::Vector(0, step));
+		auto T = model::transformation::translation(model::Vector(0, step));
 
-		if (!_row_selected)
-			_window->transformation(T);
-		else
-			_shapes_map[_row_selected]->transformation(T);
-
+		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
 
 	void MainControl::left()
 	{
-		Gtk::SpinButton *spin;
+		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
-		double step = (_row_selected ? 1 : -1) * spin->get_value();
+		double step = (_shape_selected ? -1 : 1) * spin->get_value();
 
-		auto T = model::transformations::translation(model::Vector(-step, 0));
+		auto T = model::transformation::translation(model::Vector(step, 0));
 
-		if (!_row_selected)
-			_window->transformation(T);
-		else
-			_shapes_map[_row_selected]->transformation(T);
-
+		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
 
 	void MainControl::right()
 	{
-		Gtk::SpinButton *spin;
+		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
-		double step = (_row_selected ? 1 : -1) * spin->get_value();
+		double step = (_shape_selected ? 1 : -1) * spin->get_value();
 
-		auto T = model::transformations::translation(model::Vector(step, 0));
+		auto T = model::transformation::translation(model::Vector(step, 0));
 
-		if (!_row_selected)
-			_window->transformation(T);
-		else
-			_shapes_map[_row_selected]->transformation(T);
-
+		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
 
 	void MainControl::down()
 	{
-		Gtk::SpinButton *spin;
+		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
-		double step = (_row_selected ? 1 : -1) * spin->get_value();
+		double step = (_shape_selected ? -1 : 1) * spin->get_value();
 
-		auto T = model::transformations::translation(model::Vector(0, -step));
+		auto T = model::transformation::translation(model::Vector(0, step));
 
-		if (!_row_selected)
-			_window->transformation(T);
-		else
-			_shapes_map[_row_selected]->transformation(T);
-
+		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
 
 	void MainControl::zoom_in()
 	{
-		Gtk::SpinButton *spin;
+		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
 		double step = spin->get_value();
+		auto mass_center = _shapes_map[_shape_selected]->mass_center();
+		
+		auto T = model::transformation::scheduling(step, mass_center);
 
-		if (!_row_selected)
-		{
-			auto mass_center = _window->mass_center();
-			auto T = model::transformations::scheduling(step, mass_center);
-			_window->transformation(T);
-		}
-		else
-		{
-			auto mass_center = _shapes_map[_row_selected]->mass_center();
-			auto T = model::transformations::scheduling(step, mass_center);
-			_shapes_map[_row_selected]->transformation(T);
-		}
-
+		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
 
 	void MainControl::zoom_out()
 	{
-		Gtk::SpinButton *spin;
+		Gtk::SpinButton *spin{nullptr};
 		_builder->get_widget("spin_step", spin);
 
-		double step = spin->get_value();
+		double step = 1 / spin->get_value();
+		auto mass_center = _shapes_map[_shape_selected]->mass_center();
 
-		if (!_row_selected)
-		{
-			auto mass_center = _window->mass_center();
-			auto T = model::transformations::scheduling(1/step, mass_center);
-			_window->transformation(T);
-		}
-		else
-		{
-			auto mass_center = _shapes_map[_row_selected]->mass_center();
-			auto T = model::transformations::scheduling(1/step, mass_center);
-			_shapes_map[_row_selected]->transformation(T);
-		}
+		auto T = model::transformation::scheduling(step, mass_center);
 
+		_shapes_map[_shape_selected]->transformation(T);
+		_viewport->update();
+	}
+
+	void MainControl::clockwise()
+	{
+		Gtk::SpinButton *spin{nullptr};
+		_builder->get_widget("spin_clock", spin);
+
+		double angle = (_shape_selected ? 1 : -1) * spin->get_value();
+		auto mass_center = _shapes_map[_shape_selected]->mass_center();
+
+		auto T = model::transformation::rotation(angle, mass_center);
+
+		_shapes_map[_shape_selected]->transformation(T);
+		_viewport->update();
+	}
+
+	void MainControl::counterclockwise()
+	{
+		Gtk::SpinButton *spin{nullptr};
+		_builder->get_widget("spin_clock", spin);
+
+		double angle = (_shape_selected ? -1 : 1) * spin->get_value();
+		auto mass_center = _shapes_map[_shape_selected]->mass_center();
+
+		auto T = model::transformation::rotation(angle, mass_center);
+
+		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
 

@@ -67,7 +67,7 @@ namespace model
 			_vectors{vs}
 		{}
 
-		~Shape() = default;
+		virtual ~Shape() = default;
 
 		virtual Vector mass_center() const;
 		virtual void transformation(const Matrix & T);
