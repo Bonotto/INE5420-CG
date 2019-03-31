@@ -163,7 +163,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "Build window" << std::endl;
 
-		Gtk::DrawingArea *draw{nullptr};
+		Gtk::DrawingArea *draw;
 		Gtk::Allocation alloc;
 		double width{0}, height{0};
 
@@ -183,7 +183,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "Build viewport" << std::endl;
 
-		Gtk::DrawingArea *draw{nullptr};
+		Gtk::DrawingArea *draw;
 		_builder->get_widget("area_draw", draw);
 		_viewport = new model::Viewport(*_window, _shapes, *draw);
 	}
@@ -192,7 +192,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "Build tree views" << std::endl;
 
-		Gtk::TreeView *tree{nullptr};
+		Gtk::TreeView *tree;
 
 		_builder->get_widget("tree_objects", tree);
 		_list_model_objects = Gtk::ListStore::create(_tree_model_objects);
@@ -223,9 +223,9 @@ namespace control
 	{
 		db<MainControl>(TRC) << "Build buttons" << std::endl;
 
-		Gtk::Button      *button{nullptr};
-		Gtk::RadioButton *radio1{nullptr};
-		Gtk::RadioButton *radio2{nullptr};
+		Gtk::Button      *button;
+		Gtk::RadioButton *radio1;
+		Gtk::RadioButton *radio2;
 
 		_builder->get_widget("button_new_object", button);
 		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_new_object_clicked));
@@ -239,6 +239,7 @@ namespace control
 		_builder->get_widget("button_insert_vector", button);
 		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_insert_clicked));
 
+		/* New object group */
 		_builder->get_widget("radio_point", radio1);
 		radio1->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 
@@ -253,13 +254,25 @@ namespace control
 		_builder->get_widget("radio_polygon", radio2);
 		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 		radio2->join_group(*radio1);
+
+		/* Rotation group */
+		// _builder->get_widget("radio_center_object", radio1);
+		// radio1->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+
+		// _builder->get_widget("radio_center_world", radio2);
+		// radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		// radio2->join_group(*radio1);
+
+		// _builder->get_widget("radio_center_specific", radio2);
+		// radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		// radio2->join_group(*radio1);
 	}
 
 	void MainControl::on_item_selected()
 	{
 		db<MainControl>(TRC) << "MainControl::on_item_selected()" << std::endl;
 
-		Gtk::TreeView *tree{nullptr};
+		Gtk::TreeView *tree;
 		_builder->get_widget("tree_objects", tree);
 
 		_shape_selected = tree->get_selection()->get_selected()->get_value(_tree_model_objects._column_id);
@@ -271,7 +284,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "Build movements" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		Gtk::SpinButton *spin;
 
 		_builder->get_widget("spin_step", spin);
 
@@ -304,7 +317,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "Build numeric entrys" << std::endl;
 
-		Gtk::Entry *entry{nullptr};
+		Gtk::Entry *entry;
 		std::vector<std::string> entry_names{
 			"entry_point_x", "entry_point_y", "entry_point_z",
 			"entry_x1_Line", "entry_y1_Line", "entry_z1_Line",
@@ -314,7 +327,8 @@ namespace control
 			"entry_polygon_x", "entry_polygon_y", "entry_polygon_z"
 		};
 
-		((void) entry);
+		((void) entry);       //! Suppress unused variable warning.
+		((void) entry_names); //! Suppress unused variable warning.
 
 		//! Not working
 
@@ -347,7 +361,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "Disable unused entrys" << std::endl;
 
-		Gtk::Entry *entry{nullptr};
+		Gtk::Entry *entry;
 		std::vector<std::string> entry_names{
 			"entry_point_z",
 			"entry_z1_Line",
@@ -368,7 +382,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::on_new_object_clicked()" << std::endl;
 
-		Gtk::Dialog *dialog{nullptr};
+		Gtk::Dialog *dialog;
 		_builder->get_widget("window_dialog", dialog);
   		dialog->run();
 	}
@@ -382,7 +396,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::on_dialog_exit_clicked()" << std::endl;
 
-		Gtk::Dialog *dialog{nullptr};
+		Gtk::Dialog *dialog;
 		_builder->get_widget("window_dialog", dialog);
   		dialog->close();
 	}
@@ -391,8 +405,8 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::on_dialog_ok_clicked()" << std::endl;
 
-		Gtk::RadioButton *radio{nullptr};
-		Gtk::Entry *entry{nullptr};
+		Gtk::RadioButton *radio;
+		Gtk::Entry *entry;
 
 		_builder->get_widget("radio_point", radio);
 		_builder->get_widget("entry_name", entry);
@@ -425,7 +439,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::on_dialog_insert_clicked()" << std::endl;
 
-		Gtk::Entry *entry{nullptr};
+		Gtk::Entry *entry;
 		double x{0}, y{0}, z{0};
 
 		_builder->get_widget("entry_polygon_x", entry);
@@ -449,7 +463,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::insert_point()" << std::endl;
 
-		Gtk::Entry *entry{nullptr};
+		Gtk::Entry *entry;
 		double x{0}, y{0}, z{0};
 
 		_builder->get_widget("entry_point_x", entry);
@@ -477,8 +491,8 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::insert_object()" << std::endl;
 
-		Gtk::Entry *entry{nullptr};
-		double x1{0}, y1{0}, z1{0}, x2{0}, y2{0}, z2{0};
+		Gtk::Entry *entry;
+		double x1{0}, y1{0}, z1{model::Vector::z}, x2{0}, y2{0}, z2{model::Vector::z};
 
 		_builder->get_widget("entry_x1_" + type, entry);
 		x1 = atof(std::string(entry->get_text()).c_str());
@@ -500,8 +514,6 @@ namespace control
 			_builder->get_widget("entry_z2_" + type, entry);
 			z2 = atof(std::string(entry->get_text()).c_str());
 		}
-		else
-			z1 = z2 = model::Vector::z;
 
 		add_entry(_objects_control, name, type);
 
@@ -517,7 +529,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::insert_polygon()" << std::endl;
 
-		Gtk::TreeView *tree{nullptr};
+		Gtk::TreeView *tree;
 		std::vector<model::Vector> vectors;
 
 		_builder->get_widget("tree_vectors", tree);
@@ -568,7 +580,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::up()" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
 		double step = (_shape_selected ? 1 : -1) * spin->get_value();
@@ -583,7 +595,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::left()" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
 		double step = (_shape_selected ? -1 : 1) * spin->get_value();
@@ -598,7 +610,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::right()" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
 		double step = (_shape_selected ? 1 : -1) * spin->get_value();
@@ -613,7 +625,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::down()" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
 		double step = (_shape_selected ? -1 : 1) * spin->get_value();
@@ -628,7 +640,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::zoom_in()" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
 		double step = spin->get_value();
@@ -644,7 +656,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::zoom_out()" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		Gtk::SpinButton *spin;
 		_builder->get_widget("spin_step", spin);
 
 		double step = 1 / spin->get_value();
@@ -660,14 +672,51 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::clockwise()" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		double angle;
+		model::Vector mass_center;
+		Gtk::Entry *entry;
+		Gtk::SpinButton *spin;
+		Gtk::RadioButton *radio;
+
+		/* Calculate the angle */
 		_builder->get_widget("spin_clock", spin);
+		angle = (_shape_selected ? 1 : -1) * spin->get_value();
 
-		double angle = (_shape_selected ? 1 : -1) * spin->get_value();
-		auto mass_center = _shapes_map[_shape_selected]->mass_center();
+		/* Calculate the center of mass */
+		_builder->get_widget("radio_center_object", radio);
+		if (radio->get_active())
+			mass_center = _shapes_map[_shape_selected]->mass_center();
+		else
+		{
+			_builder->get_widget("radio_center_world", radio);
+			if (radio->get_active())
+				mass_center = model::Vector(0, 0);
 
+			/* radio_center_specific */
+			else
+			{
+				double x{0}, y{0}, z{model::Vector::z};
+
+				_builder->get_widget("entry_center_x", entry);
+				x = atof(std::string(entry->get_text()).c_str());
+
+				_builder->get_widget("entry_center_y", entry);
+				y = atof(std::string(entry->get_text()).c_str());
+
+				if (model::Vector::dimension == 4)
+				{
+					_builder->get_widget("entry_center_z", entry);
+					z = atof(std::string(entry->get_text()).c_str());
+				}
+				
+				mass_center = model::Vector(x, y, z);
+			}
+		}
+
+		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center);
 
+		/* Apply transformation */
 		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
@@ -676,14 +725,52 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::counterclockwise()" << std::endl;
 
-		Gtk::SpinButton *spin{nullptr};
+		double angle;
+		model::Vector mass_center;
+		Gtk::Entry *entry;
+		Gtk::SpinButton *spin;
+		Gtk::RadioButton *radio;
+
+		/* Calculate the angle */
 		_builder->get_widget("spin_clock", spin);
+		angle = (_shape_selected ? -1 : 1) * spin->get_value();
 
-		double angle = (_shape_selected ? -1 : 1) * spin->get_value();
-		auto mass_center = _shapes_map[_shape_selected]->mass_center();
+		/* Calculate the center of mass */
+		_builder->get_widget("radio_center_object", radio);
+		if (radio->get_active())
+			mass_center = _shapes_map[_shape_selected]->mass_center();
+		else
+		{
+			_builder->get_widget("radio_center_world", radio);
+			if (radio->get_active())
+				mass_center = model::Vector(0, 0);
+			
+			/* radio_center_specific */
+			else
+			{
+				
+				double x{0}, y{0}, z{model::Vector::z};
 
+				_builder->get_widget("entry_center_x", entry);
+				x = atof(std::string(entry->get_text()).c_str());
+
+				_builder->get_widget("entry_center_y", entry);
+				y = atof(std::string(entry->get_text()).c_str());
+
+				if (model::Vector::dimension == 4)
+				{
+					_builder->get_widget("entry_center_z", entry);
+					z = atof(std::string(entry->get_text()).c_str());
+				}
+				
+				mass_center = model::Vector(x, y, z);
+			}
+		}
+
+		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center);
 
+		/* Apply transformation */
 		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
