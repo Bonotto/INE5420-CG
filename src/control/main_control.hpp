@@ -26,7 +26,6 @@
 
 /* External includes */
 #include <vector>
-#include <iostream>
 #include <gtkmm.h>
 
 /* local includes */
@@ -81,6 +80,21 @@ namespace control
 
 	class MainControl
 	{
+	private:
+		enum ButtonID
+		{
+			/* Objects */
+			Null           = 0,
+			Point          = 1,
+			Line           = 2,
+			Rectangle      = 3,
+			Polygon        = 4,
+			/* Rotation */
+			CenterObject   = 5,
+			CenterWorld    = 6,
+			CenterSpecific = 7
+		};
+
 	public:
 
 		MainControl(Glib::RefPtr<Gtk::Builder>& builder) :
@@ -405,32 +419,50 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::on_dialog_ok_clicked()" << std::endl;
 
+		Gtk::Entry       *entry;
 		Gtk::RadioButton *radio;
-		Gtk::Entry *entry;
+		
+		/* Entry name */
+		_builder->get_widget("entry_name", entry);
+  		std::string name(entry->get_text());
+
+		/* Object type */
+		unsigned hash = 0;
 
 		_builder->get_widget("radio_point", radio);
-		_builder->get_widget("entry_name", entry);
+		hash += radio->get_active() ? ButtonID::Point     : ButtonID::Null;
 
-  		std::string name = std::string(entry->get_text());
+		_builder->get_widget("radio_line", radio);
+		hash += radio->get_active() ? ButtonID::Line      : ButtonID::Null;
 
-  		if (radio->get_active())
-  			insert_point(name);
-  		else
-  		{
-			_builder->get_widget("radio_line", radio);
+		_builder->get_widget("radio_rectangle", radio);
+		hash += radio->get_active() ? ButtonID::Rectangle : ButtonID::Null;
 
-			if (radio->get_active())
-	  			insert_object(name, "Line");
-	  		else
-	  		{
-				_builder->get_widget("radio_rectangle", radio);
+		_builder->get_widget("radio_polygon", radio);
+		hash += radio->get_active() ? ButtonID::Polygon   : ButtonID::Null;
 
-				if (radio->get_active())
-		  			insert_object(name, "Rectangle");
-		  		else
-		  			insert_polygon(name);
-	  		}
-  		}
+		switch (hash)
+		{
+			case ButtonID::Point:
+				insert_point(name);
+				break;
+
+			case ButtonID::Line:
+				insert_object(name, "Line");
+				break;
+
+			case ButtonID::Rectangle:
+				insert_object(name, "Rectangle");
+				break;
+			
+			case ButtonID::Polygon:
+				insert_polygon(name);
+				break;
+
+			/* Undefined */
+			default:
+				break;
+		}
 
 		_viewport->update();
 	}
@@ -672,29 +704,38 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::clockwise()" << std::endl;
 
-		double angle;
-		model::Vector mass_center;
 		Gtk::Entry *entry;
 		Gtk::SpinButton *spin;
 		Gtk::RadioButton *radio;
+		model::Vector mass_center;
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_clock", spin);
-		angle = (_shape_selected ? 1 : -1) * spin->get_value();
+		double angle = (_shape_selected ? 1 : -1) * spin->get_value();
 
 		/* Calculate the center of mass */
-		_builder->get_widget("radio_center_object", radio);
-		if (radio->get_active())
-			mass_center = _shapes_map[_shape_selected]->mass_center();
-		else
-		{
-			_builder->get_widget("radio_center_world", radio);
-			if (radio->get_active())
-				mass_center = model::Vector(0, 0);
+		unsigned hash = 0;
 
-			/* radio_center_specific */
-			else
-			{
+		_builder->get_widget("radio_center_object", radio);
+		hash += radio->get_active() ? ButtonID::Point     : ButtonID::Null;
+
+		_builder->get_widget("radio_center_world", radio);
+		hash += radio->get_active() ? ButtonID::Line      : ButtonID::Null;
+
+		_builder->get_widget("radio_center_specific", radio);
+		hash += radio->get_active() ? ButtonID::Rectangle : ButtonID::Null;
+
+		switch (hash)
+		{
+			case ButtonID::CenterObject:
+				mass_center = _shapes_map[_shape_selected]->mass_center();
+				break;
+
+			case ButtonID::CenterWorld:
+				mass_center = model::Vector(0, 0);
+				break;
+
+			case ButtonID::CenterSpecific: {
 				double x{0}, y{0}, z{model::Vector::z};
 
 				_builder->get_widget("entry_center_x", entry);
@@ -710,7 +751,11 @@ namespace control
 				}
 				
 				mass_center = model::Vector(x, y, z);
-			}
+			} break;
+
+			/* Undefined */
+			default:
+				return;
 		}
 
 		/* Calculate the rotation matrix */
@@ -725,7 +770,6 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::counterclockwise()" << std::endl;
 
-		double angle;
 		model::Vector mass_center;
 		Gtk::Entry *entry;
 		Gtk::SpinButton *spin;
@@ -733,22 +777,31 @@ namespace control
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_clock", spin);
-		angle = (_shape_selected ? -1 : 1) * spin->get_value();
+		double angle = (_shape_selected ? -1 : 1) * spin->get_value();
 
 		/* Calculate the center of mass */
+		unsigned hash = 0;
+
 		_builder->get_widget("radio_center_object", radio);
-		if (radio->get_active())
-			mass_center = _shapes_map[_shape_selected]->mass_center();
-		else
+		hash += radio->get_active() ? ButtonID::Point     : ButtonID::Null;
+
+		_builder->get_widget("radio_center_world", radio);
+		hash += radio->get_active() ? ButtonID::Line      : ButtonID::Null;
+
+		_builder->get_widget("radio_center_specific", radio);
+		hash += radio->get_active() ? ButtonID::Rectangle : ButtonID::Null;
+
+		switch (hash)
 		{
-			_builder->get_widget("radio_center_world", radio);
-			if (radio->get_active())
+			case ButtonID::CenterObject:
+				mass_center = _shapes_map[_shape_selected]->mass_center();
+				break;
+
+			case ButtonID::CenterWorld:
 				mass_center = model::Vector(0, 0);
-			
-			/* radio_center_specific */
-			else
-			{
-				
+				break;
+
+			case ButtonID::CenterSpecific: {
 				double x{0}, y{0}, z{model::Vector::z};
 
 				_builder->get_widget("entry_center_x", entry);
@@ -764,7 +817,11 @@ namespace control
 				}
 				
 				mass_center = model::Vector(x, y, z);
-			}
+			} break;
+
+			/* Undefined */
+			default:
+				return;
 		}
 
 		/* Calculate the rotation matrix */
