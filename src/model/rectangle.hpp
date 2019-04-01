@@ -41,16 +41,14 @@ namespace model
 	{
 	public:
 		Rectangle(std::string name) :
-			Shape(name, {Vector(), Vector()})
+			Shape(name, {Vector(), Vector(), Vector(), Vector()})
 		{}
 
 		Rectangle(std::string name, const Vector& v1, const Vector& v2) :
-			Shape(name, {v1, v2})
+			Shape(name, {v1, Vector(v1[0], v2[1]), v2, Vector(v2[0], v1[1])})
 		{}
 
 		~Rectangle() = default;
-
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
 		virtual std::string type();
 	};
@@ -58,22 +56,6 @@ namespace model
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
-
-	void Rectangle::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
-	{
-		Vector v0 = _vectors[0] * T;
-		Vector v1 = _vectors[1] * T;
-
-		/* First point */
-		cr->move_to(v0[0], v0[1]);
-
-		// Draw all other points
-		cr->line_to(v0[0], v0[1]);
-		cr->line_to(v0[0], v1[1]);
-		cr->line_to(v1[0], v1[1]);
-		cr->line_to(v1[0], v0[1]);
-		cr->line_to(v0[0], v0[1]);
-	}
 
 	std::string Rectangle::type()
 	{

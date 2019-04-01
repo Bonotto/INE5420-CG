@@ -125,6 +125,8 @@ namespace model
 			Vector vi = v * T;
 			cr->line_to(vi[0], vi[1]);
 		}
+		
+		cr->line_to(v0[0], v0[1]);
 	}
 
 	std::string Shape::name()

@@ -43,7 +43,7 @@ namespace model
 		Window(const Vector & min, const Vector & max) :
 			Rectangle{"window", min, max},
 			_min{_vectors[0]},
-			_max{_vectors[1]}
+			_max{_vectors[2]}
 		{
 			Vector l0(1, 0, 0, 0);
 			Vector l1(0, 1, 0, 0);
