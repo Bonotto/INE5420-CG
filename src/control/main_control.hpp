@@ -270,16 +270,16 @@ namespace control
 		radio2->join_group(*radio1);
 
 		/* Rotation group */
-		// _builder->get_widget("radio_center_object", radio1);
-		// radio1->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		_builder->get_widget("radio_center_object", radio1);
+		radio1->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 
-		// _builder->get_widget("radio_center_world", radio2);
-		// radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
-		// radio2->join_group(*radio1);
+		_builder->get_widget("radio_center_world", radio2);
+		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		radio2->join_group(*radio1);
 
-		// _builder->get_widget("radio_center_specific", radio2);
-		// radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
-		// radio2->join_group(*radio1);
+		_builder->get_widget("radio_center_specific", radio2);
+		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		radio2->join_group(*radio1);
 	}
 
 	void MainControl::on_item_selected()
@@ -302,10 +302,22 @@ namespace control
 
 		_builder->get_widget("spin_step", spin);
 
-		spin->set_digits(5);
+		// spin->set_digits(0);
 		spin->set_range(0, 9999999);
 		spin->set_increments(1, 100);
 		spin->set_value(2);
+
+		_builder->get_widget("spin_percentual", spin);
+
+		spin->set_range(1, 100);
+		spin->set_increments(1, 100);
+		spin->set_value(1);
+
+		_builder->get_widget("spin_degrees", spin);
+
+		spin->set_range(0, 359);
+		spin->set_increments(1, 100);
+		spin->set_value(0);
 
 		Gtk::Button *btn;
 		_builder->get_widget("button_up", btn);
@@ -325,6 +337,12 @@ namespace control
 
 		_builder->get_widget("button_out", btn);
 		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::zoom_out));
+
+		_builder->get_widget("button_r_left", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::counterclockwise));
+
+		_builder->get_widget("button_r_right", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::clockwise));
 	}
 
 	void MainControl::build_numeric_entrys()
@@ -382,7 +400,8 @@ namespace control
 			"entry_z2_Line",
 			"entry_z1_Rectangle",
 			"entry_z2_Rectangle",
-			"entry_polygon_z"
+			"entry_polygon_z",
+			"entry_rotation_z"
 		};
 
 		for (auto name : entry_names)
@@ -673,12 +692,12 @@ namespace control
 		db<MainControl>(TRC) << "MainControl::zoom_in()" << std::endl;
 
 		Gtk::SpinButton *spin;
-		_builder->get_widget("spin_step", spin);
+		_builder->get_widget("spin_percentual", spin);
 
-		double step = spin->get_value();
+		double times = spin->get_value();
 		auto mass_center = _shapes_map[_shape_selected]->mass_center();
 		
-		auto T = model::transformation::scheduling(step, mass_center);
+		auto T = model::transformation::scheduling(times, mass_center);
 
 		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
@@ -689,12 +708,12 @@ namespace control
 		db<MainControl>(TRC) << "MainControl::zoom_out()" << std::endl;
 
 		Gtk::SpinButton *spin;
-		_builder->get_widget("spin_step", spin);
+		_builder->get_widget("spin_percentual", spin);
 
-		double step = 1 / spin->get_value();
+		double times = 1 / spin->get_value();
 		auto mass_center = _shapes_map[_shape_selected]->mass_center();
 
-		auto T = model::transformation::scheduling(step, mass_center);
+		auto T = model::transformation::scheduling(times, mass_center);
 
 		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
@@ -710,20 +729,20 @@ namespace control
 		model::Vector mass_center;
 
 		/* Calculate the angle */
-		_builder->get_widget("spin_clock", spin);
-		double angle = (_shape_selected ? 1 : -1) * spin->get_value();
+		_builder->get_widget("spin_degrees", spin);
+		double angle = (_shape_selected ? -1 : +1) * spin->get_value() * (M_PI/180);
 
 		/* Calculate the center of mass */
 		unsigned hash = 0;
 
 		_builder->get_widget("radio_center_object", radio);
-		hash += radio->get_active() ? ButtonID::Point     : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::CenterObject     : ButtonID::Null;
 
 		_builder->get_widget("radio_center_world", radio);
-		hash += radio->get_active() ? ButtonID::Line      : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::CenterWorld      : ButtonID::Null;
 
 		_builder->get_widget("radio_center_specific", radio);
-		hash += radio->get_active() ? ButtonID::Rectangle : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::CenterSpecific : ButtonID::Null;
 
 		switch (hash)
 		{
@@ -738,15 +757,15 @@ namespace control
 			case ButtonID::CenterSpecific: {
 				double x{0}, y{0}, z{model::Vector::z};
 
-				_builder->get_widget("entry_center_x", entry);
+				_builder->get_widget("entry_rotation_x", entry);
 				x = atof(std::string(entry->get_text()).c_str());
 
-				_builder->get_widget("entry_center_y", entry);
+				_builder->get_widget("entry_rotation_y", entry);
 				y = atof(std::string(entry->get_text()).c_str());
 
 				if (model::Vector::dimension == 4)
 				{
-					_builder->get_widget("entry_center_z", entry);
+					_builder->get_widget("entry_rotation_z", entry);
 					z = atof(std::string(entry->get_text()).c_str());
 				}
 				
@@ -776,20 +795,20 @@ namespace control
 		Gtk::RadioButton *radio;
 
 		/* Calculate the angle */
-		_builder->get_widget("spin_clock", spin);
-		double angle = (_shape_selected ? -1 : 1) * spin->get_value();
+		_builder->get_widget("spin_degrees", spin);
+		double angle = (_shape_selected ? 1 : -1) * spin->get_value() * (M_PI/180);
 
 		/* Calculate the center of mass */
 		unsigned hash = 0;
 
 		_builder->get_widget("radio_center_object", radio);
-		hash += radio->get_active() ? ButtonID::Point     : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::CenterObject     : ButtonID::Null;
 
 		_builder->get_widget("radio_center_world", radio);
-		hash += radio->get_active() ? ButtonID::Line      : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::CenterWorld      : ButtonID::Null;
 
 		_builder->get_widget("radio_center_specific", radio);
-		hash += radio->get_active() ? ButtonID::Rectangle : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::CenterSpecific : ButtonID::Null;
 
 		switch (hash)
 		{
@@ -804,15 +823,15 @@ namespace control
 			case ButtonID::CenterSpecific: {
 				double x{0}, y{0}, z{model::Vector::z};
 
-				_builder->get_widget("entry_center_x", entry);
+				_builder->get_widget("entry_rotation_x", entry);
 				x = atof(std::string(entry->get_text()).c_str());
 
-				_builder->get_widget("entry_center_y", entry);
+				_builder->get_widget("entry_rotation_y", entry);
 				y = atof(std::string(entry->get_text()).c_str());
 
 				if (model::Vector::dimension == 4)
 				{
-					_builder->get_widget("entry_center_z", entry);
+					_builder->get_widget("entry_rotation_z", entry);
 					z = atof(std::string(entry->get_text()).c_str());
 				}
 				
