@@ -44,33 +44,22 @@ namespace model
 			Shape(name)
 		{}
 
-		Polygon(std::string name, std::initializer_list<Vector>& vs) :
+		Polygon(std::string name, const std::initializer_list<Vector>& vs) :
 			Shape(name, vs)
 		{}
 
-		Polygon(std::string name, std::initializer_list<Vector>&& vs) :
+		Polygon(std::string name, const std::vector<Vector>& vs) :
 			Shape(name, vs)
 		{}
 
 		~Polygon() = default;
 
 		virtual std::string type();
-
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
-
-	void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
-	{
-		//! Base draw
-		Shape::draw(cr, T);
-
-		//! Complete polygon
-		cr->close_path();
-	}
 
 	std::string Polygon::type()
 	{

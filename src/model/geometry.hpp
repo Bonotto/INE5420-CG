@@ -83,6 +83,18 @@ namespace model
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
 
+		friend Debug & operator<<(Debug & db, const Vector & v)
+		{
+			db << "[" << v._coordinates[0];
+
+			for (auto i = 1; i < Vector::dimension; ++i)
+				db << ", " << v._coordinates[i];
+
+			db << "]";
+
+			return db;
+		}
+
 	private:
 		std::vector<double> _coordinates;
 	};
@@ -124,21 +136,38 @@ namespace model
 
 		Matrix operator*(const Matrix& M) const;
 
+		friend Debug & operator<<(Debug & db, const Matrix & M)
+		{
+			for (auto i = 0; i < Vector::dimension; ++i)
+				db << M._vectors[i] << std::endl;
+
+			return db;
+		}
+
 	private:
 		std::vector<MatrixLine> _vectors;
 	};
 
 /*--------------------------------------------------------------------------------*/
-/*                                transformations                                 */
+/*                                calculation                                 */
 /*--------------------------------------------------------------------------------*/
 
-	namespace transformations
+	namespace calculation
 	{
 		double euclidean_distance(const Vector& v1, const Vector& v2);
+	} //! namespace calculation
 
+/*--------------------------------------------------------------------------------*/
+/*                                transformation                                 */
+/*--------------------------------------------------------------------------------*/
+
+	namespace transformation
+	{
 		Matrix translation(const Vector& factor);
 
 		Matrix scheduling(const double factor, const Vector& mass_center);
+
+		Matrix rotation(const double angle, const Vector& mass_center);
 
 		Matrix viewport_transformation(
 			const Vector& vp_min,
@@ -146,7 +175,7 @@ namespace model
 			const Vector& win_min,
 			const Vector& win_max
 		);
-	} //! namespace transformations
+	} //! namespace transformation
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
@@ -227,7 +256,6 @@ namespace model
 
 	Matrix Matrix::operator*(const Matrix& M) const
 	{
-		// Matrix C = M.column_oriented();
 		Matrix R( //! Result
 			{0, 0, 0, 0},
 			{0, 0, 0, 0},
@@ -239,6 +267,9 @@ namespace model
 			for (int j = 0; j < dimension; ++j)
 				for (int i = 0; i < dimension; ++i)
 					R[h][j] += _vectors[h][i] * M[i][j];
+		
+		//! Another way
+		// Matrix C = M.column_oriented();
 
 		// for (int i = 0; i < dimension; ++i)
 		// 	for (int j = 0; j < dimension; ++j)
@@ -248,10 +279,10 @@ namespace model
 	}
 
 /*--------------------------------------------------------------------------------*/
-/*                                transformations                                 */
+/*                                  calculation                                   */
 /*--------------------------------------------------------------------------------*/
 
-	double transformations::euclidean_distance(const Vector& v0, const Vector& v1)
+	double calculation::euclidean_distance(const Vector& v0, const Vector& v1)
 	{
 		double sum = 0;
 		for (int i = 0; i < Vector::dimension; ++i)
@@ -260,7 +291,11 @@ namespace model
 		return std::sqrt(sum);
 	}
 
-	Matrix transformations::translation(const Vector& factor)
+/*--------------------------------------------------------------------------------*/
+/*                                transformation                                  */
+/*--------------------------------------------------------------------------------*/
+
+	Matrix transformation::translation(const Vector& factor)
 	{
 		Vector l0(1, 0, 0, 0);
 		Vector l1(0, 1, 0, 0);
@@ -281,7 +316,7 @@ namespace model
 		return Matrix(l0, l1, l2, l3);
 	}
 
-	Matrix transformations::scheduling(const double factor, const Vector& mass_center)
+	Matrix transformation::scheduling(const double factor, const Vector& mass_center)
 	{
 		double factor_z = Vector::dimension == 3 ? 1 : factor;
 
@@ -298,7 +333,22 @@ namespace model
 		return (to_origin * scalling) * go_back;
 	}
 
-	Matrix transformations::viewport_transformation(
+	Matrix transformation::rotation(const double angle, const Vector& mass_center)
+	{
+		auto to_origin = translation(-1 * mass_center);
+		auto go_back   = translation(mass_center);
+
+		Matrix rotating(
+			{ std::cos(angle), std::sin(angle), 0, 0},
+			{-std::sin(angle), std::cos(angle), 0, 0},
+			{               0,               0, 1, 0},
+			{               0,               0, 0, 1}
+		);
+
+		return (to_origin * rotating) * go_back;
+	}
+
+	Matrix transformation::viewport_transformation(
 		const Vector& vp_min,
 		const Vector& vp_max,
 		const Vector& win_min,

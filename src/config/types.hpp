@@ -24,27 +24,40 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-
-template<class C>
-using UniquePointer = std::unique_ptr<C>;
-
 /* General */
 class Debug;
 
+namespace sys
+{
+    enum Color {CLR = 1};
+} //! namespace sys
+
+namespace gui
+{
+    enum Color {CLR = 1};
+} //! namespace gui
+
 namespace control
 {
-
+    class MainControl;
 } //! namespace control
 
 namespace model
 {
     class Vector;
     class Matrix;
+    class Shape;
+    class Point;
+    class Line;
+    class Rectangle;
+    class Polygon;
+    class Window;
+    class Viewport;
 } //! namespace model
 
 namespace view
 {
-    
+    /* Empty */
 } //! namespace view
 
 #endif //! TYPES_HPP
