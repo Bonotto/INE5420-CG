@@ -149,7 +149,7 @@ namespace model
 	};
 
 /*--------------------------------------------------------------------------------*/
-/*                                transformation                                 */
+/*                                calculation                                 */
 /*--------------------------------------------------------------------------------*/
 
 	namespace calculation
@@ -163,8 +163,6 @@ namespace model
 
 	namespace transformation
 	{
-		double euclidean_distance(const Vector& v1, const Vector& v2);
-
 		Matrix translation(const Vector& factor);
 
 		Matrix scheduling(const double factor, const Vector& mass_center);
@@ -270,7 +268,7 @@ namespace model
 				for (int i = 0; i < dimension; ++i)
 					R[h][j] += _vectors[h][i] * M[i][j];
 		
-		// //! Another way
+		//! Another way
 		// Matrix C = M.column_oriented();
 
 		// for (int i = 0; i < dimension; ++i)
@@ -346,14 +344,6 @@ namespace model
 			{               0,               0, 1, 0},
 			{               0,               0, 0, 1}
 		);
-
-
-		db<control::MainControl>(INF) << "[rotation] to origin" <<  to_origin << std::endl;
-		db<control::MainControl>(INF) << "[rotation] rotating" <<  rotating << std::endl;
-		db<control::MainControl>(INF) << "[rotation] go_back" << go_back << std::endl;
-
-
-		db<control::MainControl>(INF) << "[rotation] T " << (to_origin * rotating) * go_back << std::endl;
 
 		return (to_origin * rotating) * go_back;
 	}

@@ -36,16 +36,16 @@
 template<typename T>
 struct Traits
 {
-    static const bool debugged = true;              /* Enable debugging.        */
-    static const bool hysterically_debugged = false; /* Enables chain debugging. */
+    static const bool debugged = false;              /* Enable debugging.        */
+    static const bool hysterically_debugged = true; /* Enables chain debugging. */
 };
 
 template<> struct Traits<Debug>
 {
     static const bool error   = true;  /* Prints erros.                */
     static const bool warning = true;  /* Prints warnings.             */
-    static const bool info    = true; /* Prints relevant information. */
-    static const bool trace   = false;  /* Prints function call trace.  */
+    static const bool info    = false; /* Prints relevant information. */
+    static const bool trace   = true;  /* Prints function call trace.  */
 };
 
 /*================================================================================*/
@@ -54,7 +54,7 @@ template<> struct Traits<Debug>
 
 template<> struct Traits<control::MainControl> : public Traits<void>
 {
-    static const bool debugged = true;
+    static const bool debugged = hysterically_debugged;
 };
 
 template<> struct Traits<model::Vector> : public Traits<void>

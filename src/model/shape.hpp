@@ -76,6 +76,14 @@ namespace model
 		std::string name();
 		virtual std::string type();
 
+		friend Debug & operator<<(Debug & db, const Shape & s)
+		{
+			for (const Vector & v : s._vectors)
+				db << v << std::endl;
+
+			return db;
+		}
+
 	protected:
 		std::string _name{"Shape"};
 		std::vector<Vector> _vectors{{0, 0}};
@@ -87,8 +95,8 @@ namespace model
 
 	Vector Shape::mass_center() const
 	{
-		int total = _vectors.size();
-		int x = 0, y = 0, z = 0, w = 0;
+		double total = _vectors.size();
+		double x = 0, y = 0, z = 0, w = 0;
 
 		for (const auto &v : _vectors)
 		{
@@ -98,23 +106,47 @@ namespace model
 			w += v[3];
 		}
 
-		Vector center(
+		return Vector(
 			x/total,
 			y/total,
 			z/total,
 			w/total
 		);
-
-		db<Shape>(INF) << "[mass center] " << _name << " = x:" << x << ", y:" << y << ", z:" << z << std::endl;
-		db<Shape>(INF) << "[mass center] " << _name << " = " << center  << " and total = " << total << std::endl;
-
-		return center;
 	}
 
 	void Shape::transformation(const Matrix & T)
 	{
+		std::cout << "Shape before:" << std::endl;
+		
+		for (const Vector & v : _vectors)
+		{
+			std::cout << "[" << v[0];
+
+			for (auto i = 1; i < Vector::dimension; ++i)
+				std::cout << ", " << v[i];
+
+			std::cout << "]";
+
+		}
+
+		
 		for (auto & v : _vectors)
 			v = v * T;
+
+
+		std::cout  << "Shape after:" << std::endl;
+	
+		
+		for (const Vector & v : _vectors)
+		{
+			std::cout << "[" << v[0];
+
+			for (auto i = 1; i < Vector::dimension; ++i)
+				std::cout << ", " << v[i];
+
+			std::cout << "]";
+
+		}
 	}
 
 	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
@@ -131,7 +163,7 @@ namespace model
 			cr->line_to(vi[0], vi[1]);
 		}
 		
-		//! Complete draw
+		//! Complete path
 		cr->close_path();
 	}
 

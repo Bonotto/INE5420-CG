@@ -25,6 +25,7 @@
 #define CONTROL_MAIN_CONTROL_HPP
 
 /* External includes */
+#include <unordered_map>
 #include <vector>
 #include <gtkmm.h>
 
@@ -108,7 +109,7 @@ namespace control
 			build_numeric_entrys();
 
 			if (model::Vector::dimension == 3)
-				disable_unused_entrys();
+				disable_unused_interface_objects(ButtonID::Null);
 		}
 
 		~MainControl()
@@ -125,12 +126,15 @@ namespace control
 		void clockwise();
 		void counterclockwise();
 
-		void on_item_selected();
+		void on_vector_selected();
+		void on_object_selected();
 		void on_radio_clicked();
 		void on_dialog_ok_clicked();
 		void on_new_object_clicked();
 		void on_dialog_exit_clicked();
+		void on_remove_object_clicked();
 		void on_dialog_insert_clicked();
+		void on_dialog_delete_clicked();
 
 	private:
 		void build_window();
@@ -139,16 +143,21 @@ namespace control
 		void build_new_objects();
 		void build_movements();
 		void build_numeric_entrys();
-		void disable_unused_entrys();
+		void reset_dialog_entries();
+		void enable_used_interface_objects(ButtonID selected);
+		void disable_unused_interface_objects(ButtonID selected);
 
 		void insert_point(std::string name);
 		void insert_polygon(std::string name);
 		void insert_object(std::string name, std::string type);
 
+		void erase_object_entry(int id);
+		void erase_vector_entry(int id);
 		void add_entry(int id, double x, double y, double z);
 		void add_entry(int id, std::string name, std::string type);
 
 		/* Control */
+		int _vector_selected{-1};
 		int _shape_selected{0};
 		int _objects_control{0};
 		int _vectors_control{0};
@@ -159,7 +168,7 @@ namespace control
 
 		/* Shapes */
 		std::vector<std::shared_ptr<model::Shape>> _shapes;
-		std::map<int, std::shared_ptr<model::Shape>> _shapes_map;
+		std::unordered_map<int, std::shared_ptr<model::Shape>> _shapes_map;
 
 		/* Gtk */
 		Glib::RefPtr<Gtk::Builder> _builder;
@@ -216,7 +225,7 @@ namespace control
 		tree->append_column("Name", _tree_model_objects._column_name);
 		tree->append_column("Type", _tree_model_objects._column_type);
 
-        tree->get_selection()->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_item_selected));
+        tree->get_selection()->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_object_selected));
 
 		Gtk::TreeModel::Row row = *(_list_model_objects->append());
 		row[_tree_model_objects._column_id]   = 0;
@@ -231,6 +240,8 @@ namespace control
 		tree->append_column("X", _tree_model_vectors._column_x);
 		tree->append_column("Y", _tree_model_vectors._column_y);
 		tree->append_column("Z", _tree_model_vectors._column_z);
+
+        tree->get_selection()->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_vector_selected));
 	}
 
 	void MainControl::build_new_objects()
@@ -252,6 +263,12 @@ namespace control
 
 		_builder->get_widget("button_insert_vector", button);
 		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_insert_clicked));
+
+		_builder->get_widget("button_remove_object", button);
+		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_remove_object_clicked));
+
+		_builder->get_widget("button_delete_vector", button);
+		button->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_delete_clicked));
 
 		/* New object group */
 		_builder->get_widget("radio_point", radio1);
@@ -282,9 +299,9 @@ namespace control
 		radio2->join_group(*radio1);
 	}
 
-	void MainControl::on_item_selected()
+	void MainControl::on_object_selected()
 	{
-		db<MainControl>(TRC) << "MainControl::on_item_selected()" << std::endl;
+		db<MainControl>(TRC) << "MainControl::on_object_selected()" << std::endl;
 
 		Gtk::TreeView *tree;
 		_builder->get_widget("tree_objects", tree);
@@ -292,6 +309,18 @@ namespace control
 		_shape_selected = tree->get_selection()->get_selected()->get_value(_tree_model_objects._column_id);
 
 		db<MainControl>(INF) << "Shape selected: " << _shape_selected << std::endl;
+	}
+
+	void MainControl::on_vector_selected()
+	{
+		db<MainControl>(TRC) << "MainControl::on_vector_selected()" << std::endl;
+
+		Gtk::TreeView *tree;
+		_builder->get_widget("tree_vectors", tree);
+
+		_vector_selected = tree->get_selection()->get_selected()->get_value(_tree_model_vectors._column_id);
+
+		db<MainControl>(INF) << "Vector selected: " << _vector_selected << std::endl;
 	}
 
 	void MainControl::build_movements()
@@ -302,20 +331,19 @@ namespace control
 
 		_builder->get_widget("spin_step", spin);
 
-		// spin->set_digits(0);
 		spin->set_range(0, 9999999);
 		spin->set_increments(1, 100);
-		spin->set_value(2);
+		spin->set_value(0);
 
 		_builder->get_widget("spin_percentual", spin);
 
-		spin->set_range(1, 100);
+		spin->set_range(1, 9999999);
 		spin->set_increments(1, 100);
 		spin->set_value(1);
 
 		_builder->get_widget("spin_degrees", spin);
 
-		spin->set_range(0, 359);
+		spin->set_range(0, 9999999);
 		spin->set_increments(1, 100);
 		spin->set_value(0);
 
@@ -389,25 +417,217 @@ namespace control
 		// }
 	}
 
-	void MainControl::disable_unused_entrys()
+	void MainControl::disable_unused_interface_objects(ButtonID selected)
 	{
-		db<MainControl>(TRC) << "Disable unused entrys" << std::endl;
+		db<MainControl>(TRC) << "Disable unused interface objects" << std::endl;
 
+		std::vector<std::string> entry_names;
+		std::vector<std::string> button_names;
+
+		switch(selected)
+		{
+			case ButtonID::Null:
+				entry_names = {
+					"entry_point_z",
+					"entry_x1_Line",
+					"entry_x2_Line",
+					"entry_y1_Line",
+					"entry_y2_Line",
+					"entry_z1_Line",
+					"entry_z2_Line",
+					"entry_x1_Rectangle",
+					"entry_x2_Rectangle",
+					"entry_y1_Rectangle",
+					"entry_y2_Rectangle",
+					"entry_z1_Rectangle",
+					"entry_z2_Rectangle",
+					"entry_polygon_x",
+					"entry_polygon_y",
+					"entry_polygon_z",
+					"entry_rotation_x",
+					"entry_rotation_y",
+					"entry_rotation_z"
+				};
+				button_names = {
+					"button_insert_vector",
+					"button_delete_vector"
+				};
+				break;
+
+			case ButtonID::Point:
+				entry_names = {
+					"entry_x1_Line",
+					"entry_x2_Line",
+					"entry_y1_Line",
+					"entry_y2_Line",
+					"entry_x1_Rectangle",
+					"entry_x2_Rectangle",
+					"entry_y1_Rectangle",
+					"entry_y2_Rectangle",
+					"entry_polygon_x",
+					"entry_polygon_y",
+					"entry_polygon_z"
+				};
+				button_names = {
+					"button_insert_vector",
+					"button_delete_vector"
+				};
+				break;
+
+			case ButtonID::Line:
+				entry_names = {
+					"entry_point_x",
+					"entry_point_y",
+					"entry_x1_Rectangle",
+					"entry_x2_Rectangle",
+					"entry_y1_Rectangle",
+					"entry_y2_Rectangle",
+					"entry_polygon_x",
+					"entry_polygon_y",
+					"entry_polygon_z"
+				};
+				button_names = {
+					"button_insert_vector",
+					"button_delete_vector"
+				};
+				break;
+
+			case ButtonID::Rectangle:
+				entry_names = {
+					"entry_point_x",
+					"entry_point_y",
+					"entry_x1_Line",
+					"entry_x2_Line",
+					"entry_y1_Line",
+					"entry_y2_Line",
+					"entry_polygon_x",
+					"entry_polygon_y",
+					"entry_polygon_z"
+				};
+				button_names = {
+					"button_insert_vector",
+					"button_delete_vector"
+				};
+				break;
+
+			case ButtonID::Polygon:
+				entry_names = {
+					"entry_point_x",
+					"entry_point_y",
+					"entry_x1_Line",
+					"entry_x2_Line",
+					"entry_y1_Line",
+					"entry_y2_Line",
+					"entry_x1_Rectangle",
+					"entry_x2_Rectangle",
+					"entry_y1_Rectangle",
+					"entry_y2_Rectangle"
+				};
+				break;
+
+			case ButtonID::CenterObject:
+				entry_names = {
+					"entry_rotation_x",
+					"entry_rotation_y"
+				};
+				break;
+
+			case ButtonID::CenterWorld:
+				entry_names = {
+					"entry_rotation_x",
+					"entry_rotation_y"
+				};
+				break;
+
+			default:
+				break;
+		}
+		
 		Gtk::Entry *entry;
-		std::vector<std::string> entry_names{
-			"entry_point_z",
-			"entry_z1_Line",
-			"entry_z2_Line",
-			"entry_z1_Rectangle",
-			"entry_z2_Rectangle",
-			"entry_polygon_z",
-			"entry_rotation_z"
-		};
+		Gtk::Button *button;
 
 		for (auto name : entry_names)
 		{
 			_builder->get_widget(name, entry);
 			entry->set_sensitive(false);
+		};
+
+		for (auto name : button_names)
+		{
+			_builder->get_widget(name, button);
+			button->set_sensitive(false);
+		}
+	}
+
+	void MainControl::enable_used_interface_objects(ButtonID selected)
+	{
+		db<MainControl>(TRC) << "Enable used interface objects" << std::endl;
+
+		std::vector<std::string> entry_names;
+		std::vector<std::string> button_names;
+
+		switch(selected)
+		{
+			case ButtonID::Point:
+				entry_names = {
+					"entry_point_x",
+					"entry_point_y"
+				};
+				break;
+
+			case ButtonID::Line:
+				entry_names = {
+					"entry_x1_Line",
+					"entry_x2_Line",
+					"entry_y1_Line",
+					"entry_y2_Line"
+				};
+				break;
+
+			case ButtonID::Rectangle:
+				entry_names = {
+					"entry_x1_Rectangle",
+					"entry_x2_Rectangle",
+					"entry_y1_Rectangle",
+					"entry_y2_Rectangle"
+				};
+				break;
+
+			case ButtonID::Polygon:
+				entry_names = {
+					"entry_polygon_x",
+					"entry_polygon_y"
+				};
+				button_names = {
+					"button_insert_vector",
+					"button_delete_vector"
+				};
+				break;
+
+			case ButtonID::CenterSpecific:
+				entry_names = {
+					"entry_rotation_x",
+					"entry_rotation_y"
+				};
+				break;
+
+			default:
+				break;
+		}
+		
+		Gtk::Entry *entry;
+		Gtk::Button *button;
+
+		for (auto name : entry_names)
+		{
+			_builder->get_widget(name, entry);
+			entry->set_sensitive(true);
+		};
+
+		for (auto name : button_names)
+		{
+			_builder->get_widget(name, button);
+			button->set_sensitive(true);
 		}
 	}
 
@@ -423,6 +643,83 @@ namespace control
 	void MainControl::on_radio_clicked()
 	{
 		db<MainControl>(TRC) << "MainControl::on_radio_clicked()" << std::endl;
+		
+		Gtk::RadioButton *radio;
+
+		/* Object type */
+		unsigned hash = 0;
+
+		_builder->get_widget("radio_point", radio);
+		hash += radio->get_active() ? ButtonID::Point     	   : ButtonID::Null;
+
+		_builder->get_widget("radio_line", radio);
+		hash += radio->get_active() ? ButtonID::Line      	   : ButtonID::Null;
+
+		_builder->get_widget("radio_rectangle", radio);
+		hash += radio->get_active() ? ButtonID::Rectangle 	   : ButtonID::Null;
+
+		_builder->get_widget("radio_polygon", radio);
+		hash += radio->get_active() ? ButtonID::Polygon   	   : ButtonID::Null;
+
+		switch (hash)
+		{
+			case ButtonID::Point:
+				disable_unused_interface_objects(ButtonID::Point);
+				enable_used_interface_objects(ButtonID::Point);
+				break;
+
+			case ButtonID::Line:
+				disable_unused_interface_objects(ButtonID::Line);
+				enable_used_interface_objects(ButtonID::Line);
+				break;
+
+			case ButtonID::Rectangle:
+				disable_unused_interface_objects(ButtonID::Rectangle);
+				enable_used_interface_objects(ButtonID::Rectangle);
+				break;
+
+			case ButtonID::Polygon:
+				disable_unused_interface_objects(ButtonID::Polygon);
+				enable_used_interface_objects(ButtonID::Polygon);
+				break;
+
+			/* Undefined */
+			default:
+				break;
+		}
+
+		hash = 0;
+
+		_builder->get_widget("radio_center_object", radio);
+		hash += radio->get_active() ? ButtonID::CenterObject   : ButtonID::Null;
+
+		_builder->get_widget("radio_center_world", radio);
+		hash += radio->get_active() ? ButtonID::CenterWorld    : ButtonID::Null;
+
+		_builder->get_widget("radio_center_specific", radio);
+		hash += radio->get_active() ? ButtonID::CenterSpecific : ButtonID::Null;
+
+		switch (hash)
+		{
+			case ButtonID::CenterObject:
+				disable_unused_interface_objects(ButtonID::CenterObject);
+				enable_used_interface_objects(ButtonID::CenterObject);
+				break;
+
+			case ButtonID::CenterWorld:
+				disable_unused_interface_objects(ButtonID::CenterWorld);
+				enable_used_interface_objects(ButtonID::CenterWorld);
+				break;
+
+			case ButtonID::CenterSpecific:
+				disable_unused_interface_objects(ButtonID::CenterSpecific);
+				enable_used_interface_objects(ButtonID::CenterSpecific);
+				break;
+
+			/* Undefined */
+			default:
+				break;
+		}
 	}
 
 	void MainControl::on_dialog_exit_clicked()
@@ -431,7 +728,41 @@ namespace control
 
 		Gtk::Dialog *dialog;
 		_builder->get_widget("window_dialog", dialog);
-  		dialog->close();
+  		dialog->hide();
+
+		reset_dialog_entries();
+	}
+
+	void MainControl::reset_dialog_entries()
+	{
+		std::vector<std::string> entry_names = {
+			"entry_name",
+			"entry_point_x",
+			"entry_point_y",
+			"entry_x1_Line",
+			"entry_x2_Line",
+			"entry_y1_Line",
+			"entry_y2_Line",
+			"entry_x1_Rectangle",
+			"entry_x2_Rectangle",
+			"entry_y1_Rectangle",
+			"entry_y2_Rectangle",
+			"entry_polygon_x",
+			"entry_polygon_y",
+			"entry_polygon_z"
+		};
+		
+		Gtk::Entry *entry;
+
+		for (auto name : entry_names)
+		{
+			_builder->get_widget(name, entry);
+			entry->set_text("");
+		};
+
+		_list_model_vectors->clear();
+		_vector_selected = -1;
+		_vectors_control = 0;
 	}
 
 	void MainControl::on_dialog_ok_clicked()
@@ -484,6 +815,8 @@ namespace control
 		}
 
 		_viewport->update();
+
+		reset_dialog_entries();
 	}
 
 	void MainControl::on_dialog_insert_clicked()
@@ -508,6 +841,34 @@ namespace control
 			z = model::Vector::z;
 
 		add_entry(_vectors_control++, x, y, z);
+	}
+
+	void MainControl::on_remove_object_clicked()
+	{
+		if(!_shape_selected)
+			return;
+
+		for (auto v = _shapes.begin(); v != _shapes.end(); v++)
+			if (*v == _shapes_map[_shape_selected]){
+				_shapes.erase(v);
+				break;
+			}
+
+		_shapes_map.erase(_shape_selected);
+
+		erase_object_entry(_shape_selected);
+
+		_shape_selected = 0;
+	}
+
+	void MainControl::on_dialog_delete_clicked()
+	{
+		if(_vector_selected < 0)
+			return;
+
+		erase_vector_entry(_vector_selected);
+
+		_vector_selected = -1;
 	}
 
 	void MainControl::insert_point(std::string name)
@@ -627,6 +988,38 @@ namespace control
 		row[_tree_model_vectors._column_z] = z;
 	}
 
+	void MainControl::erase_object_entry(int id)
+	{
+		db<MainControl>(TRC) << "MainControl::erase_entry() - objects" << std::endl;
+
+		for (auto it: _list_model_objects->children())
+		{
+			Gtk::TreeModel::Row row = *it;
+
+			if (row[_tree_model_objects._column_id] == id)
+			{
+				_list_model_objects->erase(it);
+				break;
+			}
+		}
+	}
+
+	void MainControl::erase_vector_entry(int id)
+	{
+		db<MainControl>(TRC) << "MainControl::erase_entry()" << std::endl;
+
+		for (auto it: _list_model_vectors->children())
+		{
+			Gtk::TreeModel::Row row = *it;
+
+			if (row[_tree_model_vectors._column_id] == id)
+			{
+				_list_model_vectors->erase(it);
+				break;
+			}
+		}
+	}
+
 	void MainControl::up()
 	{
 		db<MainControl>(TRC) << "MainControl::up()" << std::endl;
@@ -730,7 +1123,7 @@ namespace control
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_degrees", spin);
-		double angle = (_shape_selected ? -1 : +1) * spin->get_value() * (M_PI/180);
+		double angle = (_shape_selected ? -1 : 1) * spin->get_value() * (M_PI / 180);
 
 		/* Calculate the center of mass */
 		unsigned hash = 0;
@@ -777,14 +1170,10 @@ namespace control
 				return;
 		}
 
-
-
 		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center);
 
 		/* Apply transformation */
-		db<MainControl>(INF) << "[mass center] " << _shapes_map[_shape_selected]->name() << " = " << mass_center << std::endl;
-		db<MainControl>(INF) << "[mass center] Matrix = " << std::endl << T << std::endl;
 		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}
@@ -800,7 +1189,7 @@ namespace control
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_degrees", spin);
-		double angle = (_shape_selected ? 1 : -1) * spin->get_value() * (M_PI/180);
+		double angle = (_shape_selected ? 1 : -1) * spin->get_value() * (M_PI / 180);
 
 		/* Calculate the center of mass */
 		unsigned hash = 0;
