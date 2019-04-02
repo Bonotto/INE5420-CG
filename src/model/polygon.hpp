@@ -55,22 +55,11 @@ namespace model
 		~Polygon() = default;
 
 		virtual std::string type();
-
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
-
-	void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
-	{
-		//! Base draw
-		Shape::draw(cr, T);
-
-		//! Complete polygon
-		cr->close_path();
-	}
 
 	std::string Polygon::type()
 	{

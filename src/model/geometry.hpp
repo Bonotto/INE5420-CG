@@ -87,7 +87,7 @@ namespace model
 		{
 			db << "[" << v._coordinates[0];
 
-			for (auto i = 0; i < Vector::dimension; ++i)
+			for (auto i = 1; i < Vector::dimension; ++i)
 				db << ", " << v._coordinates[i];
 
 			db << "]";
@@ -346,6 +346,14 @@ namespace model
 			{               0,               0, 1, 0},
 			{               0,               0, 0, 1}
 		);
+
+
+		db<control::MainControl>(INF) << "[rotation] to origin" <<  to_origin << std::endl;
+		db<control::MainControl>(INF) << "[rotation] rotating" <<  rotating << std::endl;
+		db<control::MainControl>(INF) << "[rotation] go_back" << go_back << std::endl;
+
+
+		db<control::MainControl>(INF) << "[rotation] T " << (to_origin * rotating) * go_back << std::endl;
 
 		return (to_origin * rotating) * go_back;
 	}

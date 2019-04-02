@@ -777,10 +777,14 @@ namespace control
 				return;
 		}
 
+
+
 		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center);
 
 		/* Apply transformation */
+		db<MainControl>(INF) << "[mass center] " << _shapes_map[_shape_selected]->name() << " = " << mass_center << std::endl;
+		db<MainControl>(INF) << "[mass center] Matrix = " << std::endl << T << std::endl;
 		_shapes_map[_shape_selected]->transformation(T);
 		_viewport->update();
 	}

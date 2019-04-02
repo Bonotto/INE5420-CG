@@ -98,12 +98,17 @@ namespace model
 			w += v[3];
 		}
 
-		return Vector(
+		Vector center(
 			x/total,
 			y/total,
 			z/total,
 			w/total
 		);
+
+		db<Shape>(INF) << "[mass center] " << _name << " = x:" << x << ", y:" << y << ", z:" << z << std::endl;
+		db<Shape>(INF) << "[mass center] " << _name << " = " << center  << " and total = " << total << std::endl;
+
+		return center;
 	}
 
 	void Shape::transformation(const Matrix & T)
@@ -126,7 +131,8 @@ namespace model
 			cr->line_to(vi[0], vi[1]);
 		}
 		
-		cr->line_to(v0[0], v0[1]);
+		//! Complete draw
+		cr->close_path();
 	}
 
 	std::string Shape::name()
