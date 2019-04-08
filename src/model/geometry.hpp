@@ -80,6 +80,7 @@ namespace model
 		const double& operator[](int position) const;
 
 		double operator*(const Vector& v) const;
+		// Vector operator*(const Vector& v) const;
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
 
@@ -135,6 +136,7 @@ namespace model
 		const MatrixLine& operator[](const int position) const;
 
 		Matrix operator*(const Matrix& M) const;
+		Vector operator*(const Vector& v) const;
 
 		friend Debug & operator<<(Debug & db, const Matrix & M)
 		{
@@ -267,15 +269,19 @@ namespace model
 			for (int j = 0; j < dimension; ++j)
 				for (int i = 0; i < dimension; ++i)
 					R[h][j] += _vectors[h][i] * M[i][j];
-		
-		//! Another way
-		// Matrix C = M.column_oriented();
-
-		// for (int i = 0; i < dimension; ++i)
-		// 	for (int j = 0; j < dimension; ++j)
-		// 		R[i][j] += _vectors[i] * C[j];
 
 		return R;
+	}
+
+	Vector Matrix::operator*(const Vector& v) const
+	{
+		Vector r(0, 0, 0, 0); //! Result
+
+		for (int i = 0; i < dimension; ++i)
+			for (int j = 0; j < dimension; ++j)
+				r[i] += _vectors[i][j] * v[i];
+
+		return r;
 	}
 
 /*--------------------------------------------------------------------------------*/

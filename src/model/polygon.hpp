@@ -40,16 +40,12 @@ namespace model
 	class Polygon : public Shape
 	{
 	public:
-		Polygon(std::string name) :
-			Shape(name)
+		Polygon(std::string name, const std::initializer_list<Vector>& world_vs, const std::initializer_list<Vector>& window_vs) :
+			Shape(name, world_vs, window_vs)
 		{}
 
-		Polygon(std::string name, const std::initializer_list<Vector>& vs) :
-			Shape(name, vs)
-		{}
-
-		Polygon(std::string name, const std::vector<Vector>& vs) :
-			Shape(name, vs)
+		Polygon(std::string name, const std::vector<Vector>& world_vs, const std::vector<Vector>& window_vs) :
+			Shape(name, world_vs, window_vs)
 		{}
 
 		~Polygon() = default;

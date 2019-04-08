@@ -197,8 +197,8 @@ namespace control
 		width = alloc.get_width();
 		height = alloc.get_height();
 
-		_window = new model::Window(model::Vector(0, 0), model::Vector(width, height));
-		_shapes.emplace_back(_window);
+		_window = new model::Window(model::Vector(10, 10), model::Vector(width-10, height-10));
+		_shapes.emplace_back(_window->drawable());
 		_shapes_map[_objects_control++] = _shapes.back();
 	}
 
