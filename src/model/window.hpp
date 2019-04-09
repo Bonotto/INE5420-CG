@@ -41,28 +41,10 @@ namespace model
 	{
 	public:
 		Window(const Vector & min, const Vector & max) :
-			_visible_area(Rectangle{"window", min, max, normalization({min}), normalization({max})}),
+			_visible_world(Rectangle{"window", min, max}),
 			_min{min},
 			_max{max}
-		{
-			Vector l0(1, 0, 0, 0);
-			Vector l1(0, 1, 0, 0);
-			Vector l2;
-			Vector l3;
-
-			if (Vector::dimension == 3)
-			{
-				l2 = Vector(-1, -1, 1, 0);
-				l3 = Vector(0, 0, 0, 1);
-			}
-			else
-			{
-				l2 = Vector(0, 0, 1, 0);
-				l3 = Vector(-1, -1, -1, 1);
-			}
-
-			_dimensions = Matrix(l0, l1, l2, l3);
-		}
+		{}
 
 		~Window() = default;
 
@@ -72,17 +54,17 @@ namespace model
 		virtual void transformation(const Matrix& T);
 		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
-		virtual Vector& normalization(const std::vector<Vector>& v);
+		virtual Vector normalization(const Vector& v);
 		
 		const Matrix& transformation() const;
 		const Vector& min() const;
 		const Vector& max() const;
-		const Rectangle drawable();
+		const Rectangle& drawable();
 
 	private:
-		Rectangle _visible_area;
+		Rectangle _visible_world;
 		Vector _min, _max;
-		Matrix _dimensions;
+		Matrix _history;
 	};
 
 /*================================================================================*/
@@ -101,17 +83,17 @@ namespace model
 
 	void Window::transformation(const Matrix& T)
 	{
-		_dimensions = _dimensions * T;
+		_history = _history * T;
 	}
 
 	void Window::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
 	{
-		_visible_area.draw(cr, T);
+		_visible_world.draw(cr, T);
 	}
 
 	const Matrix& Window::transformation() const
 	{
-		return _dimensions;
+		return _history;
 	}
 
 	const Vector& Window::min() const
@@ -124,36 +106,32 @@ namespace model
 		return _max;
 	}
 	
-	const Rectangle Window::drawable()
+	const Rectangle& Window::drawable()
 	{
-		return _visible_area;
+		return _visible_world;
 	}
 	
-	Vector& Window::normalization(const std::vector<Vector>& v)
+	Vector Window::normalization(const Vector& v)
 	{
-		// xw_max (Window where x = max) and xw_min (Window where x = min)
-		// are always 1 and -1, respectively
-		// xvw min and max are the coordinates of visible world on window, respectively
-		// xw = (xw_max - xw_min) / (xvw_max - xvw_min)
-		// xw = xw * (xvw - xvw_min);
-		// xw = xw + xw_min;
-		// for yw the calculus is analogous
-
-		Matrix B, C;
-		Vector A;
+		Matrix A, B, C;
 
 		double x = 2 / (_max[0] - _min[0]);
 		double y = 2 / (_max[1] - _min[1]);
 
 		if (Vector::dimension == 3)
 		{
-			A = Vector(x, y, 1);
-
-			B = Matrix( 
+			A = Matrix( 
 				{1, 		0, 			0, 0},
 				{0, 		1, 			0, 0},
 				{-_min[0],	-_min[1],	1, 0},
 				{0, 		0, 			0, 0}
+			);
+
+			B = Matrix( 
+				{x, 0, 0, 0},
+				{0, y, 0, 0},
+				{0, 0, 1, 0},
+				{0, 0, 0, 0}
 			);
 
 			C = Matrix( 
@@ -167,13 +145,18 @@ namespace model
 		{
 			double z = 2 / (_max[2] - _min[2]);
 
-			A = Vector(x, y, z, 1);
-
-			B = Matrix( 
+			A = Matrix( 
 				{1, 		0, 			0, 		0},
 				{0, 		1, 			0, 		0},
 				{0,			0,			1, 		0},
 				{-_min[0], -_min[1], -_min[2], 	1}
+			);
+
+			B = Matrix( 
+				{x, 0, 0, 0},
+				{0, y, 0, 0},
+				{0, 0, z, 0},
+				{0, 0, 0, 1}
 			);
 
 			C = Matrix( 
@@ -183,13 +166,8 @@ namespace model
 				{-1, -1, -1, 1}
 			);
 		}
-
-		std::vector<Vector>* window_coord = new std::vector<Vector>();
-
-		for (auto vector: v)
-			window_coord->push_back((A * (vector * B)) * C);
-
-		return window_coord;
+		
+		return ((v * A) * B) * C;
 	}
 
 } //! namespace model

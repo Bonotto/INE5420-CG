@@ -40,9 +40,8 @@ namespace model
 	class Rectangle : public Shape
 	{
 	public:
-		Rectangle(std::string name, const Vector& world_v1, const Vector& world_v2, const Vector& window_v1, const Vector& window_v2) :
-			Shape(name, {world_v1, Vector(world_v1[0], world_v2[1]), world_v2, Vector(world_v2[0], world_v1[1])},
-						{window_v1, Vector(window_v1[0], window_v2[1]), window_v2, Vector(window_v2[0], window_v1[1])})
+		Rectangle(std::string name, const Vector& world_v1, const Vector& world_v2) :
+			Shape(name, {world_v1, Vector(world_v1[0], world_v2[1]), world_v2, Vector(world_v2[0], world_v1[1])})
 		{}
 
 		~Rectangle() = default;

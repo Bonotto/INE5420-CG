@@ -144,6 +144,7 @@ namespace control
 		void build_movements();
 		void build_numeric_entrys();
 		void reset_dialog_entries();
+		void build_objects(std::vector<model::Shape> shapes);
 		void enable_used_interface_objects(ButtonID selected);
 		void disable_unused_interface_objects(ButtonID selected);
 
@@ -194,11 +195,12 @@ namespace control
 
 		draw->set_hexpand(true);
 		alloc = draw->get_allocation();
-		width = alloc.get_width();
-		height = alloc.get_height();
+		width = alloc.get_width() / 2;
+		height = alloc.get_height() / 2;
 
-		_window = new model::Window(model::Vector(10, 10), model::Vector(width-10, height-10));
-		_shapes.emplace_back(_window->drawable());
+		_window = new model::Window(model::Vector(-width + 10, -height + 10), model::Vector(width - 10, height - 10));
+
+		_shapes.push_back(std::make_shared<model::Shape>(_window->drawable()));
 		_shapes_map[_objects_control++] = _shapes.back();
 	}
 
@@ -559,6 +561,15 @@ namespace control
 		}
 	}
 
+	void MainControl::build_objects(std::vector<model::Shape> shapes)
+	{
+		//create window coordinates
+		//normalization
+		//clipping
+		//viewport transformation
+		//draw
+	}
+
 	void MainControl::enable_used_interface_objects(ButtonID selected)
 	{
 		db<MainControl>(TRC) << "Enable used interface objects" << std::endl;
@@ -895,6 +906,12 @@ namespace control
 		add_entry(_objects_control, name, "Point");
 
 		_shapes.emplace_back(new model::Point(name, x, y, z));
+
+		// std::vector<model::Shape> shape;
+
+		// shape.emplace_back(_shapes.back());
+
+		// build_objects(shape);
 
 		_shapes_map[_objects_control++] = _shapes.back();
 	}
