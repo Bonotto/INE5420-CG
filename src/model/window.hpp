@@ -54,7 +54,6 @@ namespace model
 		const double height();
 
 		virtual void transformation(const Matrix& T);
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
 		virtual Vector normalization(const Vector& v);
 		virtual Matrix& normalization();
@@ -100,12 +99,6 @@ namespace model
 	const Matrix& Window::transformation() const
 	{
 		return _history;
-	}
-
-	void Window::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
-	{
-		Matrix identity;
-		_visible_world.draw(cr, identity, T);
 	}
 
 	const Vector& Window::min() const
