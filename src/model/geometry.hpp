@@ -107,6 +107,7 @@ namespace model
 	{
 	public:
 		using MatrixLine = Vector;
+
 		const static int dimension = Vector::dimension;
 
 	public:
@@ -135,6 +136,7 @@ namespace model
 		const MatrixLine& operator[](const int position) const;
 
 		Matrix operator*(const Matrix& M) const;
+		bool operator==(const Matrix& M) const;
 
 		friend Debug & operator<<(Debug & db, const Matrix & M)
 		{
@@ -269,6 +271,16 @@ namespace model
 					R[h][j] += _vectors[h][i] * M[i][j];
 
 		return R;
+	}
+
+	bool Matrix::operator==(const Matrix& M) const
+	{
+		for (int i = 0; i < dimension; ++i)
+			for (int j = 0; j < dimension; ++j)
+				if (M[i][j] != _vectors[i][j])
+					return false;
+
+		return true;
 	}
 
 /*--------------------------------------------------------------------------------*/

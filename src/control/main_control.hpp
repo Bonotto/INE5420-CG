@@ -144,7 +144,7 @@ namespace control
 		void build_movements();
 		void build_numeric_entrys();
 		void reset_dialog_entries();
-		void build_objects(std::vector<model::Shape> shapes);
+		void build_objects(std::vector<std::shared_ptr<model::Shape>> shapes);
 		void enable_used_interface_objects(ButtonID selected);
 		void disable_unused_interface_objects(ButtonID selected);
 
@@ -561,15 +561,6 @@ namespace control
 		}
 	}
 
-	void MainControl::build_objects(std::vector<model::Shape> shapes)
-	{
-		//create window coordinates
-		//normalization
-		//clipping
-		//viewport transformation
-		//draw
-	}
-
 	void MainControl::enable_used_interface_objects(ButtonID selected)
 	{
 		db<MainControl>(TRC) << "Enable used interface objects" << std::endl;
@@ -882,6 +873,17 @@ namespace control
 		_vector_selected = -1;
 	}
 
+	void MainControl::build_objects(std::vector<std::shared_ptr<model::Shape>> shapes)
+	{
+		//create and normalizate window coordinates
+		for (auto shape: shapes)
+			shape->transformation(_window->transformation(), _window->normalization());
+		
+		//clipping
+		//viewport transformation
+		//draw
+	}
+
 	void MainControl::insert_point(std::string name)
 	{
 		db<MainControl>(TRC) << "MainControl::insert_point()" << std::endl;
@@ -906,14 +908,9 @@ namespace control
 		add_entry(_objects_control, name, "Point");
 
 		_shapes.emplace_back(new model::Point(name, x, y, z));
-
-		// std::vector<model::Shape> shape;
-
-		// shape.emplace_back(_shapes.back());
-
-		// build_objects(shape);
-
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		build_objects({_shapes.back()});
 	}
 
 	void MainControl::insert_object(std::string name, std::string type)
@@ -952,6 +949,8 @@ namespace control
 			_shapes.emplace_back(new model::Rectangle(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2)));
 
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		build_objects({_shapes.back()});
 	}
 
 	void MainControl::insert_polygon(std::string name)
@@ -982,6 +981,8 @@ namespace control
 
 		_shapes.emplace_back(new model::Polygon(name, vectors));
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		build_objects({_shapes.back()});
 	}
 
 	void MainControl::add_entry(int id, std::string name, std::string type)
@@ -1048,7 +1049,17 @@ namespace control
 
 		auto T = model::transformation::translation(model::Vector(0, step));
 
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 
@@ -1056,209 +1067,209 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::left()" << std::endl;
 
-		Gtk::SpinButton *spin;
-		_builder->get_widget("spin_step", spin);
+		// Gtk::SpinButton *spin;
+		// _builder->get_widget("spin_step", spin);
 
-		double step = (_shape_selected ? -1 : 1) * spin->get_value();
+		// double step = (_shape_selected ? -1 : 1) * spin->get_value();
 
-		auto T = model::transformation::translation(model::Vector(step, 0));
+		// auto T = model::transformation::translation(model::Vector(step, 0));
 
-		_shapes_map[_shape_selected]->transformation(T);
-		_viewport->update();
+		// _shapes_map[_shape_selected]->transformation(T);
+		// _viewport->update();
 	}
 
 	void MainControl::right()
 	{
 		db<MainControl>(TRC) << "MainControl::right()" << std::endl;
 
-		Gtk::SpinButton *spin;
-		_builder->get_widget("spin_step", spin);
+		// Gtk::SpinButton *spin;
+		// _builder->get_widget("spin_step", spin);
 
-		double step = (_shape_selected ? 1 : -1) * spin->get_value();
+		// double step = (_shape_selected ? 1 : -1) * spin->get_value();
 
-		auto T = model::transformation::translation(model::Vector(step, 0));
+		// auto T = model::transformation::translation(model::Vector(step, 0));
 
-		_shapes_map[_shape_selected]->transformation(T);
-		_viewport->update();
+		// _shapes_map[_shape_selected]->transformation(T);
+		// _viewport->update();
 	}
 
 	void MainControl::down()
 	{
 		db<MainControl>(TRC) << "MainControl::down()" << std::endl;
 
-		Gtk::SpinButton *spin;
-		_builder->get_widget("spin_step", spin);
+		// Gtk::SpinButton *spin;
+		// _builder->get_widget("spin_step", spin);
 
-		double step = (_shape_selected ? -1 : 1) * spin->get_value();
+		// double step = (_shape_selected ? -1 : 1) * spin->get_value();
 
-		auto T = model::transformation::translation(model::Vector(0, step));
+		// auto T = model::transformation::translation(model::Vector(0, step));
 
-		_shapes_map[_shape_selected]->transformation(T);
-		_viewport->update();
+		// _shapes_map[_shape_selected]->transformation(T);
+		// _viewport->update();
 	}
 
 	void MainControl::zoom_in()
 	{
 		db<MainControl>(TRC) << "MainControl::zoom_in()" << std::endl;
 
-		Gtk::SpinButton *spin;
-		_builder->get_widget("spin_percentual", spin);
+		// Gtk::SpinButton *spin;
+		// _builder->get_widget("spin_percentual", spin);
 
-		double times = spin->get_value();
-		auto mass_center = _shapes_map[_shape_selected]->mass_center();
+		// double times = spin->get_value();
+		// auto mass_center = _shapes_map[_shape_selected]->mass_center();
 		
-		auto T = model::transformation::scheduling(times, mass_center);
+		// auto T = model::transformation::scheduling(times, mass_center);
 
-		_shapes_map[_shape_selected]->transformation(T);
-		_viewport->update();
+		// _shapes_map[_shape_selected]->transformation(T);
+		// _viewport->update();
 	}
 
 	void MainControl::zoom_out()
 	{
 		db<MainControl>(TRC) << "MainControl::zoom_out()" << std::endl;
 
-		Gtk::SpinButton *spin;
-		_builder->get_widget("spin_percentual", spin);
+		// Gtk::SpinButton *spin;
+		// _builder->get_widget("spin_percentual", spin);
 
-		double times = 1 / spin->get_value();
-		auto mass_center = _shapes_map[_shape_selected]->mass_center();
+		// double times = 1 / spin->get_value();
+		// auto mass_center = _shapes_map[_shape_selected]->mass_center();
 
-		auto T = model::transformation::scheduling(times, mass_center);
+		// auto T = model::transformation::scheduling(times, mass_center);
 
-		_shapes_map[_shape_selected]->transformation(T);
-		_viewport->update();
+		// _shapes_map[_shape_selected]->transformation(T);
+		// _viewport->update();
 	}
 
 	void MainControl::clockwise()
 	{
 		db<MainControl>(TRC) << "MainControl::clockwise()" << std::endl;
 
-		Gtk::Entry *entry;
-		Gtk::SpinButton *spin;
-		Gtk::RadioButton *radio;
-		model::Vector mass_center;
+		// Gtk::Entry *entry;
+		// Gtk::SpinButton *spin;
+		// Gtk::RadioButton *radio;
+		// model::Vector mass_center;
 
-		/* Calculate the angle */
-		_builder->get_widget("spin_degrees", spin);
-		double angle = (_shape_selected ? -1 : 1) * spin->get_value() * (M_PI / 180);
+		// /* Calculate the angle */
+		// _builder->get_widget("spin_degrees", spin);
+		// double angle = (_shape_selected ? -1 : 1) * spin->get_value() * (M_PI / 180);
 
-		/* Calculate the center of mass */
-		unsigned hash = 0;
+		// /* Calculate the center of mass */
+		// unsigned hash = 0;
 
-		_builder->get_widget("radio_center_object", radio);
-		hash += radio->get_active() ? ButtonID::CenterObject     : ButtonID::Null;
+		// _builder->get_widget("radio_center_object", radio);
+		// hash += radio->get_active() ? ButtonID::CenterObject     : ButtonID::Null;
 
-		_builder->get_widget("radio_center_world", radio);
-		hash += radio->get_active() ? ButtonID::CenterWorld      : ButtonID::Null;
+		// _builder->get_widget("radio_center_world", radio);
+		// hash += radio->get_active() ? ButtonID::CenterWorld      : ButtonID::Null;
 
-		_builder->get_widget("radio_center_specific", radio);
-		hash += radio->get_active() ? ButtonID::CenterSpecific : ButtonID::Null;
+		// _builder->get_widget("radio_center_specific", radio);
+		// hash += radio->get_active() ? ButtonID::CenterSpecific : ButtonID::Null;
 
-		switch (hash)
-		{
-			case ButtonID::CenterObject:
-				mass_center = _shapes_map[_shape_selected]->mass_center();
-				break;
+		// switch (hash)
+		// {
+		// 	case ButtonID::CenterObject:
+		// 		mass_center = _shapes_map[_shape_selected]->mass_center();
+		// 		break;
 
-			case ButtonID::CenterWorld:
-				mass_center = model::Vector(0, 0);
-				break;
+		// 	case ButtonID::CenterWorld:
+		// 		mass_center = model::Vector(0, 0);
+		// 		break;
 
-			case ButtonID::CenterSpecific: {
-				double x{0}, y{0}, z{model::Vector::z};
+		// 	case ButtonID::CenterSpecific: {
+		// 		double x{0}, y{0}, z{model::Vector::z};
 
-				_builder->get_widget("entry_rotation_x", entry);
-				x = atof(std::string(entry->get_text()).c_str());
+		// 		_builder->get_widget("entry_rotation_x", entry);
+		// 		x = atof(std::string(entry->get_text()).c_str());
 
-				_builder->get_widget("entry_rotation_y", entry);
-				y = atof(std::string(entry->get_text()).c_str());
+		// 		_builder->get_widget("entry_rotation_y", entry);
+		// 		y = atof(std::string(entry->get_text()).c_str());
 
-				if (model::Vector::dimension == 4)
-				{
-					_builder->get_widget("entry_rotation_z", entry);
-					z = atof(std::string(entry->get_text()).c_str());
-				}
+		// 		if (model::Vector::dimension == 4)
+		// 		{
+		// 			_builder->get_widget("entry_rotation_z", entry);
+		// 			z = atof(std::string(entry->get_text()).c_str());
+		// 		}
 				
-				mass_center = model::Vector(x, y, z);
-			} break;
+		// 		mass_center = model::Vector(x, y, z);
+		// 	} break;
 
-			/* Undefined */
-			default:
-				return;
-		}
+		// 	/* Undefined */
+		// 	default:
+		// 		return;
+		// }
 
-		/* Calculate the rotation matrix */
-		auto T = model::transformation::rotation(angle, mass_center);
+		// /* Calculate the rotation matrix */
+		// auto T = model::transformation::rotation(angle, mass_center);
 
-		/* Apply transformation */
-		_shapes_map[_shape_selected]->transformation(T);
-		_viewport->update();
+		// /* Apply transformation */
+		// _shapes_map[_shape_selected]->transformation(T);
+		// _viewport->update();
 	}
 
 	void MainControl::counterclockwise()
 	{
 		db<MainControl>(TRC) << "MainControl::counterclockwise()" << std::endl;
 
-		model::Vector mass_center;
-		Gtk::Entry *entry;
-		Gtk::SpinButton *spin;
-		Gtk::RadioButton *radio;
+		// model::Vector mass_center;
+		// Gtk::Entry *entry;
+		// Gtk::SpinButton *spin;
+		// Gtk::RadioButton *radio;
 
-		/* Calculate the angle */
-		_builder->get_widget("spin_degrees", spin);
-		double angle = (_shape_selected ? 1 : -1) * spin->get_value() * (M_PI / 180);
+		// /* Calculate the angle */
+		// _builder->get_widget("spin_degrees", spin);
+		// double angle = (_shape_selected ? 1 : -1) * spin->get_value() * (M_PI / 180);
 
-		/* Calculate the center of mass */
-		unsigned hash = 0;
+		// /* Calculate the center of mass */
+		// unsigned hash = 0;
 
-		_builder->get_widget("radio_center_object", radio);
-		hash += radio->get_active() ? ButtonID::CenterObject     : ButtonID::Null;
+		// _builder->get_widget("radio_center_object", radio);
+		// hash += radio->get_active() ? ButtonID::CenterObject     : ButtonID::Null;
 
-		_builder->get_widget("radio_center_world", radio);
-		hash += radio->get_active() ? ButtonID::CenterWorld      : ButtonID::Null;
+		// _builder->get_widget("radio_center_world", radio);
+		// hash += radio->get_active() ? ButtonID::CenterWorld      : ButtonID::Null;
 
-		_builder->get_widget("radio_center_specific", radio);
-		hash += radio->get_active() ? ButtonID::CenterSpecific : ButtonID::Null;
+		// _builder->get_widget("radio_center_specific", radio);
+		// hash += radio->get_active() ? ButtonID::CenterSpecific : ButtonID::Null;
 
-		switch (hash)
-		{
-			case ButtonID::CenterObject:
-				mass_center = _shapes_map[_shape_selected]->mass_center();
-				break;
+		// switch (hash)
+		// {
+		// 	case ButtonID::CenterObject:
+		// 		mass_center = _shapes_map[_shape_selected]->mass_center();
+		// 		break;
 
-			case ButtonID::CenterWorld:
-				mass_center = model::Vector(0, 0);
-				break;
+		// 	case ButtonID::CenterWorld:
+		// 		mass_center = model::Vector(0, 0);
+		// 		break;
 
-			case ButtonID::CenterSpecific: {
-				double x{0}, y{0}, z{model::Vector::z};
+		// 	case ButtonID::CenterSpecific: {
+		// 		double x{0}, y{0}, z{model::Vector::z};
 
-				_builder->get_widget("entry_rotation_x", entry);
-				x = atof(std::string(entry->get_text()).c_str());
+		// 		_builder->get_widget("entry_rotation_x", entry);
+		// 		x = atof(std::string(entry->get_text()).c_str());
 
-				_builder->get_widget("entry_rotation_y", entry);
-				y = atof(std::string(entry->get_text()).c_str());
+		// 		_builder->get_widget("entry_rotation_y", entry);
+		// 		y = atof(std::string(entry->get_text()).c_str());
 
-				if (model::Vector::dimension == 4)
-				{
-					_builder->get_widget("entry_rotation_z", entry);
-					z = atof(std::string(entry->get_text()).c_str());
-				}
+		// 		if (model::Vector::dimension == 4)
+		// 		{
+		// 			_builder->get_widget("entry_rotation_z", entry);
+		// 			z = atof(std::string(entry->get_text()).c_str());
+		// 		}
 				
-				mass_center = model::Vector(x, y, z);
-			} break;
+		// 		mass_center = model::Vector(x, y, z);
+		// 	} break;
 
-			/* Undefined */
-			default:
-				return;
-		}
+		// 	/* Undefined */
+		// 	default:
+		// 		return;
+		// }
 
-		/* Calculate the rotation matrix */
-		auto T = model::transformation::rotation(angle, mass_center);
+		// /* Calculate the rotation matrix */
+		// auto T = model::transformation::rotation(angle, mass_center);
 
-		/* Apply transformation */
-		_shapes_map[_shape_selected]->transformation(T);
-		_viewport->update();
+		// /* Apply transformation */
+		// _shapes_map[_shape_selected]->transformation(T);
+		// _viewport->update();
 	}
 
 } //! namespace control

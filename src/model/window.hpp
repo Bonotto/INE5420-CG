@@ -25,6 +25,7 @@
 #define MODEL_WINDOW_HPP
 
 /* External includes */
+#include <utility>
 
 /* Local includes */
 #include "geometry.hpp"
@@ -55,7 +56,8 @@ namespace model
 		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
 		virtual Vector normalization(const Vector& v);
-		
+		virtual std::pair<Matrix&, Matrix&>* normalization();
+
 		const Matrix& transformation() const;
 		const Vector& min() const;
 		const Vector& max() const;
@@ -83,7 +85,12 @@ namespace model
 
 	void Window::transformation(const Matrix& T)
 	{
-		_history = _history * T;
+		Matrix identity;
+
+		if (_history == identity)
+			_history = T;
+		else
+			_history = _history * T;
 	}
 
 	void Window::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
@@ -110,64 +117,61 @@ namespace model
 	{
 		return _visible_world;
 	}
-	
-	Vector Window::normalization(const Vector& v)
+
+	std::pair<Matrix&, Matrix&>* Window::normalization()
 	{
-		Matrix A, B, C;
+		Matrix A, B;
 
 		double x = 2 / (_max[0] - _min[0]);
 		double y = 2 / (_max[1] - _min[1]);
 
+		double a = (2 * _min[0]) / (_max[0] - _min[0]) + 1;
+		double b = (2 * _min[1]) / (_max[1] - _min[1]) + 1;
+
 		if (Vector::dimension == 3)
 		{
-			A = Matrix( 
-				{1, 		0, 			0, 0},
-				{0, 		1, 			0, 0},
-				{-_min[0],	-_min[1],	1, 0},
-				{0, 		0, 			0, 0}
-			);
+			A = Matrix(
+					{x, 0, 0, 0},
+					{0, y, 0, 0},
+					{0, 0, 1, 0},
+					{0, 0, 0, 0}
+				);
 
-			B = Matrix( 
-				{x, 0, 0, 0},
-				{0, y, 0, 0},
-				{0, 0, 1, 0},
-				{0, 0, 0, 0}
-			);
-
-			C = Matrix( 
-				{ 1,  0,  0, 0},
-				{ 0,  1,  0, 0},
-				{-1, -1,  1, 0},
-				{ 0,  0,  0, 0}
-			);
+			B = Matrix(
+					{ 1,  0, 0, 0},
+					{ 0,  1, 0, 0},
+					{-a, -b, 1, 0},
+					{ 0,  0, 0, 0}
+				);
 		}
 		else
 		{
 			double z = 2 / (_max[2] - _min[2]);
+			double c = (2 * _min[2]) / (_max[2] - _min[2]) + 1;
 
-			A = Matrix( 
-				{1, 		0, 			0, 		0},
-				{0, 		1, 			0, 		0},
-				{0,			0,			1, 		0},
-				{-_min[0], -_min[1], -_min[2], 	1}
-			);
+			A = Matrix(
+					{x, 0, 0, 0},
+					{0, y, 0, 0},
+					{0, 0, z, 0},
+					{0, 0, 0, 0}
+				);
 
-			B = Matrix( 
-				{x, 0, 0, 0},
-				{0, y, 0, 0},
-				{0, 0, z, 0},
-				{0, 0, 0, 1}
-			);
-
-			C = Matrix( 
-				{ 1,  0,  0, 0},
-				{ 0,  1,  0, 0},
-				{ 0,  0,  1, 0},
-				{-1, -1, -1, 1}
-			);
+			B = Matrix(
+					{ 1,  0,  0, 0},
+					{ 0,  1,  0, 0},
+					{ 0,  0,  1, 0},
+					{-a, -b, -c, 0}
+				);
 		}
+
+		return new std::pair<Matrix&, Matrix&>(A, B);
+	}
+	
+	Vector Window::normalization(const Vector& v)
+	{
+		auto norm_Ts = normalization();
 		
-		return ((v * A) * B) * C;
+		return (v * norm_Ts->first) * norm_Ts->second;
 	}
 
 } //! namespace model
