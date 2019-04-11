@@ -25,7 +25,6 @@
 #define MODEL_WINDOW_HPP
 
 /* External includes */
-#include <utility>
 
 /* Local includes */
 #include "geometry.hpp"
@@ -45,7 +44,9 @@ namespace model
 			_visible_world(Rectangle{"window", min, max}),
 			_min{min},
 			_max{max}
-		{}
+		{
+			_visible_world.transformation(_history, normalization());
+		}
 
 		~Window() = default;
 
@@ -56,8 +57,8 @@ namespace model
 		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
 
 		virtual Vector normalization(const Vector& v);
-		virtual std::pair<Matrix&, Matrix&> normalization();
-		virtual std::pair<Matrix&, Matrix&> anormalization();
+		virtual Matrix& normalization();
+		virtual Matrix& anormalization();
 
 		const Matrix& transformation() const;
 		const Vector& min() const;
@@ -68,10 +69,8 @@ namespace model
 		Rectangle _visible_world;
 		Vector _min, _max;
 		Matrix _history;
-		Matrix _anorm1;
-		Matrix _anorm2;
-		Matrix _norm1;
-		Matrix _norm2;
+		Matrix _anorm;
+		Matrix _norm;
 	};
 
 /*================================================================================*/
@@ -105,7 +104,8 @@ namespace model
 
 	void Window::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
 	{
-		_visible_world.draw(cr, anormalization(), T);
+		Matrix identity;
+		_visible_world.draw(cr, identity, T);
 	}
 
 	const Vector& Window::min() const
@@ -123,26 +123,19 @@ namespace model
 		return _visible_world;
 	}
 
-	std::pair<Matrix&, Matrix&> Window::anormalization()
+	Matrix& Window::anormalization()
 	{
 		double x = (_max[0] - _min[0]) / 2;
 		double y = (_max[1] - _min[1]) / 2;
 
-		double a = (_max[0] - _min[0]) / 2 - _min[0];
-		double b = (_max[1] - _min[1]) / 2 - _min[1];
+		double a = x + _min[0];
+		double b = y + _min[1];
 
 		if (Vector::dimension == 3)
 		{
-			_anorm1 = Matrix(
+			_anorm = Matrix(
 					{x, 0, 0, 0},
 					{0, y, 0, 0},
-					{0, 0, 1, 0},
-					{0, 0, 0, 0}
-				);
-
-			_anorm2 = Matrix(
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
 					{a, b, 1, 0},
 					{0, 0, 0, 0}
 				);
@@ -150,27 +143,20 @@ namespace model
 		else
 		{
 			double z = (_max[2] - _min[2]) / 2;
-			double c = (_max[2] - _min[2]) / 2 - _min[2];
+			double c = z + _min[2];
 
-			_anorm1 = Matrix(
+			_anorm = Matrix(
 					{x, 0, 0, 0},
 					{0, y, 0, 0},
 					{0, 0, z, 0},
-					{0, 0, 0, 0}
-				);
-
-			_anorm2 = Matrix(
-					{1, 0, 0, 0},
-					{0, 1, 0, 0},
-					{0, 0, 1, 0},
 					{a, b, c, 0}
 				);
 		}
 
-		return {_anorm1, _anorm2};
+		return _anorm;
 	}
 
-	std::pair<Matrix&, Matrix&> Window::normalization()
+	Matrix& Window::normalization()
 	{
 		double x = 2 / (_max[0] - _min[0]);
 		double y = 2 / (_max[1] - _min[1]);
@@ -180,16 +166,9 @@ namespace model
 
 		if (Vector::dimension == 3)
 		{
-			_norm1 = Matrix(
-					{x, 0, 0, 0},
-					{0, y, 0, 0},
-					{0, 0, 1, 0},
-					{0, 0, 0, 0}
-				);
-
-			_norm2 = Matrix(
-					{ 1,  0, 0, 0},
-					{ 0,  1, 0, 0},
+			_norm = Matrix(
+					{ x,  0, 0, 0},
+					{ 0,  y, 0, 0},
 					{-a, -b, 1, 0},
 					{ 0,  0, 0, 0}
 				);
@@ -199,29 +178,20 @@ namespace model
 			double z = 2 / (_max[2] - _min[2]);
 			double c = (2 * _min[2]) / (_max[2] - _min[2]) + 1;
 
-			_norm1 = Matrix(
-					{x, 0, 0, 0},
-					{0, y, 0, 0},
-					{0, 0, z, 0},
-					{0, 0, 0, 0}
-				);
-
-			_norm2 = Matrix(
-					{ 1,  0,  0, 0},
-					{ 0,  1,  0, 0},
-					{ 0,  0,  1, 0},
+			_norm = Matrix(
+					{ x,  0,  0, 0},
+					{ 0,  y,  0, 0},
+					{ 0,  0,  z, 0},
 					{-a, -b, -c, 0}
 				);
 		}
 
-		return {_norm1, _norm2};
+		return _norm;
 	}
 	
 	Vector Window::normalization(const Vector& v)
 	{
-		auto norm_Ts = normalization();
-		
-		return (v * norm_Ts.first) * norm_Ts.second;
+		return v * normalization();
 	}
 
 } //! namespace model

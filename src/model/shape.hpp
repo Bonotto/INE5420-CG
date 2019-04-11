@@ -26,7 +26,6 @@
 
 /* External includes */
 #include <string>
-#include <utility>
 #include <gtkmm/drawingarea.h>
 
 /* Local includes */
@@ -69,8 +68,8 @@ namespace model
 		virtual Vector mass_center() const;
 		
 		virtual void transformation(const Matrix & T);
-		virtual void transformation(const Matrix & window_T, std::pair<Matrix&, Matrix&> norm_Ts);
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const std::pair<Matrix&, Matrix&> anorm_Ts, const Matrix & T);
+		virtual void transformation(const Matrix & window_T, const Matrix& norm_Ts);
+		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix& anorm_T, const Matrix & T);
 
 		std::string name();
 		virtual std::string type();
@@ -114,12 +113,12 @@ namespace model
 		);
 	}
 
-	void Shape::transformation(const Matrix & window_T, std::pair<Matrix&, Matrix&> norm_Ts)
+	void Shape::transformation(const Matrix & window_T, const Matrix& norm_T)
 	{
 		std::vector<Vector> vectors;
 
 		for (auto & v : _world_vectors)
-			vectors.emplace_back(((v * window_T) * norm_Ts.first) * norm_Ts.second);
+			vectors.emplace_back((v * window_T) * norm_T);
 
 		_window_vectors = std::move(vectors);
 	}
@@ -130,9 +129,9 @@ namespace model
 			v = v * T;
 	}
 
-	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const std::pair<Matrix&, Matrix&> anorm_Ts, const Matrix & T)
+	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix& anorm_T, const Matrix & T)
 	{
-		Vector v0 = ((_window_vectors[0] * anorm_Ts.first) * anorm_Ts.second) * T;
+		Vector v0 = (_window_vectors[0] * anorm_T) * T;
 
 		/* First point */
 		cr->move_to(v0[0], v0[1]);
@@ -140,7 +139,7 @@ namespace model
 		// Draw all other points
 		for (Vector& v : _window_vectors)
 		{
-			Vector vi = ((v * anorm_Ts.first) * anorm_Ts.second) * T;
+			Vector vi = (v * anorm_T) * T;
 			cr->line_to(vi[0], vi[1]);
 		}
 		
