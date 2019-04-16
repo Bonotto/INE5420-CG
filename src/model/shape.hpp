@@ -67,6 +67,8 @@ namespace model
 
 		virtual Vector mass_center() const;
 
+		virtual void clipping(const Vector & min, const Vector & max);
+
 		virtual void w_transformation(const Matrix & window_T);
 		virtual void transformation(const Matrix & world_T);
 		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T);
@@ -131,6 +133,9 @@ namespace model
 
 	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
 	{
+		if (_window_vectors.empty())
+			return;
+
 		Vector v0 = _window_vectors[0] * viewport_T;
 
 		/* First point */
@@ -155,6 +160,11 @@ namespace model
 	std::string Shape::type()
 	{
 		return "Shape_t";
+	}
+
+	void Shape::clipping(const Vector & min, const Vector & max)
+	{
+		db<Shape>(INF) << "[" << this << "] Clipping: I'm only a Shape dude!" << std::endl;
 	}
 
 } //! namespace model
