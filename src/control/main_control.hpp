@@ -875,15 +875,25 @@ namespace control
 
 	void MainControl::build_objects(std::vector<std::shared_ptr<model::Shape>> shapes)
 	{
-		auto T = _window->transformation() * _window->normalization();
+		static const model::Vector cmin{
+			model::Window::fixed_min[0] - 0.05 * model::Window::fixed_min[0],
+			model::Window::fixed_min[1] - 0.05 * model::Window::fixed_min[1]
+		};
+		static const model::Vector cmax{
+			model::Window::fixed_max[0] - 0.05 * model::Window::fixed_max[0],
+			model::Window::fixed_max[1] - 0.05 * model::Window::fixed_max[1]
+		};
+
+		const model::Matrix T = _window->transformation() * _window->normalization();
 
 		for (auto shape: shapes)
 			if (shape->name().compare("window"))
+			{
 				shape->w_transformation(T);
 
-		//clipping
-		//viewport transformation
-		//draw
+				if (Traits<model::Window>::need_clipping)
+					shape->clipping(cmin, cmax);
+			}
 	}
 
 	void MainControl::insert_point(std::string name)

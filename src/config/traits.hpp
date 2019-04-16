@@ -42,9 +42,9 @@ struct Traits
 
 template<> struct Traits<Debug>
 {
-    static const bool error   = true;  /* Prints erros.                */
-    static const bool warning = true;  /* Prints warnings.             */
-    static const bool info    = false; /* Prints relevant information. */
+    static const bool error   = false;  /* Prints erros.                */
+    static const bool warning = false;  /* Prints warnings.             */
+    static const bool info    = true; /* Prints relevant information. */
     static const bool trace   = true;  /* Prints function call trace.  */
 };
 
@@ -99,7 +99,8 @@ template<> struct Traits<model::Polygon> : public Traits<void>
 
 template<> struct Traits<model::Window> : public Traits<void>
 {
-    static const bool debugged = hysterically_debugged;
+    static const bool need_clipping = true;                  /* Enables clipping. */
+    static const bool debugged      = hysterically_debugged; /* Enables debug.    */
 };
 
 template<> struct Traits<model::Viewport> : public Traits<void>
