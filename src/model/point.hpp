@@ -40,16 +40,12 @@ namespace model
 	class Point : public Shape
 	{
 	public:
-		Point(std::string name) :
-			Shape(name)
+		Point(std::string name, const Vector& world_v) :
+			Shape(name, {world_v})
 		{}
 
-		Point(std::string name, const Vector& v) :
-			Shape(name, {v})
-		{}
-
-		Point(std::string name, double x, double y, double z = Vector::z, double w = Vector::w) :
-			Shape(name, Vector(x, y, z, w))
+		Point(std::string name, double world_x, double world_y, double world_z = Vector::z, double world_w = Vector::w) :
+			Shape(name, Vector(world_x, world_y, world_z, world_w))
 		{}
 
 		~Point() = default;

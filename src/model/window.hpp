@@ -37,31 +37,15 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class Window : public Rectangle
+	class Window
 	{
 	public:
 		Window(const Vector & min, const Vector & max) :
-			Rectangle{"window", min, max},
-			_min{_vectors[0]},
-			_max{_vectors[2]}
+			_visible_world(Rectangle{"window", min, max}),
+			_min{min},
+			_max{max}
 		{
-			Vector l0(1, 0, 0, 0);
-			Vector l1(0, 1, 0, 0);
-			Vector l2;
-			Vector l3;
-
-			if (Vector::dimension == 3)
-			{
-				l2 = Vector(_min[0], _min[1], 1, 0);
-				l3 = Vector(0, 0, 0, 1);
-			}
-			else
-			{
-				l2 = Vector(0, 0, 1, 0);
-				l3 = Vector(_min[0], _min[1], _min[2], 1);
-			}
-
-			_dimensions = Matrix(l0, l1, l2, l3);
+			_visible_world.transformation(_history, normalization());
 		}
 
 		~Window() = default;
@@ -70,14 +54,22 @@ namespace model
 		const double height();
 
 		virtual void transformation(const Matrix& T);
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
+
+		virtual Vector normalization(const Vector& v);
+		virtual Matrix& normalization();
+		virtual Matrix& anormalization();
+
 		const Matrix& transformation() const;
 		const Vector& min() const;
 		const Vector& max() const;
+		const Rectangle& drawable();
 
 	private:
-		Vector &_min, &_max;
-		Matrix _dimensions;
+		Rectangle _visible_world;
+		Vector _min, _max;
+		Matrix _history;
+		Matrix _anorm;
+		Matrix _norm;
 	};
 
 /*================================================================================*/
@@ -96,17 +88,17 @@ namespace model
 
 	void Window::transformation(const Matrix& T)
 	{
-		_dimensions = _dimensions * T;
-	}
+		Matrix identity;
 
-	void Window::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
-	{
-		/* Do not draw the window for now. */
+		if (_history == identity)
+			_history = T;
+		else
+			_history = _history * T;
 	}
 
 	const Matrix& Window::transformation() const
 	{
-		return _dimensions;
+		return _history;
 	}
 
 	const Vector& Window::min() const
@@ -117,6 +109,82 @@ namespace model
 	const Vector& Window::max() const
 	{
 		return _max;
+	}
+	
+	const Rectangle& Window::drawable()
+	{
+		return _visible_world;
+	}
+
+	Matrix& Window::anormalization()
+	{
+		double x = (_max[0] - _min[0]) / 2;
+		double y = (_max[1] - _min[1]) / 2;
+
+		double a = x + _min[0];
+		double b = y + _min[1];
+
+		if (Vector::dimension == 3)
+		{
+			_anorm = Matrix(
+					{x, 0, 0, 0},
+					{0, y, 0, 0},
+					{a, b, 1, 0},
+					{0, 0, 0, 0}
+				);
+		}
+		else
+		{
+			double z = (_max[2] - _min[2]) / 2;
+			double c = z + _min[2];
+
+			_anorm = Matrix(
+					{x, 0, 0, 0},
+					{0, y, 0, 0},
+					{0, 0, z, 0},
+					{a, b, c, 0}
+				);
+		}
+
+		return _anorm;
+	}
+
+	Matrix& Window::normalization()
+	{
+		double x = 2 / (_max[0] - _min[0]);
+		double y = 2 / (_max[1] - _min[1]);
+
+		double a = (2 * _min[0]) / (_max[0] - _min[0]) + 1;
+		double b = (2 * _min[1]) / (_max[1] - _min[1]) + 1;
+
+		if (Vector::dimension == 3)
+		{
+			_norm = Matrix(
+					{ x,  0, 0, 0},
+					{ 0,  y, 0, 0},
+					{-a, -b, 1, 0},
+					{ 0,  0, 0, 0}
+				);
+		}
+		else
+		{
+			double z = 2 / (_max[2] - _min[2]);
+			double c = (2 * _min[2]) / (_max[2] - _min[2]) + 1;
+
+			_norm = Matrix(
+					{ x,  0,  0, 0},
+					{ 0,  y,  0, 0},
+					{ 0,  0,  z, 0},
+					{-a, -b, -c, 0}
+				);
+		}
+
+		return _norm;
+	}
+	
+	Vector Window::normalization(const Vector& v)
+	{
+		return v * normalization();
 	}
 
 } //! namespace model

@@ -144,6 +144,7 @@ namespace control
 		void build_movements();
 		void build_numeric_entrys();
 		void reset_dialog_entries();
+		void build_objects(std::vector<std::shared_ptr<model::Shape>> shapes);
 		void enable_used_interface_objects(ButtonID selected);
 		void disable_unused_interface_objects(ButtonID selected);
 
@@ -194,11 +195,12 @@ namespace control
 
 		draw->set_hexpand(true);
 		alloc = draw->get_allocation();
-		width = alloc.get_width();
-		height = alloc.get_height();
+		width = alloc.get_width() / 2;
+		height = alloc.get_height() / 2;
 
-		_window = new model::Window(model::Vector(0, 0), model::Vector(width, height));
-		_shapes.emplace_back(_window);
+		_window = new model::Window(model::Vector(-width + 10, -height + 10), model::Vector(width - 10, height - 10));
+
+		_shapes.push_back(std::make_shared<model::Shape>(_window->drawable()));
 		_shapes_map[_objects_control++] = _shapes.back();
 	}
 
@@ -871,6 +873,17 @@ namespace control
 		_vector_selected = -1;
 	}
 
+	void MainControl::build_objects(std::vector<std::shared_ptr<model::Shape>> shapes)
+	{
+		for (auto shape: shapes)
+			if (shape->name().compare("window"))
+				shape->transformation(_window->transformation(), _window->normalization());
+		
+		//clipping
+		//viewport transformation
+		//draw
+	}
+
 	void MainControl::insert_point(std::string name)
 	{
 		db<MainControl>(TRC) << "MainControl::insert_point()" << std::endl;
@@ -895,8 +908,9 @@ namespace control
 		add_entry(_objects_control, name, "Point");
 
 		_shapes.emplace_back(new model::Point(name, x, y, z));
-
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		build_objects({_shapes.back()});
 	}
 
 	void MainControl::insert_object(std::string name, std::string type)
@@ -935,6 +949,8 @@ namespace control
 			_shapes.emplace_back(new model::Rectangle(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2)));
 
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		build_objects({_shapes.back()});
 	}
 
 	void MainControl::insert_polygon(std::string name)
@@ -965,6 +981,8 @@ namespace control
 
 		_shapes.emplace_back(new model::Polygon(name, vectors));
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		build_objects({_shapes.back()});
 	}
 
 	void MainControl::add_entry(int id, std::string name, std::string type)
@@ -1031,7 +1049,17 @@ namespace control
 
 		auto T = model::transformation::translation(model::Vector(0, step));
 
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 
@@ -1046,7 +1074,17 @@ namespace control
 
 		auto T = model::transformation::translation(model::Vector(step, 0));
 
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 
@@ -1061,7 +1099,17 @@ namespace control
 
 		auto T = model::transformation::translation(model::Vector(step, 0));
 
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 
@@ -1076,7 +1124,17 @@ namespace control
 
 		auto T = model::transformation::translation(model::Vector(0, step));
 
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 
@@ -1092,7 +1150,17 @@ namespace control
 		
 		auto T = model::transformation::scheduling(times, mass_center);
 
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 
@@ -1108,7 +1176,17 @@ namespace control
 
 		auto T = model::transformation::scheduling(times, mass_center);
 
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 
@@ -1173,8 +1251,17 @@ namespace control
 		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center);
 
-		/* Apply transformation */
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 
@@ -1239,8 +1326,17 @@ namespace control
 		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center);
 
-		/* Apply transformation */
-		_shapes_map[_shape_selected]->transformation(T);
+		if (_shape_selected)
+		{
+			_shapes_map[_shape_selected]->transformation(T);
+			build_objects({_shapes_map[_shape_selected]});
+		}
+		else
+		{
+			_window->transformation(T);
+			build_objects(_shapes);
+		}
+
 		_viewport->update();
 	}
 

@@ -43,42 +43,40 @@ namespace model
 	public:
 		Shape()  = default;
 
-		Shape(std::string name) :
-			_name{name}
+		Shape(std::string name, const Vector& world_v) :
+			_name{name},
+			_world_vectors{{world_v}}
 		{}
 
-		Shape(std::string name, const Vector& v) :
+		Shape(std::string name, double world_x, double world_y, double world_z = Vector::z, double world_w = Vector::w) :
 			_name{name},
-			_vectors{{v}}
+			_world_vectors{{world_x, world_y, world_z, world_w}}
 		{}
 
-		Shape(std::string name, double x, double y, double z = Vector::x, double w = Vector::w) :
+		Shape(std::string name, const std::initializer_list<Vector>& world_vs) :
 			_name{name},
-			_vectors{{x, y, z, w}}
+			_world_vectors{world_vs}
 		{}
 
-		Shape(std::string name, const std::initializer_list<Vector>& vs) :
+		Shape(std::string name, const std::vector<Vector>& world_vs) :
 			_name{name},
-			_vectors{vs}
-		{}
-
-		Shape(std::string name, const std::vector<Vector>& vs) :
-			_name{name},
-			_vectors{vs}
+			_world_vectors{world_vs}
 		{}
 
 		virtual ~Shape() = default;
 
 		virtual Vector mass_center() const;
+		
 		virtual void transformation(const Matrix & T);
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T);
+		virtual void transformation(const Matrix & window_T, const Matrix& norm_Ts);
+		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix& anorm_T, const Matrix & T);
 
 		std::string name();
 		virtual std::string type();
 
 		friend Debug & operator<<(Debug & db, const Shape & s)
 		{
-			for (const Vector & v : s._vectors)
+			for (const Vector & v : s._world_vectors)
 				db << v << std::endl;
 
 			return db;
@@ -86,7 +84,8 @@ namespace model
 
 	protected:
 		std::string _name{"Shape"};
-		std::vector<Vector> _vectors{{0, 0}};
+		std::vector<Vector> _world_vectors{{0, 0}};
+		std::vector<Vector> _window_vectors{{0, 0}};
 	};
 
 /*================================================================================*/
@@ -95,10 +94,10 @@ namespace model
 
 	Vector Shape::mass_center() const
 	{
-		double total = _vectors.size();
+		double total = _world_vectors.size();
 		double x = 0, y = 0, z = 0, w = 0;
 
-		for (const auto &v : _vectors)
+		for (const auto &v : _world_vectors)
 		{
 			x += v[0];
 			y += v[1];
@@ -114,52 +113,33 @@ namespace model
 		);
 	}
 
-	void Shape::transformation(const Matrix & T)
+	void Shape::transformation(const Matrix & window_T, const Matrix& norm_T)
 	{
-		std::cout << "Shape before:" << std::endl;
-		
-		for (const Vector & v : _vectors)
-		{
-			std::cout << "[" << v[0];
+		std::vector<Vector> vectors;
 
-			for (auto i = 1; i < Vector::dimension; ++i)
-				std::cout << ", " << v[i];
+		for (auto & v : _world_vectors)
+			vectors.emplace_back((v * window_T) * norm_T);
 
-			std::cout << "]";
-
-		}
-
-		
-		for (auto & v : _vectors)
-			v = v * T;
-
-
-		std::cout  << "Shape after:" << std::endl;
-	
-		
-		for (const Vector & v : _vectors)
-		{
-			std::cout << "[" << v[0];
-
-			for (auto i = 1; i < Vector::dimension; ++i)
-				std::cout << ", " << v[i];
-
-			std::cout << "]";
-
-		}
+		_window_vectors = std::move(vectors);
 	}
 
-	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & T)
+	void Shape::transformation(const Matrix & T)
+	{	
+		for (auto & v : _world_vectors)
+			v = v * T;
+	}
+
+	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix& anorm_T, const Matrix & T)
 	{
-		Vector v0 = _vectors[0] * T;
+		Vector v0 = (_window_vectors[0] * anorm_T) * T;
 
 		/* First point */
 		cr->move_to(v0[0], v0[1]);
 
 		// Draw all other points
-		for (Vector& v : _vectors)
+		for (Vector& v : _window_vectors)
 		{
-			Vector vi = v * T;
+			Vector vi = (v * anorm_T) * T;
 			cr->line_to(vi[0], vi[1]);
 		}
 		

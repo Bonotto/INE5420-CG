@@ -40,12 +40,8 @@ namespace model
 	class Line : public Shape
 	{
 	public:
-		Line(std::string name) :
-			Shape(name, {Vector(), Vector()})
-		{}
-
-		Line(std::string name, const Vector& v1, const Vector& v2) :
-			Shape(name, {v1, v2})
+		Line(std::string name, const Vector& world_v1, const Vector& world_v2) :
+			Shape(name, {world_v1, world_v2})
 		{}
 
 		~Line() = default;

@@ -97,12 +97,12 @@ namespace model
 		model::Vector win_min = _window.min();
 		model::Vector win_max = _window.max();
 
-		auto T = _window.transformation();
-		T = T * model::transformation::viewport_transformation(vp_min, vp_max, win_min, win_max);
+		auto anorm_T = _window.anormalization();
+		auto T = model::transformation::viewport_transformation(vp_min, vp_max, win_min, win_max);
 
 		/* Draw all shapes. */
 		for (auto & shape : _shapes)
-			shape->draw(cr, T);
+			shape->draw(cr, anorm_T, T);
 
 		/* Commit a drawing. */
 		cr->stroke();
