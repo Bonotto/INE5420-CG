@@ -84,7 +84,15 @@ template<> struct Traits<model::Point> : public Traits<void>
 
 template<> struct Traits<model::Line> : public Traits<void>
 {
+    enum class ClippingMethod
+    {
+        Cohen_Sutherland,
+        Liang_Barsky,
+        Nicholl_Lee_Nicholl
+    };
+
     static const bool debugged = hysterically_debugged;
+    static const ClippingMethod clipping_method = ClippingMethod::Cohen_Sutherland;
 };
 
 template<> struct Traits<model::Rectangle> : public Traits<void>

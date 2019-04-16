@@ -46,12 +46,59 @@ namespace model
 
 		~Line() = default;
 
+		void cohen_sutherland(const Vector & min, const Vector & max);
+		void liang_barsky(const Vector & min, const Vector & max);
+		void nicholl_lee_nicholl(const Vector & min, const Vector & max);
+
+		virtual void clipping(const Vector & min, const Vector & max);
 		virtual std::string type();
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
+
+	void Line::cohen_sutherland(const Vector & min, const Vector & max)
+	{
+		db<Line>(INF) << "[" << this << "] Cohen Sutherland" << std::endl;
+		
+		enum Location
+		{
+			Left  = 0x1  /*< 0001 */
+			Right = 0x2, /*< 0010 */
+			Down  = 0x4, /*< 0100 */
+			Up    = 0x8, /*< 1000 */
+		}
+
+		unsigned loc_a = 0, loc_b = 0;
+		const Vector & pa = _window_vectors[0];
+		const Vector & pb = _window_vectors[0];
+
+		if 
+	}
+
+	void Line::liang_barsky(const Vector & min, const Vector & max)
+	{
+		db<Line>(INF) << "[" << this << "] Liang Barsky" << std::endl;	
+	}
+
+	void Line::nicholl_lee_nicholl(const Vector & min, const Vector & max)
+	{
+		db<Line>(INF) << "[" << this << "] Nicholl Lee Nicholl" << std::endl;	
+	}
+
+	void Line::clipping(const Vector & min, const Vector & max)
+	{
+		db<Line>(INF) << "[" << this << "] Line: " << _window_vectors[0] << " x " << _window_vectors[1] << std::endl;
+		db<Line>(INF) << "[" << this << "] Clipping area: " << min << " x " << max << std::endl;
+
+		if (Traits<Line>::clipping_method == Traits<Line>::ClippingMethod::Cohen_Sutherland)
+			cohen_sutherland(min, max);
+		else if (Traits<Line>::clipping_method == Traits<Line>::ClippingMethod::Liang_Barsky)
+			liang_barsky(min, max);
+		else if (Traits<Line>::clipping_method == Traits<Line>::ClippingMethod::Nicholl_Lee_Nicholl)
+			nicholl_lee_nicholl(min, max);
+	}
 
 	std::string Line::type()
 	{
