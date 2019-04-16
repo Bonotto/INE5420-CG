@@ -94,15 +94,14 @@ namespace model
 		auto alloc = _draw_area.get_allocation();
 		model::Vector vp_min(0, 0);
 		model::Vector vp_max(alloc.get_width(), alloc.get_height());
-		model::Vector win_min = _window.min();
-		model::Vector win_max = _window.max();
+		model::Vector win_min = model::Window::fixed_min;
+		model::Vector win_max = model::Window::fixed_max;
 
-		auto anorm_T = _window.anormalization();
 		auto T = model::transformation::viewport_transformation(vp_min, vp_max, win_min, win_max);
 
 		/* Draw all shapes. */
 		for (auto & shape : _shapes)
-			shape->draw(cr, anorm_T, T);
+			shape->draw(cr, T);
 
 		/* Commit a drawing. */
 		cr->stroke();

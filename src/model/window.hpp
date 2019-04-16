@@ -40,12 +40,15 @@ namespace model
 	class Window
 	{
 	public:
+		const static Vector fixed_min;
+		const static Vector fixed_max;
+
 		Window(const Vector & min, const Vector & max) :
-			_visible_world(Rectangle{"window", min, max}),
+			_visible_world(Rectangle{"window", Vector(min[0] - 0.05*min[0], min[1] - 0.05*min[1]), Vector(max[0] - 0.05*max[0], max[1] - 0.05*max[1])}),
 			_min{min},
 			_max{max}
 		{
-			_visible_world.transformation(_history, normalization());
+			_visible_world.w_transformation(normalization());
 		}
 
 		~Window() = default;
@@ -53,11 +56,9 @@ namespace model
 		const double width();
 		const double height();
 
-		virtual void transformation(const Matrix& T);
+		void transformation(const Matrix& T);
 
-		virtual Vector normalization(const Vector& v);
-		virtual Matrix& normalization();
-		virtual Matrix& anormalization();
+		Matrix normalization();
 
 		const Matrix& transformation() const;
 		const Vector& min() const;
@@ -68,13 +69,15 @@ namespace model
 		Rectangle _visible_world;
 		Vector _min, _max;
 		Matrix _history;
-		Matrix _anorm;
 		Matrix _norm;
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
+
+	const Vector Window::fixed_min{-1, -1};
+	const Vector Window::fixed_max{ 1,  1};
 
 	const double Window::width()
 	{
@@ -88,12 +91,7 @@ namespace model
 
 	void Window::transformation(const Matrix& T)
 	{
-		Matrix identity;
-
-		if (_history == identity)
-			_history = T;
-		else
-			_history = _history * T;
+		_history = _history * T;
 	}
 
 	const Matrix& Window::transformation() const
@@ -116,40 +114,7 @@ namespace model
 		return _visible_world;
 	}
 
-	Matrix& Window::anormalization()
-	{
-		double x = (_max[0] - _min[0]) / 2;
-		double y = (_max[1] - _min[1]) / 2;
-
-		double a = x + _min[0];
-		double b = y + _min[1];
-
-		if (Vector::dimension == 3)
-		{
-			_anorm = Matrix(
-					{x, 0, 0, 0},
-					{0, y, 0, 0},
-					{a, b, 1, 0},
-					{0, 0, 0, 0}
-				);
-		}
-		else
-		{
-			double z = (_max[2] - _min[2]) / 2;
-			double c = z + _min[2];
-
-			_anorm = Matrix(
-					{x, 0, 0, 0},
-					{0, y, 0, 0},
-					{0, 0, z, 0},
-					{a, b, c, 0}
-				);
-		}
-
-		return _anorm;
-	}
-
-	Matrix& Window::normalization()
+	Matrix Window::normalization()
 	{
 		double x = 2 / (_max[0] - _min[0]);
 		double y = 2 / (_max[1] - _min[1]);
@@ -157,34 +122,26 @@ namespace model
 		double a = (2 * _min[0]) / (_max[0] - _min[0]) + 1;
 		double b = (2 * _min[1]) / (_max[1] - _min[1]) + 1;
 
+		Vector l0{ x,  0, 0, 0};
+		Vector l1{ 0,  y, 0, 0};
+		Vector l2;
+		Vector l3;
+
 		if (Vector::dimension == 3)
 		{
-			_norm = Matrix(
-					{ x,  0, 0, 0},
-					{ 0,  y, 0, 0},
-					{-a, -b, 1, 0},
-					{ 0,  0, 0, 0}
-				);
+			l2 = Vector{-a, -b, 1, 0};
+			l3 = Vector{ 0,  0, 0, 0};
 		}
 		else
 		{
 			double z = 2 / (_max[2] - _min[2]);
 			double c = (2 * _min[2]) / (_max[2] - _min[2]) + 1;
 
-			_norm = Matrix(
-					{ x,  0,  0, 0},
-					{ 0,  y,  0, 0},
-					{ 0,  0,  z, 0},
-					{-a, -b, -c, 0}
-				);
+			l2 = Vector{ 0,  0,  z, 0};
+			l3 = Vector{-a, -b, -c, 0};
 		}
 
-		return _norm;
-	}
-	
-	Vector Window::normalization(const Vector& v)
-	{
-		return v * normalization();
+		return Matrix(l0, l1, l2, l3);
 	}
 
 } //! namespace model
