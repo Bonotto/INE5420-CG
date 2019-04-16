@@ -198,7 +198,7 @@ namespace control
 		width = alloc.get_width() / 2;
 		height = alloc.get_height() / 2;
 
-		_window = new model::Window(model::Vector(-width + 10, -height + 10), model::Vector(width - 10, height - 10));
+		_window = new model::Window(model::Vector(-width, -height), model::Vector(width, height));
 
 		_shapes.push_back(std::make_shared<model::Shape>(_window->drawable()));
 		_shapes_map[_objects_control++] = _shapes.back();
@@ -335,19 +335,19 @@ namespace control
 
 		spin->set_range(0, 9999999);
 		spin->set_increments(1, 100);
-		spin->set_value(0);
+		spin->set_value(20);
 
 		_builder->get_widget("spin_percentual", spin);
 
 		spin->set_range(1, 9999999);
 		spin->set_increments(1, 100);
-		spin->set_value(1);
+		spin->set_value(2);
 
 		_builder->get_widget("spin_degrees", spin);
 
 		spin->set_range(0, 9999999);
 		spin->set_increments(1, 100);
-		spin->set_value(0);
+		spin->set_value(45);
 
 		Gtk::Button *btn;
 		_builder->get_widget("button_up", btn);
@@ -880,7 +880,7 @@ namespace control
 		for (auto shape: shapes)
 			if (shape->name().compare("window"))
 				shape->w_transformation(T);
-		
+
 		//clipping
 		//viewport transformation
 		//draw

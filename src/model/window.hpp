@@ -44,7 +44,7 @@ namespace model
 		const static Vector fixed_max;
 
 		Window(const Vector & min, const Vector & max) :
-			_visible_world(Rectangle{"window", min, max}),
+			_visible_world(Rectangle{"window", Vector(min[0] - 0.05*min[0], min[1] - 0.05*min[1]), Vector(max[0] - 0.05*max[0], max[1] - 0.05*max[1])}),
 			_min{min},
 			_max{max}
 		{
@@ -58,7 +58,6 @@ namespace model
 
 		void transformation(const Matrix& T);
 
-		Vector normalization(const Vector& v);
 		Matrix normalization();
 
 		const Matrix& transformation() const;
@@ -143,11 +142,6 @@ namespace model
 		}
 
 		return Matrix(l0, l1, l2, l3);
-	}
-	
-	Vector Window::normalization(const Vector& v)
-	{
-		return v * normalization();
 	}
 
 } //! namespace model
