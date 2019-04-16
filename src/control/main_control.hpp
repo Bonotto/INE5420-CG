@@ -875,9 +875,11 @@ namespace control
 
 	void MainControl::build_objects(std::vector<std::shared_ptr<model::Shape>> shapes)
 	{
+		auto T = _window->transformation() * _window->normalization();
+
 		for (auto shape: shapes)
 			if (shape->name().compare("window"))
-				shape->transformation(_window->transformation(), _window->normalization());
+				shape->w_transformation(T);
 		
 		//clipping
 		//viewport transformation
