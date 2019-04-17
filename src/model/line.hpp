@@ -40,6 +40,13 @@ namespace model
 	class Line : public Shape
 	{
 	public:
+	    enum class ClippingMethod
+	    {
+	        Cohen_Sutherland,
+	        Liang_Barsky,
+	        Nicholl_Lee_Nicholl
+	    };
+
 		Line(std::string name, const Vector& world_v1, const Vector& world_v2) :
 			Shape(name, {world_v1, world_v2})
 		{}
@@ -52,6 +59,9 @@ namespace model
 
 		virtual void clipping(const Vector & min, const Vector & max);
 		virtual std::string type();
+
+	private:
+		ClippingMethod _clipping_method{ClippingMethod::Cohen_Sutherland};
 	};
 
 /*================================================================================*/
@@ -62,19 +72,119 @@ namespace model
 	{
 		db<Line>(INF) << "[" << this << "] Cohen Sutherland" << std::endl;
 		
-		enum Location
+		enum Region
 		{
-			Left  = 0x1  /*< 0001 */
+			Left  = 0x1, /*< 0001 */
 			Right = 0x2, /*< 0010 */
 			Down  = 0x4, /*< 0100 */
 			Up    = 0x8, /*< 1000 */
-		}
+		};
 
 		unsigned loc_a = 0, loc_b = 0;
-		const Vector & pa = _window_vectors[0];
-		const Vector & pb = _window_vectors[0];
+		
+		Vector & pa = _window_vectors[0];
+		Vector & pb = _window_vectors[1];
 
-		if 
+		Vector new_pa;
+		Vector new_pb;
+
+		auto func = [&](const Vector & p)
+		{
+			unsigned loc = 0;
+
+			if (p[1] > max[1])
+				loc |= Region::Up;
+			
+			else if (p[1] < min[1])
+				loc |= Region::Down;
+
+			if (p[0] > max[0])
+				loc |= Region::Right;
+			
+			else if (p[0] < min[0])
+				loc |= Region::Left;
+
+			return loc;
+		};
+
+		loc_a = func(pa);
+		loc_b = func(pb);
+
+		if (loc_a & loc_b)
+		{
+			_window_vectors.clear();
+			return;
+		}
+
+		// Clipping for 'pa'
+		while (loc_a)
+		{
+			if (loc_a & Region::Up)
+			{
+				new_pa[0] = pa[0] + (pb[0] - pa[0]) * (max[1] - pa[1]) / (pb[1] - pa[1]);
+				new_pa[1] = max[1];
+			}
+			
+			else if (loc_a & Region::Down)
+			{
+				new_pa[0] = pa[0] + (pb[0] - pa[0]) * (min[1] - pa[1]) / (pb[1] - pa[1]);
+				new_pa[1] = min[1];
+			}
+
+			else if (loc_a & Region::Right)
+			{
+				new_pa[0] = max[0];
+				new_pa[1] = pa[1] + (pb[1] - pa[1]) * (max[0] - pa[0]) / (pb[0] - pa[0]);
+			}
+
+			else if (loc_a & Region::Left)
+			{
+				new_pa[0] = min[0];
+				new_pa[1] = pa[1] + (pb[1] - pa[1]) * (min[0] - pa[0]) / (pb[0] - pa[0]);
+			}
+
+			loc_a = func(new_pa);
+
+			pa = new_pa;
+		}
+		
+		// Clipping for 'pa'
+		while (loc_b)
+		{
+			if (loc_b & Region::Up)
+			{
+				new_pb[0] = pa[0] + (pb[0] - pa[0]) * (max[1] - pa[1]) / (pb[1] - pa[1]);
+				new_pb[1] = max[1];
+			}
+			
+			else if (loc_b & Region::Down)
+			{
+				new_pb[0] = pa[0] + (pb[0] - pa[0]) * (min[1] - pa[1]) / (pb[1] - pa[1]);
+				new_pb[1] = min[1];
+			}
+
+			else if (loc_b & Region::Right)
+			{
+				new_pb[0] = max[0];
+				new_pb[1] = pa[1] + (pb[1] - pa[1]) * (max[0] - pa[0]) / (pb[0] - pa[0]);
+			}
+
+			else if (loc_b & Region::Left)
+			{
+				new_pb[0] = min[0];
+				new_pb[1] = pa[1] + (pb[1] - pa[1]) * (min[0] - pa[0]) / (pb[0] - pa[0]);
+			}
+
+			loc_b = func(new_pb);
+			
+			pb = new_pb;
+		}
+
+		_window_vectors[0] = pa;
+		_window_vectors[1] = pb;
+
+		db<Line>(INF) << "[" << this << "] Clipping area: " << min << " x " << max << std::endl;
+		db<Line>(INF) << "[" << this << "] Line: " << pa << " <-> " << pb << std::endl;
 	}
 
 	void Line::liang_barsky(const Vector & min, const Vector & max)
@@ -89,15 +199,26 @@ namespace model
 
 	void Line::clipping(const Vector & min, const Vector & max)
 	{
-		db<Line>(INF) << "[" << this << "] Line: " << _window_vectors[0] << " x " << _window_vectors[1] << std::endl;
-		db<Line>(INF) << "[" << this << "] Clipping area: " << min << " x " << max << std::endl;
+		// db<Line>(INF) << "[" << this << "] Line: " << _window_vectors[0] << " x " << _window_vectors[1] << std::endl;
+		// db<Line>(INF) << "[" << this << "] Clipping area: " << min << " x " << max << std::endl;
 
-		if (Traits<Line>::clipping_method == Traits<Line>::ClippingMethod::Cohen_Sutherland)
-			cohen_sutherland(min, max);
-		else if (Traits<Line>::clipping_method == Traits<Line>::ClippingMethod::Liang_Barsky)
-			liang_barsky(min, max);
-		else if (Traits<Line>::clipping_method == Traits<Line>::ClippingMethod::Nicholl_Lee_Nicholl)
-			nicholl_lee_nicholl(min, max);
+		switch (_clipping_method)
+		{
+			case ClippingMethod::Cohen_Sutherland:
+				cohen_sutherland(min, max);
+				break;
+
+			case ClippingMethod::Liang_Barsky:
+				liang_barsky(min, max);
+				break;
+
+			case ClippingMethod::Nicholl_Lee_Nicholl:
+				nicholl_lee_nicholl(min, max);
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	std::string Line::type()
