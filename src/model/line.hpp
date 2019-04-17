@@ -46,6 +46,14 @@ namespace model
 	        Liang_Barsky,
 	        Nicholl_Lee_Nicholl
 	    };
+		
+		enum Region
+		{
+			Left  = 0x1, /*< 0001 */
+			Right = 0x2, /*< 0010 */
+			Down  = 0x4, /*< 0100 */
+			Up    = 0x8, /*< 1000 */
+		};
 
 		Line(std::string name, const Vector& world_v1, const Vector& world_v2) :
 			Shape(name, {world_v1, world_v2})
@@ -61,7 +69,7 @@ namespace model
 		virtual std::string type();
 
 	private:
-		ClippingMethod _clipping_method{ClippingMethod::Cohen_Sutherland};
+		ClippingMethod _clipping_method{ClippingMethod::Liang_Barsky};
 	};
 
 /*================================================================================*/
@@ -71,14 +79,6 @@ namespace model
 	void Line::cohen_sutherland(const Vector & min, const Vector & max)
 	{
 		db<Line>(INF) << "[" << this << "] Cohen Sutherland" << std::endl;
-		
-		enum Region
-		{
-			Left  = 0x1, /*< 0001 */
-			Right = 0x2, /*< 0010 */
-			Down  = 0x4, /*< 0100 */
-			Up    = 0x8, /*< 1000 */
-		};
 
 		unsigned loc_a = 0, loc_b = 0;
 		
@@ -148,7 +148,7 @@ namespace model
 			pa = new_pa;
 		}
 		
-		// Clipping for 'pa'
+		// Clipping for 'pb'
 		while (loc_b)
 		{
 			if (loc_b & Region::Up)
@@ -187,14 +187,82 @@ namespace model
 		db<Line>(INF) << "[" << this << "] Line: " << pa << " <-> " << pb << std::endl;
 	}
 
-	void Line::liang_barsky(const Vector & min, const Vector & max)
-	{
-		db<Line>(INF) << "[" << this << "] Liang Barsky" << std::endl;	
-	}
 
 	void Line::nicholl_lee_nicholl(const Vector & min, const Vector & max)
 	{
-		db<Line>(INF) << "[" << this << "] Nicholl Lee Nicholl" << std::endl;	
+		db<Line>(INF) << "[" << this << "] Nicholl Lee Nicholl" << std::endl;
+	}
+
+	void Line::liang_barsky(const Vector & min, const Vector & max)
+	{
+		db<Line>(INF) << "[" << this << "] Liang Barsky" << std::endl;
+		
+		Vector pa = _window_vectors[0];
+		Vector pb = _window_vectors[1];
+
+		double p4 = pb[1] - pa[1];
+		double p3 = -p4;
+		double p2 = pb[0] - pa[0];
+		double p1 = -p2;
+
+		double q1 = pa[0] - min[0];
+		double q2 = max[0] - pa[0];
+		double q3 = pa[1] - min[1];
+		double q4 = max[1] - pa[1];
+
+		double positive[5], negative[5];
+		
+		int pos_index = 1, neg_index = 1;
+		
+		positive[0] = 1;
+		negative[0] = 0;
+
+		if ((p1 == 0 && q1 < 0) || (p3 == 0 && q3 < 0))
+		{
+			_window_vectors.clear();
+			return;
+		}
+
+		if (p1 != 0)
+		{
+			double r1 = q1 / p1;
+			double r2 = q2 / p2;
+
+			negative[neg_index++] = p1 < 0 ? r1 : r2;
+			positive[pos_index++] = p1 < 0 ? r2 : r1;
+		}
+
+		if (p3 != 0)
+		{
+			double r3 = q3 / p3;
+			double r4 = q4 / p4;
+		
+			negative[neg_index++] = p3 < 0 ? r3: r4;
+			positive[pos_index++] = p3 < 0 ? r4: r3;
+		}
+
+		double rn1 = negative[0];
+		double rn2 = positive[0];
+
+		for (int i = 1; i < neg_index; ++i)
+			if (rn1 < negative[i])
+				rn1 = negative[i];
+
+		for (int i = 1; i < pos_index; ++i)
+			if (rn2 > positive[i])
+				rn2 = positive[i];
+
+		if (rn1 > rn2)
+		{
+			_window_vectors.clear();
+			return;
+		}
+
+		_window_vectors[0][0] = pa[0] + p2 * rn1;
+		_window_vectors[0][1] = pa[1] + p4 * rn1;
+
+		_window_vectors[1][0] = pa[0] + p2 * rn2;
+		_window_vectors[1][1] = pa[1] + p4 * rn2;
 	}
 
 	void Line::clipping(const Vector & min, const Vector & max)
