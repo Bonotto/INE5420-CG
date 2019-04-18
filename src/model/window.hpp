@@ -63,7 +63,8 @@ namespace model
 		const Matrix& transformation() const;
 		const Vector& min() const;
 		const Vector& max() const;
-		const Rectangle& drawable();
+		
+		Rectangle& drawable();
 
 	private:
 		Rectangle _visible_world;
@@ -109,7 +110,7 @@ namespace model
 		return _max;
 	}
 	
-	const Rectangle& Window::drawable()
+	Rectangle& Window::drawable()
 	{
 		return _visible_world;
 	}

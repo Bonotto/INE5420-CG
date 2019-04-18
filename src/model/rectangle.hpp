@@ -40,9 +40,11 @@ namespace model
 	class Rectangle : public Polygon
 	{
 	public:
-		Rectangle(std::string name, const Vector& world_v1, const Vector& world_v2) :
-			Polygon(name, {world_v1, Vector(world_v1[0], world_v2[1]), world_v2, Vector(world_v2[0], world_v1[1])})
-		{}
+		Rectangle(std::string name, const Vector& world_v1, const Vector& world_v2, bool filled = false) :
+			Polygon(name, {world_v1, Vector(world_v1[0], world_v2[1]), world_v2, Vector(world_v2[0], world_v1[1])}, filled)
+		{
+			std::cout << "PASSED HERE" << std::endl;
+		}
 
 		~Rectangle() = default;
 
@@ -57,6 +59,7 @@ namespace model
 	{
 		return "Rectangle";
 	}
+
 
 } //! namespace model
 

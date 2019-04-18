@@ -40,22 +40,27 @@ namespace model
 	class Polygon : public Shape
 	{
 	public:
-		Polygon(std::string name, const std::initializer_list<Vector>& world_vs) :
-			Shape(name, world_vs)
+		Polygon(std::string name, const std::initializer_list<Vector>& world_vs, bool filled = false) :
+			Shape(name, world_vs),
+			_filled(filled)
 		{}
 
-		Polygon(std::string name, const std::vector<Vector>& world_vs) :
-			Shape(name, world_vs)
+		Polygon(std::string name, const std::vector<Vector>& world_vs, bool filled = false) :
+			Shape(name, world_vs),
+			_filled(filled)
 		{}
 
 		~Polygon() = default;
 
 
+		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T);
 		virtual void clipping(const Vector & min, const Vector & max);
 		virtual std::string type();
 
 	private:
 		void sutherland_hodgeman(double x1, double y1, double x2, double y2);
+
+		bool _filled{false};
 	};
 
 /*================================================================================*/
@@ -126,6 +131,19 @@ namespace model
 
 		for (int i = 0, k = 1; i < 4; i++, k = (k + 1) % 4) 
 			sutherland_hodgeman(vertices[i][0], vertices[i][1], vertices[k][0], vertices[k][1]);
+	}
+
+	void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
+	{
+		Shape::draw(cr, viewport_T);
+
+		if (_filled)
+		{
+			cr->save();
+			cr->set_source_rgb(0.6, 0.6, 0.6);
+			cr->fill_preserve();
+			cr->restore();
+		}
 	}
 
 	std::string Polygon::type()

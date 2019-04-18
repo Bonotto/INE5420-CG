@@ -203,7 +203,7 @@ namespace control
 
 		_window = new model::Window(model::Vector(-width, -height), model::Vector(width, height));
 
-		_shapes.push_back(std::make_shared<model::Shape>(_window->drawable()));
+		_shapes.emplace_back(&_window->drawable());
 		_shapes_map[_objects_control++] = _shapes.back();
 	}
 
@@ -987,7 +987,12 @@ namespace control
 		if (!type.compare("Line"))
 			_shapes.emplace_back(new model::Line(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2)));
 		else
-			_shapes.emplace_back(new model::Rectangle(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2)));
+		{
+			Gtk::CheckButton *button;
+			_builder->get_widget("check_filled", button);
+
+			_shapes.emplace_back(new model::Rectangle(name, model::Vector(x1, y1, z1), model::Vector(x2, y2, z2), button->get_active()));
+		}
 
 		_shapes_map[_objects_control++] = _shapes.back();
 
@@ -1020,7 +1025,10 @@ namespace control
 
 		add_entry(_objects_control, name, "Polygon");
 
-		_shapes.emplace_back(new model::Polygon(name, vectors));
+		Gtk::CheckButton *button;
+		_builder->get_widget("check_filled", button);
+
+		_shapes.emplace_back(new model::Polygon(name, vectors, button->get_active()));
 		_shapes_map[_objects_control++] = _shapes.back();
 
 		build_objects({_shapes.back()});
