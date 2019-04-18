@@ -50,12 +50,83 @@ namespace model
 
 		~Polygon() = default;
 
+
+		virtual void clipping(const Vector & min, const Vector & max);
 		virtual std::string type();
+
+	private:
+		void sutherland_hodgeman(double x1, double y1, double x2, double y2);
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
+
+	void Polygon::sutherland_hodgeman(double x1, double y1, double x2, double y2)
+	{
+		std::vector<Vector> new_vectors;
+
+		auto x_intersect = [=](double x3, double y3, double x4, double y4)
+		{
+			double num = (x1*y2 - y1*x2) * (x3-x4) - (x1-x2) * (x3*y4 - y3*x4);
+			double den = (x1-x2) * (y3-y4) - (y1-y2) * (x3-x4);
+
+			return num / den;
+		};
+
+		auto y_intersect = [=](double x3, double y3, double x4, double y4)
+		{
+			double num = (x1*y2 - y1*x2) * (y3-y4) - (y1-y2) * (x3*y4 - y3*x4);
+			double den = (x1-x2) * (y3-y4) - (y1-y2) * (x3-x4);
+
+			return num / den;
+		};
+
+		for (size_t i = 0, k = 1; i < _window_vectors.size(); i++, k = (k + 1) % _window_vectors.size())
+		{
+			double ix = _window_vectors[i][0], iy = _window_vectors[i][1];
+			double kx = _window_vectors[k][0], ky = _window_vectors[k][1];
+
+			double i_pos = (x2-x1) * (iy-y1) - (y2-y1) * (ix-x1);
+			double k_pos = (x2-x1) * (ky-y1) - (y2-y1) * (kx-x1);
+
+			if (i_pos < 0  && k_pos < 0) 
+				new_vectors.emplace_back(kx, ky);
+
+			else if (i_pos >= 0  && k_pos < 0)
+			{
+				new_vectors.emplace_back(
+					x_intersect(ix, iy, kx, ky),
+					y_intersect(ix, iy, kx, ky)
+				);
+
+				new_vectors.emplace_back(kx, ky);
+			}
+
+			else if (i_pos < 0  && k_pos >= 0) 
+			{
+				new_vectors.emplace_back(
+					x_intersect(ix, iy, kx, ky),
+					y_intersect(ix, iy, kx, ky)
+				);
+			}
+		}
+
+		_window_vectors = new_vectors;
+	}
+
+	void Polygon::clipping(const Vector & min, const Vector & max)
+	{
+		double vertices[4][2] = {
+			{min[0], min[1]},
+			{min[0], max[1]},
+			{max[0], max[1]},
+			{max[0], min[1]}
+		};
+
+		for (int i = 0, k = 1; i < 4; i++, k = (k + 1) % 4) 
+			sutherland_hodgeman(vertices[i][0], vertices[i][1], vertices[k][0], vertices[k][1]);
+	}
 
 	std::string Polygon::type()
 	{

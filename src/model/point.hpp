@@ -58,7 +58,6 @@ namespace model
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-
 	void Point::clipping(const Vector & min, const Vector & max)
 	{
 		db<Point>(INF) << "[" << this << "] Clipping area: " << min << " x " << max << std::endl;

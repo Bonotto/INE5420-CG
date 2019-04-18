@@ -107,6 +107,7 @@ namespace control
 			build_new_objects();
 			build_movements();
 			build_numeric_entrys();
+			build_advanced_options();
 
 			if (model::Vector::dimension == 3)
 				disable_unused_interface_objects(ButtonID::Null);
@@ -135,6 +136,7 @@ namespace control
 		void on_remove_object_clicked();
 		void on_dialog_insert_clicked();
 		void on_dialog_delete_clicked();
+		void on_combo_line_clipp_changed();
 
 	private:
 		void build_window();
@@ -144,6 +146,7 @@ namespace control
 		void build_movements();
 		void build_numeric_entrys();
 		void reset_dialog_entries();
+		void build_advanced_options();
 		void build_objects(std::vector<std::shared_ptr<model::Shape>> shapes);
 		void enable_used_interface_objects(ButtonID selected);
 		void disable_unused_interface_objects(ButtonID selected);
@@ -417,6 +420,32 @@ namespace control
 		// 		}
 		// 	);
 		// }
+	}
+
+	void MainControl::build_advanced_options()
+	{
+		Gtk::ComboBoxText* combo_box;
+
+		_builder->get_widget("combo_line_clipp", combo_box);
+
+		combo_box->append("Cohen Sutherland");
+		combo_box->append("Liang Barsky");
+
+		combo_box->set_active_text("Cohen Sutherland");
+
+		combo_box->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_combo_line_clipp_changed));
+	}
+
+	void MainControl::on_combo_line_clipp_changed()
+	{
+		Gtk::ComboBoxText* combo_box;
+
+		_builder->get_widget("combo_line_clipp", combo_box);
+
+		if (combo_box->get_active_text() == "Cohen Sutherland")
+			model::Line::clipping_method = model::Line::ClippingMethod::Cohen_Sutherland;
+		else
+			model::Line::clipping_method = model::Line::ClippingMethod::Liang_Barsky;
 	}
 
 	void MainControl::disable_unused_interface_objects(ButtonID selected)
