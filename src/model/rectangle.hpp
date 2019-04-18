@@ -37,11 +37,11 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class Rectangle : public Shape
+	class Rectangle : public Polygon
 	{
 	public:
 		Rectangle(std::string name, const Vector& world_v1, const Vector& world_v2) :
-			Shape(name, {world_v1, Vector(world_v1[0], world_v2[1]), world_v2, Vector(world_v2[0], world_v1[1])})
+			Polygon(name, {world_v1, Vector(world_v1[0], world_v2[1]), world_v2, Vector(world_v2[0], world_v1[1])})
 		{}
 
 		~Rectangle() = default;
