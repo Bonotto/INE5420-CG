@@ -43,10 +43,11 @@ namespace model
 	    enum class ClippingMethod
 	    {
 	        Cohen_Sutherland,
-	        Liang_Barsky,
-	        Nicholl_Lee_Nicholl
+	        Liang_Barsky
 	    };
 		
+		static ClippingMethod clipping_method;
+
 		enum Region
 		{
 			Left  = 0x1, /*< 0001 */
@@ -61,20 +62,20 @@ namespace model
 
 		~Line() = default;
 
-		void cohen_sutherland(const Vector & min, const Vector & max);
-		void liang_barsky(const Vector & min, const Vector & max);
-		void nicholl_lee_nicholl(const Vector & min, const Vector & max);
-
 		virtual void clipping(const Vector & min, const Vector & max);
 		virtual std::string type();
 
 	private:
-		ClippingMethod _clipping_method{ClippingMethod::Liang_Barsky};
+		void cohen_sutherland(const Vector & min, const Vector & max);
+		void liang_barsky(const Vector & min, const Vector & max);
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
+
+
+	Line::ClippingMethod Line::clipping_method{Line::ClippingMethod::Cohen_Sutherland};
 
 	void Line::cohen_sutherland(const Vector & min, const Vector & max)
 	{
@@ -182,15 +183,6 @@ namespace model
 
 		_window_vectors[0] = pa;
 		_window_vectors[1] = pb;
-
-		db<Line>(INF) << "[" << this << "] Clipping area: " << min << " x " << max << std::endl;
-		db<Line>(INF) << "[" << this << "] Line: " << pa << " <-> " << pb << std::endl;
-	}
-
-
-	void Line::nicholl_lee_nicholl(const Vector & min, const Vector & max)
-	{
-		db<Line>(INF) << "[" << this << "] Nicholl Lee Nicholl" << std::endl;
 	}
 
 	void Line::liang_barsky(const Vector & min, const Vector & max)
@@ -267,10 +259,7 @@ namespace model
 
 	void Line::clipping(const Vector & min, const Vector & max)
 	{
-		// db<Line>(INF) << "[" << this << "] Line: " << _window_vectors[0] << " x " << _window_vectors[1] << std::endl;
-		// db<Line>(INF) << "[" << this << "] Clipping area: " << min << " x " << max << std::endl;
-
-		switch (_clipping_method)
+		switch (clipping_method)
 		{
 			case ClippingMethod::Cohen_Sutherland:
 				cohen_sutherland(min, max);
@@ -278,10 +267,6 @@ namespace model
 
 			case ClippingMethod::Liang_Barsky:
 				liang_barsky(min, max);
-				break;
-
-			case ClippingMethod::Nicholl_Lee_Nicholl:
-				nicholl_lee_nicholl(min, max);
 				break;
 
 			default:
