@@ -40,13 +40,13 @@ namespace model
 	class Polygon : public Shape
 	{
 	public:
-		Polygon(std::string name, const std::initializer_list<Vector>& world_vs, bool filled = false) :
-			Shape(name, world_vs),
+		Polygon(std::string name, const std::initializer_list<Vector>& vs, bool filled = false) :
+			Shape(name, vs),
 			_filled(filled)
 		{}
 
-		Polygon(std::string name, const std::vector<Vector>& world_vs, bool filled = false) :
-			Shape(name, world_vs),
+		Polygon(std::string name, const std::vector<Vector>& vs, bool filled = false) :
+			Shape(name, vs),
 			_filled(filled)
 		{}
 
@@ -73,16 +73,20 @@ namespace model
 
 		auto x_intersect = [=](double x3, double y3, double x4, double y4)
 		{
-			double num = (x1*y2 - y1*x2) * (x3-x4) - (x1-x2) * (x3*y4 - y3*x4);
-			double den = (x1-x2) * (y3-y4) - (y1-y2) * (x3-x4);
+			double num = (x1 * y2 - y1 * x2) * (x3 - x4)
+			           - (x3 * y4 - y3 * x4) * (x1 - x2);
+			double den = (x1 - x2) * (y3 - y4)
+			           - (y1 - y2) * (x3 - x4);
 
 			return num / den;
 		};
 
 		auto y_intersect = [=](double x3, double y3, double x4, double y4)
 		{
-			double num = (x1*y2 - y1*x2) * (y3-y4) - (y1-y2) * (x3*y4 - y3*x4);
-			double den = (x1-x2) * (y3-y4) - (y1-y2) * (x3-x4);
+			double num = (x1 * y2 - y1 * x2) * (y3 - y4)
+			           - (x3 * y4 - y3 * x4) * (y1 - y2);
+			double den = (x1 - x2) * (y3 - y4)
+			           - (y1 - y2) * (x3 - x4);
 
 			return num / den;
 		};
@@ -92,8 +96,8 @@ namespace model
 			double ix = _window_vectors[i][0], iy = _window_vectors[i][1];
 			double kx = _window_vectors[k][0], ky = _window_vectors[k][1];
 
-			double i_pos = (x2-x1) * (iy-y1) - (y2-y1) * (ix-x1);
-			double k_pos = (x2-x1) * (ky-y1) - (y2-y1) * (kx-x1);
+			double i_pos = (x2 - x1) * (iy - y1) - (y2 - y1) * (ix - x1);
+			double k_pos = (x2 - x1) * (ky - y1) - (y2 - y1) * (kx - x1);
 
 			if (i_pos < 0  && k_pos < 0) 
 				new_vectors.emplace_back(kx, ky);
@@ -117,20 +121,23 @@ namespace model
 			}
 		}
 
-		_window_vectors = new_vectors;
+		_window_vectors = std::move(new_vectors);
 	}
 
 	void Polygon::clipping(const Vector & min, const Vector & max)
 	{
-		double vertices[4][2] = {
+		double edges[4][2] = {
 			{min[0], min[1]},
 			{min[0], max[1]},
 			{max[0], max[1]},
 			{max[0], min[1]}
 		};
 
-		for (int i = 0, k = 1; i < 4; i++, k = (k + 1) % 4) 
-			sutherland_hodgeman(vertices[i][0], vertices[i][1], vertices[k][0], vertices[k][1]);
+		for (int i = 0, j = 1; i < 4; i++, j = (j + 1) % 4) 
+			sutherland_hodgeman(
+				edges[i][0], edges[i][1],
+				edges[j][0], edges[j][1]
+			);
 	}
 
 	void Polygon::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
@@ -140,7 +147,7 @@ namespace model
 		if (_filled)
 		{
 			cr->save();
-			cr->set_source_rgb(0.6, 0.6, 0.6);
+			cr->set_source_rgb(0.5, 0.5, 0.5);
 			cr->fill_preserve();
 			cr->restore();
 		}

@@ -165,11 +165,11 @@ namespace model
 
 	namespace transformation
 	{
-		Matrix translation(const Vector& factor);
+		Matrix translation(const Vector& step);
 
-		Matrix scheduling(const double factor, const Vector& mass_center);
+		Matrix scaling(const double scalar, const Vector& mass_center);
 
-		Matrix rotation(const double angle, const Vector& mass_center);
+		Matrix rotation(const double radians, const Vector& mass_center);
 
 		Matrix viewport_transformation(
 			const Vector& vp_min,
@@ -300,52 +300,46 @@ namespace model
 /*                                transformation                                  */
 /*--------------------------------------------------------------------------------*/
 
-	Matrix transformation::translation(const Vector& factor)
+	Matrix transformation::translation(const Vector& step)
 	{
-		Vector l0(1, 0, 0, 0);
-		Vector l1(0, 1, 0, 0);
-		Vector l2;
-		Vector l3;
+		Vector l0(      1,       0, 0, 0);
+		Vector l1(      0,       1, 0, 0);
+		Vector l2(step[0], step[1], 1, 0);
+		Vector l3(      0,       0, 0, 1);
 
-		if (Vector::dimension == 3)
-		{
-			l2 = Vector(factor[0], factor[1], 1, 0);
-			l3 = Vector(0, 0, 0, 1);
-		}
-		else
-		{
-			l2 = Vector(0, 0, 1, 0);
-			l3 = Vector(factor[0], factor[1], factor[2], 1);
+		if (Vector::dimension == 4) {
+			l2 = Vector(      0,       0,       1, 0);
+			l3 = Vector(step[0], step[1], step[2], 1);
 		}
 
 		return Matrix(l0, l1, l2, l3);
 	}
 
-	Matrix transformation::scheduling(const double factor, const Vector& mass_center)
+	Matrix transformation::scaling(const double scalar, const Vector& mass_center)
 	{
-		double factor_z = Vector::dimension == 3 ? 1 : factor;
+		double scalar_z = Vector::dimension == 3 ? 1 : scalar;
 
 		auto to_origin = translation(-1 * mass_center);
 		auto go_back   = translation(mass_center);
 
 		Matrix scalling(
-			{factor,      0,        0, 0},
-			{     0, factor,        0, 0},
-			{     0,      0, factor_z, 0},
+			{scalar,      0,        0, 0},
+			{     0, scalar,        0, 0},
+			{     0,      0, scalar_z, 0},
 			{     0,      0,        0, 1}
 		);
 
 		return (to_origin * scalling) * go_back;
 	}
 
-	Matrix transformation::rotation(const double angle, const Vector& mass_center)
+	Matrix transformation::rotation(const double radians, const Vector& mass_center)
 	{
 		auto to_origin = translation(-1 * mass_center);
 		auto go_back   = translation(mass_center);
 
 		Matrix rotating(
-			{ std::cos(angle), std::sin(angle), 0, 0},
-			{-std::sin(angle), std::cos(angle), 0, 0},
+			{ std::cos(radians), std::sin(radians), 0, 0},
+			{-std::sin(radians), std::cos(radians), 0, 0},
 			{               0,               0, 1, 0},
 			{               0,               0, 0, 1}
 		);
@@ -360,28 +354,23 @@ namespace model
 		const Vector& win_max
 	)
 	{
-		double x_vp_div_win     = (vp_max[0] - vp_min[0]) / (win_max[0] - win_min[0]);
-		double independent_of_x = -(win_min[0] * x_vp_div_win);
-		double dependent_of_x   = x_vp_div_win;
+		double x_vp_div_win = (vp_max[0] - vp_min[0]) / (win_max[0] - win_min[0]);
+		double ix = -(win_min[0] * x_vp_div_win);
+		double dx = x_vp_div_win;
 
-		double y_vp_div_win     = (vp_max[1] - vp_min[1]) / (win_max[1] - win_min[1]);
-		double independent_of_y = vp_max[1] - vp_min[1] + win_min[1] * y_vp_div_win;
-		double dependent_of_y   = (- y_vp_div_win);
+		double y_vp_div_win = (vp_max[1] - vp_min[1]) / (win_max[1] - win_min[1]);
+		double iy = vp_max[1] - vp_min[1] + win_min[1] * y_vp_div_win;
+		double dy = (-y_vp_div_win);
 
-		Vector l0(dependent_of_x, 0, 0, 0);
-		Vector l1(0, dependent_of_y, 0, 0);
-		Vector l2;
-		Vector l3;
+		Vector l0(dx,  0, 0, 0);
+		Vector l1( 0, dy, 0, 0);
+		Vector l2(ix, iy, 1, 0);
+		Vector l3( 0,  0, 0, 1);
 
-		if (Vector::dimension == 3)
+		if (Vector::dimension == 4)
 		{
-			l2 = Vector(independent_of_x, independent_of_y, 1, 0);
-			l3 = Vector(0, 0, 0, 1);
-		}
-		else
-		{
-			l2 = Vector(0, 0, 1, 0);
-			l3 = Vector(independent_of_x, independent_of_y, 0, 1);
+			l2 = Vector( 0,  0, 1, 0);
+			l3 = Vector(ix, iy, 0, 1);
 		}
 
 		return Matrix(l0, l1, l2, l3);
