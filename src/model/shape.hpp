@@ -43,24 +43,19 @@ namespace model
 	public:
 		Shape()  = default;
 
-		Shape(std::string name, const Vector& world_v) :
-			_name{name},
-			_world_vectors{{world_v}}
+		Shape(std::string name, const Vector& v) :
+			_name(name),
+			_world_vectors({v})
 		{}
 
-		Shape(std::string name, double world_x, double world_y, double world_z = Vector::z, double world_w = Vector::w) :
-			_name{name},
-			_world_vectors{{world_x, world_y, world_z, world_w}}
+		Shape(std::string name, const std::initializer_list<Vector>& vs) :
+			_name(name),
+			_world_vectors(vs)
 		{}
 
-		Shape(std::string name, const std::initializer_list<Vector>& world_vs) :
-			_name{name},
-			_world_vectors{world_vs}
-		{}
-
-		Shape(std::string name, const std::vector<Vector>& world_vs) :
-			_name{name},
-			_world_vectors{world_vs}
+		Shape(std::string name, const std::vector<Vector>& vs) :
+			_name(name),
+			_world_vectors(vs)
 		{}
 
 		virtual ~Shape() = default;

@@ -40,12 +40,13 @@ namespace model
 	class Point : public Shape
 	{
 	public:
-		Point(std::string name, const Vector& world_v) :
-			Shape(name, {world_v})
+		Point(std::string name, const Vector& v) :
+			Shape(name, v)
 		{}
 
-		Point(std::string name, double world_x, double world_y, double world_z = Vector::z, double world_w = Vector::w) :
-			Shape(name, Vector(world_x, world_y, world_z, world_w))
+		/* Use world coordinates to create a point */
+		Point(std::string name, double x, double y, double z = Vector::z, double w = Vector::w) :
+			Shape(name, Vector(x, y, z, w))
 		{}
 
 		~Point() = default;
@@ -60,19 +61,15 @@ namespace model
 
 	void Point::clipping(const Vector & min, const Vector & max)
 	{
-		db<Point>(INF) << "[" << this << "] Clipping area: " << min << " x " << max << std::endl;
-		db<Point>(INF) << "[" << this << "] Point: " << _window_vectors[0] << std::endl;
+		db<Point>(INF) << "[" << this << "] Clipping Point" << std::endl;
 
-		bool x_is_outside = _window_vectors[0][0] < min[0] || _window_vectors[0][0] > max[0];
-		bool y_is_outside = _window_vectors[0][1] < min[1] || _window_vectors[0][1] > max[1];
+		Vector & p = _window_vectors[0];
+
+		bool x_is_outside = p[0] < min[0] || p[0] > max[0];
+		bool y_is_outside = p[1] < min[1] || p[1] > max[1];
 		
 		if (x_is_outside || y_is_outside)
-		{
-			db<Point>(INF) << "[" << this << "] Point Clipped!" << std::endl;
 			_window_vectors.clear();
-		}
-		else
-			db<Point>(INF) << "[" << this << "] Point NOT Clipped!" << std::endl;
 	}
 
 	std::string Point::type()

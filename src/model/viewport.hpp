@@ -101,10 +101,10 @@ namespace model
 
 		/* Draw all shapes. */
 		for (auto & shape : _shapes)
+		{
 			shape->draw(cr, T);
-
-		/* Commit a drawing. */
-		cr->stroke();
+			cr->stroke();
+		}
 
 		return true;
 	}

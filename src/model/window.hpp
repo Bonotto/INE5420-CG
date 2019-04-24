@@ -44,9 +44,15 @@ namespace model
 		const static Vector fixed_max;
 
 		Window(const Vector & min, const Vector & max) :
-			_visible_world(Rectangle{"window", Vector(min[0] - 0.05*min[0], min[1] - 0.05*min[1]), Vector(max[0] - 0.05*max[0], max[1] - 0.05*max[1])}),
-			_min{min},
-			_max{max}
+			_min(min),
+			_max(max),
+			_visible_world(
+				Rectangle(
+					"window",
+					Vector(min[0] - 0.05*min[0], min[1] - 0.05*min[1]),
+					Vector(max[0] - 0.05*max[0], max[1] - 0.05*max[1])
+				)
+			)
 		{
 			_visible_world.w_transformation(normalization());
 		}
@@ -63,13 +69,13 @@ namespace model
 		const Matrix& transformation() const;
 		const Vector& min() const;
 		const Vector& max() const;
-		const Rectangle& drawable();
+		
+		Rectangle& drawable();
 
 	private:
-		Rectangle _visible_world;
-		Vector _min, _max;
 		Matrix _history;
-		Matrix _norm;
+		Vector _min, _max;
+		Rectangle _visible_world;
 	};
 
 /*================================================================================*/
@@ -109,7 +115,7 @@ namespace model
 		return _max;
 	}
 	
-	const Rectangle& Window::drawable()
+	Rectangle& Window::drawable()
 	{
 		return _visible_world;
 	}
@@ -124,21 +130,16 @@ namespace model
 
 		Vector l0{ x,  0, 0, 0};
 		Vector l1{ 0,  y, 0, 0};
-		Vector l2;
-		Vector l3;
+		Vector l2{-a, -b, 1, 0};
+		Vector l3{ 0,  0, 0, 1};
 
-		if (Vector::dimension == 3)
-		{
-			l2 = Vector{-a, -b, 1, 0};
-			l3 = Vector{ 0,  0, 0, 0};
-		}
-		else
+		if (Vector::dimension == 4)
 		{
 			double z = 2 / (_max[2] - _min[2]);
 			double c = (2 * _min[2]) / (_max[2] - _min[2]) + 1;
 
 			l2 = Vector{ 0,  0,  z, 0};
-			l3 = Vector{-a, -b, -c, 0};
+			l3 = Vector{-a, -b, -c, 1};
 		}
 
 		return Matrix(l0, l1, l2, l3);

@@ -45,16 +45,8 @@ namespace model
 	        Cohen_Sutherland,
 	        Liang_Barsky
 	    };
-		
-		static ClippingMethod clipping_method;
 
-		enum Region
-		{
-			Left  = 0x1, /*< 0001 */
-			Right = 0x2, /*< 0010 */
-			Down  = 0x4, /*< 0100 */
-			Up    = 0x8, /*< 1000 */
-		};
+		static ClippingMethod clipping_method;
 
 		Line(std::string name, const Vector& world_v1, const Vector& world_v2) :
 			Shape(name, {world_v1, world_v2})
@@ -74,121 +66,96 @@ namespace model
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-
 	Line::ClippingMethod Line::clipping_method{Line::ClippingMethod::Cohen_Sutherland};
 
 	void Line::cohen_sutherland(const Vector & min, const Vector & max)
 	{
 		db<Line>(INF) << "[" << this << "] Cohen Sutherland" << std::endl;
 
-		unsigned loc_a = 0, loc_b = 0;
-		
-		Vector & pa = _window_vectors[0];
-		Vector & pb = _window_vectors[1];
-
-		Vector new_pa;
-		Vector new_pb;
-
-		auto func = [&](const Vector & p)
+		enum Region
 		{
-			unsigned loc = 0;
+			Center  = 0x0, /*< 0000 */
+			Left    = 0x1, /*< 0001 */
+			Right   = 0x2, /*< 0010 */
+			Down    = 0x4, /*< 0100 */
+			Up      = 0x8, /*< 1000 */
+		};
+
+		auto get_location = [&](const Vector & p)
+		{
+			unsigned loc = Region::Center;
 
 			if (p[1] > max[1])
 				loc |= Region::Up;
-			
+
 			else if (p[1] < min[1])
 				loc |= Region::Down;
 
 			if (p[0] > max[0])
 				loc |= Region::Right;
-			
+
 			else if (p[0] < min[0])
 				loc |= Region::Left;
 
 			return loc;
 		};
 
-		loc_a = func(pa);
-		loc_b = func(pb);
+		Vector paux;
+		Vector & pa = _window_vectors[0];
+		Vector & pb = _window_vectors[1];
 
-		if (loc_a & loc_b)
+		unsigned region_of_a = get_location(pa);
+		unsigned region_of_b = get_location(pb);
+
+		/* Are they outside? */
+		if (region_of_a & region_of_b)
 		{
 			_window_vectors.clear();
 			return;
 		}
 
-		// Clipping for 'pa'
-		while (loc_a)
+		for (int attempts = 0; attempts < 10 && (region_of_a || region_of_b); ++attempts)
 		{
-			if (loc_a & Region::Up)
+			Vector & p = region_of_a ? pa : pb;
+			unsigned & region_of_p = region_of_a ? region_of_a : region_of_b;
+
+			if (region_of_p & Region::Up)
 			{
-				new_pa[0] = pa[0] + (pb[0] - pa[0]) * (max[1] - pa[1]) / (pb[1] - pa[1]);
-				new_pa[1] = max[1];
-			}
-			
-			else if (loc_a & Region::Down)
-			{
-				new_pa[0] = pa[0] + (pb[0] - pa[0]) * (min[1] - pa[1]) / (pb[1] - pa[1]);
-				new_pa[1] = min[1];
+				paux[0] = pa[0] + (pb[0] - pa[0]) * (max[1] - pa[1]) / (pb[1] - pa[1]);
+				paux[1] = max[1];
 			}
 
-			else if (loc_a & Region::Right)
+			else if (region_of_p & Region::Down)
 			{
-				new_pa[0] = max[0];
-				new_pa[1] = pa[1] + (pb[1] - pa[1]) * (max[0] - pa[0]) / (pb[0] - pa[0]);
+				paux[0] = pa[0] + (pb[0] - pa[0]) * (min[1] - pa[1]) / (pb[1] - pa[1]);
+				paux[1] = min[1];
 			}
 
-			else if (loc_a & Region::Left)
+			else if (region_of_p & Region::Right)
 			{
-				new_pa[0] = min[0];
-				new_pa[1] = pa[1] + (pb[1] - pa[1]) * (min[0] - pa[0]) / (pb[0] - pa[0]);
+				paux[0] = max[0];
+				paux[1] = pa[1] + (pb[1] - pa[1]) * (max[0] - pa[0]) / (pb[0] - pa[0]);
 			}
 
-			loc_a = func(new_pa);
-
-			pa = new_pa;
-		}
-		
-		// Clipping for 'pb'
-		while (loc_b)
-		{
-			if (loc_b & Region::Up)
+			else if (region_of_p & Region::Left)
 			{
-				new_pb[0] = pa[0] + (pb[0] - pa[0]) * (max[1] - pa[1]) / (pb[1] - pa[1]);
-				new_pb[1] = max[1];
-			}
-			
-			else if (loc_b & Region::Down)
-			{
-				new_pb[0] = pa[0] + (pb[0] - pa[0]) * (min[1] - pa[1]) / (pb[1] - pa[1]);
-				new_pb[1] = min[1];
+				paux[0] = min[0];
+				paux[1] = pa[1] + (pb[1] - pa[1]) * (min[0] - pa[0]) / (pb[0] - pa[0]);
 			}
 
-			else if (loc_b & Region::Right)
-			{
-				new_pb[0] = max[0];
-				new_pb[1] = pa[1] + (pb[1] - pa[1]) * (max[0] - pa[0]) / (pb[0] - pa[0]);
-			}
-
-			else if (loc_b & Region::Left)
-			{
-				new_pb[0] = min[0];
-				new_pb[1] = pa[1] + (pb[1] - pa[1]) * (min[0] - pa[0]) / (pb[0] - pa[0]);
-			}
-
-			loc_b = func(new_pb);
-			
-			pb = new_pb;
+			p = paux;
+			region_of_p = get_location(p);
 		}
 
-		_window_vectors[0] = pa;
-		_window_vectors[1] = pb;
+		/* Are they outside yet? */
+		if (region_of_a || region_of_b)
+			_window_vectors.clear();
 	}
 
 	void Line::liang_barsky(const Vector & min, const Vector & max)
 	{
 		db<Line>(INF) << "[" << this << "] Liang Barsky" << std::endl;
-		
+
 		Vector pa = _window_vectors[0];
 		Vector pb = _window_vectors[1];
 
@@ -203,9 +170,9 @@ namespace model
 		double q4 = max[1] - pa[1];
 
 		double positive[5], negative[5];
-		
+
 		int pos_index = 1, neg_index = 1;
-		
+
 		positive[0] = 1;
 		negative[0] = 0;
 
@@ -228,7 +195,7 @@ namespace model
 		{
 			double r3 = q3 / p3;
 			double r4 = q4 / p4;
-		
+
 			negative[neg_index++] = p3 < 0 ? r3: r4;
 			positive[pos_index++] = p3 < 0 ? r4: r3;
 		}
