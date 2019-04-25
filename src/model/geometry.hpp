@@ -79,6 +79,9 @@ namespace model
 		double& operator[](const int position);
 		const double& operator[](int position) const;
 
+		Vector operator+(const Vector& v) const;
+		Vector operator-(const Vector& v) const;
+
 		double operator*(const Vector& v) const;
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
@@ -195,6 +198,21 @@ namespace model
 	const double& Vector::operator[](const int position) const
 	{
 		return _coordinates.at(position);
+	}
+
+	Vector Vector::operator+(const Vector& v) const
+	{
+		return Vector(
+			_coordinates[0] + v[0],
+			_coordinates[1] + v[1],
+			_coordinates[2] + v[2],
+			_coordinates[3] + v[3]
+		);
+	}
+	
+	Vector Vector::operator-(const Vector& v) const
+	{
+		return (*this) + (v * -1);
 	}
 
 	double Vector::operator*(const Vector& v) const

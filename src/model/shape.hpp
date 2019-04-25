@@ -43,19 +43,22 @@ namespace model
 	public:
 		Shape()  = default;
 
-		Shape(std::string name, const Vector& v) :
+		Shape(std::string name, const Vector& v, bool close_path = false) :
 			_name(name),
-			_world_vectors({v})
+			_world_vectors({v}),
+			_close_path(close_path)
 		{}
 
-		Shape(std::string name, const std::initializer_list<Vector>& vs) :
+		Shape(std::string name, const std::initializer_list<Vector>& vs, bool close_path = false) :
 			_name(name),
-			_world_vectors(vs)
+			_world_vectors(vs),
+			_close_path(close_path)
 		{}
 
-		Shape(std::string name, const std::vector<Vector>& vs) :
+		Shape(std::string name, const std::vector<Vector>& vs, bool close_path = false) :
 			_name(name),
-			_world_vectors(vs)
+			_world_vectors(vs),
+			_close_path(close_path)
 		{}
 
 		virtual ~Shape() = default;
@@ -83,6 +86,7 @@ namespace model
 		std::string _name{"Shape"};
 		std::vector<Vector> _world_vectors{{0, 0}};
 		std::vector<Vector> _window_vectors{{0, 0}};
+		const bool _close_path;
 	};
 
 /*================================================================================*/
@@ -144,7 +148,8 @@ namespace model
 		}
 		
 		//! Complete path
-		cr->close_path();
+		if (_close_path)
+			cr->close_path();
 	}
 
 	std::string Shape::name()

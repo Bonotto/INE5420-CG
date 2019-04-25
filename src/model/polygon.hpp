@@ -41,12 +41,12 @@ namespace model
 	{
 	public:
 		Polygon(std::string name, const std::initializer_list<Vector>& vs, bool filled = false) :
-			Shape(name, vs),
+			Shape(name, vs, true),
 			_filled(filled)
 		{}
 
 		Polygon(std::string name, const std::vector<Vector>& vs, bool filled = false) :
-			Shape(name, vs),
+			Shape(name, vs, true),
 			_filled(filled)
 		{}
 

@@ -51,6 +51,7 @@ namespace model
     class Line;
     class Rectangle;
     class Polygon;
+    class Bezier;
     class Window;
     class Viewport;
 } //! namespace model
