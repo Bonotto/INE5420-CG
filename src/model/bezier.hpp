@@ -54,12 +54,18 @@ namespace model
 		
 		void w_transformation(const Matrix & window_T);
 
+		void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T);
+
 		virtual std::string type();
+
+		static const double precicion;
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
+
+	const double Bezier::precicion = 0.01;
 
 	void Bezier::w_transformation(const Matrix & window_T)
 	{
@@ -72,7 +78,7 @@ namespace model
 			
 		// db<Bezier>(INF) << p1 << std::endl;
 
-		for (double t = 0; t <= 1.0; t += 0.01)
+		for (double t = 0; t <= 1.0; t += precicion)
 		{			
 			Vector p =               std::pow(1 - t, 3) * p1
 			         + 3 * t       * std::pow(1 - t, 2) * p2
@@ -148,9 +154,37 @@ namespace model
 			if (rn1 > rn2)
 				continue;
 
-			// vectors.emplace_back(std::move(Vector({pa[0] + p2 * rn1, pa[1] + p4 * rn1})));
-			// aux = Vector(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
-			// vectors.emplace_back(aux);
+			vectors.emplace_back(std::move(Vector({pa[0] + p2 * rn1, pa[1] + p4 * rn1})));
+			vectors.emplace_back(std::move(Vector({pa[0] + p2 * rn2, pa[1] + p4 * rn2})));
+		}
+
+		_window_vectors = vectors;
+	}
+
+	void Bezier::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
+	{
+		if (_window_vectors.empty())
+			return;
+
+		Vector v0 = _window_vectors[0] * viewport_T;
+
+		/* First point */
+		cr->move_to(v0[0], v0[1]);
+
+		/* First point to verify coordinates */
+		v0 = _window_vectors[0];
+
+		// Draw all other points
+		for (Vector& v : _window_vectors)
+		{
+			Vector vi = v * viewport_T;
+			
+			if (calculation::euclidean_distance(v, v0) > 2 * precicion)
+				cr->move_to(vi[0], vi[1]);
+			else
+				cr->line_to(vi[0], vi[1]);
+
+			v0 = v;
 		}
 	}
 
