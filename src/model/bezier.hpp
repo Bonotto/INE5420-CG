@@ -49,6 +49,8 @@ namespace model
 		{}
 
 		~Bezier() = default;
+
+		virtual void clipping(const Vector & min, const Vector & max);
 		
 		void w_transformation(const Matrix & window_T);
 
@@ -61,19 +63,17 @@ namespace model
 
 	void Bezier::w_transformation(const Matrix & window_T)
 	{
-
-
 		std::vector<Vector> vectors;
 
 		Vector p1 = _world_vectors[0] * window_T;
 		Vector p2 = _world_vectors[1] * window_T;
 		Vector p3 = _world_vectors[2] * window_T;
 		Vector p4 = _world_vectors[3] * window_T;
-	
-		db<Vector>(TRC) << p1 << " | " << p2 << " | " << p3 << " | " << p4 << std::endl; 
+			
+		// db<Bezier>(INF) << p1 << std::endl;
 
 		for (double t = 0; t <= 1.0; t += 0.01)
-		{
+		{			
 			Vector p =               std::pow(1 - t, 3) * p1
 			         + 3 * t       * std::pow(1 - t, 2) * p2
 			         + 3 * (1 - t) * std::pow(t, 2)     * p3
@@ -83,6 +83,75 @@ namespace model
 		}
 
 		_window_vectors = std::move(vectors);
+	}
+
+	void Bezier::clipping(const Vector & min, const Vector & max)
+	{
+		std::vector<Vector> vectors;
+
+		Vector aux;
+
+		for (size_t a = 0; a < _window_vectors.size() - 1; ++a)
+		{
+			Vector pa = _window_vectors[a];
+			Vector pb = _window_vectors[a + 1];
+
+			double p4 = pb[1] - pa[1];
+			double p3 = -p4;
+			double p2 = pb[0] - pa[0];
+			double p1 = -p2;
+
+			double q1 = pa[0] - min[0];
+			double q2 = max[0] - pa[0];
+			double q3 = pa[1] - min[1];
+			double q4 = max[1] - pa[1];
+
+			double positive[5], negative[5];
+
+			int pos_index = 1, neg_index = 1;
+
+			positive[0] = 1;
+			negative[0] = 0;
+
+			if ((p1 == 0 && q1 < 0) || (p3 == 0 && q3 < 0))
+				continue;
+
+			if (p1 != 0)
+			{
+				double r1 = q1 / p1;
+				double r2 = q2 / p2;
+
+				negative[neg_index++] = p1 < 0 ? r1 : r2;
+				positive[pos_index++] = p1 < 0 ? r2 : r1;
+			}
+
+			if (p3 != 0)
+			{
+				double r3 = q3 / p3;
+				double r4 = q4 / p4;
+
+				negative[neg_index++] = p3 < 0 ? r3: r4;
+				positive[pos_index++] = p3 < 0 ? r4: r3;
+			}
+
+			double rn1 = negative[0];
+			double rn2 = positive[0];
+
+			for (int i = 1; i < neg_index; ++i)
+				if (rn1 < negative[i])
+					rn1 = negative[i];
+
+			for (int i = 1; i < pos_index; ++i)
+				if (rn2 > positive[i])
+					rn2 = positive[i];
+
+			if (rn1 > rn2)
+				continue;
+
+			// vectors.emplace_back(std::move(Vector({pa[0] + p2 * rn1, pa[1] + p4 * rn1})));
+			// aux = Vector(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
+			// vectors.emplace_back(aux);
+		}
 	}
 
 	std::string Bezier::type()
