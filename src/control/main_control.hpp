@@ -187,7 +187,6 @@ namespace control
 		void insert_polygon(std::string name);
 		void insert_object(std::string name, std::string type);
 		void insert_bezier(std::string name);
-		// void insert_object(std::string name, std::string type);
 		/**@}*/
 
 		/**
@@ -1424,7 +1423,7 @@ namespace control
 				));
 		}
 
-		if (vectors.size() < 4)
+		if (vectors.size() < 4 || (vectors.size() - 4) % 3)
 			return;
 
 		add_entry(_objects_control, name, "Bezier Curve");

@@ -75,17 +75,30 @@ namespace model
 		Vector p2 = _world_vectors[1] * window_T;
 		Vector p3 = _world_vectors[2] * window_T;
 		Vector p4 = _world_vectors[3] * window_T;
-			
-		// db<Bezier>(INF) << p1 << std::endl;
 
-		for (double t = 0; t <= 1.0; t += precicion)
-		{			
-			Vector p =               std::pow(1 - t, 3) * p1
-			         + 3 * t       * std::pow(1 - t, 2) * p2
-			         + 3 * (1 - t) * std::pow(t, 2)     * p3
-                     +               std::pow(t, 3)     * p4;
+		int bezier_curves = (_world_vectors.size() - 4) / 3;
 
-            vectors.push_back(std::move(p));
+		std::cout << "BEZIER CURVES" << bezier_curves << std::endl;
+
+		for (int k = 0; k <= bezier_curves; ++k)
+		{
+			for (double t = 0; t <= 1.0; t += precicion)
+			{			
+				Vector p =               std::pow(1 - t, 3) * p1
+				         + 3 * t       * std::pow(1 - t, 2) * p2
+				         + 3 * (1 - t) * std::pow(t, 2)     * p3
+	                     +               std::pow(t, 3)     * p4;
+
+	            vectors.push_back(std::move(p));
+			}
+
+			if (k < bezier_curves)
+			{
+				p1 = p4;
+				p2 = _world_vectors[3 * k + 4] * window_T;
+				p3 = _world_vectors[3 * k + 5] * window_T;
+				p4 = _world_vectors[3 * k + 6] * window_T;
+			}
 		}
 
 		_window_vectors = std::move(vectors);
