@@ -62,6 +62,9 @@ namespace model
 		static const double precision;
 		static const double world_max_size;
 		static const double window_max_size;
+
+	private:
+		bool over_perpendicular_edges(const Vector & pa, const Vector & pb);
 	};
 
 /*================================================================================*/
@@ -107,15 +110,14 @@ namespace model
 		/* Calculates the second point in window coordinates (the first point is the p1) */
 		Vector pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
 
-		std::cout << std::endl << std::endl << "WORLD DISTANCE = " << calculation::euclidean_distance(p1, pa) << " | " << std::endl << std::endl;
-
 		if (calculation::euclidean_distance(p1, pa) >= window_max_size)
 			return;
 
 		/* Calculates the points generation precision where 0.0153106 is de maximum distance between two points
-		   When the object is scaled then the distance between points grow, therefore, this distance under the
-		   maximum distance allows calculating the proportion to decrease 0.01 precision and make the curve
-		   maintains the same smooth */
+		 * When the object is scaled then the distance between points grow, therefore, this distance under the
+		 * maximum distance allows calculating the proportion to decrease 0.01 precision and make the curve
+		 * maintains the same smooth
+		 */
 		double gen_prec = precision / (calculation::euclidean_distance(p1, pa) / 0.0153106);
 
 		/* Amount of anothers bezier curves interconnected */
@@ -219,6 +221,22 @@ namespace model
 		_window_vectors = vectors;
 	}
 
+	bool Bezier::over_perpendicular_edges(const Vector & pa, const Vector & pb)
+	{
+		static const double TOP    =  0.95;
+		static const double RIGHT  =  0.95;
+		static const double BOTTOM = -0.95;
+		static const double LEFT   = -0.95;
+
+		if (pa[1] == TOP || pa[1] == BOTTOM)
+			return (pb[0] == LEFT || pb[0] == RIGHT);
+
+		else if (pa[0] == LEFT || pa[0] == RIGHT)
+			return (pb[1] == TOP || pb[1] == BOTTOM);
+
+		return false;
+	}
+
 	void Bezier::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
 	{
 		if (_window_vectors.empty())
@@ -232,12 +250,12 @@ namespace model
 		/* First point to verify coordinates */
 		v0 = _window_vectors[0];
 
-		// Draw all other points
+		/* Draw all other points */
 		for (Vector& v : _window_vectors)
 		{
 			Vector vi = v * viewport_T;
-			
-			if (calculation::euclidean_distance(v, v0) > 2 * precision)
+
+			if (over_perpendicular_edges(v, v0))
 				cr->move_to(vi[0], vi[1]);
 			else
 				cr->line_to(vi[0], vi[1]);
