@@ -35,6 +35,7 @@
 #include "../model/shape.hpp"
 #include "../model/point.hpp"
 #include "../model/polygon.hpp"
+#include "../model/bezier.hpp"
 #include "../model/window.hpp"
 #include "../model/viewport.hpp"
 
@@ -90,10 +91,12 @@ namespace control
 			Line           = 2,
 			Rectangle      = 3,
 			Polygon        = 4,
+			Bezier         = 5,
+			Bspline        = 6,
 			/* Rotation */
-			CenterObject   = 5,
-			CenterWorld    = 6,
-			CenterSpecific = 7
+			CenterObject   = 7,
+			CenterWorld    = 8,
+			CenterSpecific = 9
 		};
 
 	public:
@@ -183,6 +186,7 @@ namespace control
 		void insert_point(std::string name);
 		void insert_polygon(std::string name);
 		void insert_object(std::string name, std::string type);
+		void insert_bezier(std::string name);
 		/**@}*/
 
 		/**
@@ -592,6 +596,12 @@ namespace control
 		_builder->get_widget("radio_polygon", radio);
 		hash += radio->get_active() ? ButtonID::Polygon   	   : ButtonID::Null;
 
+		_builder->get_widget("radio_bezier", radio);
+		hash += radio->get_active() ? ButtonID::Bezier   	   : ButtonID::Null;
+
+		_builder->get_widget("radio_bspline", radio);
+		hash += radio->get_active() ? ButtonID::Bspline   	   : ButtonID::Null;
+
 		switch (hash)
 		{
 			case ButtonID::Point:
@@ -613,6 +623,16 @@ namespace control
 				disable_unused_interface_objects(ButtonID::Polygon);
 				enable_used_interface_objects(ButtonID::Polygon);
 				break;
+
+			case ButtonID::Bezier:
+				disable_unused_interface_objects(ButtonID::Bezier);
+				enable_used_interface_objects(ButtonID::Bezier);
+				break;
+
+			// case ButtonID::Bspline:
+			// 	disable_unused_interface_objects(ButtonID::Bspline);
+			// 	enable_used_interface_objects(ButtonID::Bspline);
+			// 	break;
 
 			/* Undefined */
 			default:
@@ -690,6 +710,12 @@ namespace control
 		_builder->get_widget("radio_polygon", radio);
 		hash += radio->get_active() ? ButtonID::Polygon   : ButtonID::Null;
 
+		_builder->get_widget("radio_bezier", radio);
+		hash += radio->get_active() ? ButtonID::Bezier    : ButtonID::Null;
+
+		_builder->get_widget("radio_bspline", radio);
+		hash += radio->get_active() ? ButtonID::Bspline   : ButtonID::Null;
+
 		switch (hash)
 		{
 			case ButtonID::Point:
@@ -707,6 +733,14 @@ namespace control
 			case ButtonID::Polygon:
 				insert_polygon(name);
 				break;
+			
+			case ButtonID::Bezier:
+				insert_bezier(name);
+				break;
+			
+			// case ButtonID::Polygon:
+			// 	insert_bspline(name);
+			// 	break;
 
 			/* Undefined */
 			default:
@@ -879,6 +913,14 @@ namespace control
 		radio2->join_group(*radio1);
 
 		_builder->get_widget("radio_polygon", radio2);
+		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		radio2->join_group(*radio1);
+
+		_builder->get_widget("radio_bezier", radio2);
+		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		radio2->join_group(*radio1);
+
+		_builder->get_widget("radio_bspline", radio2);
 		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 		radio2->join_group(*radio1);
 
@@ -1059,6 +1101,8 @@ namespace control
 				};
 				break;
 
+			case ButtonID::Bezier:
+			case ButtonID::Bspline:
 			case ButtonID::Polygon:
 				entry_names = {
 					"entry_polygon_x",
@@ -1190,6 +1234,9 @@ namespace control
 				};
 				break;
 
+
+			case ButtonID::Bezier:
+			case ButtonID::Bspline:
 			case ButtonID::Polygon:
 				entry_names = {
 					"entry_point_x",
@@ -1347,6 +1394,41 @@ namespace control
 		_builder->get_widget("check_filled", button);
 
 		_shapes.emplace_back(new model::Polygon(name, vectors, button->get_active()));
+		_shapes_map[_objects_control++] = _shapes.back();
+
+		build_objects({_shapes.back()});
+	}
+
+	void MainControl::insert_bezier(std::string name)
+	{
+		db<MainControl>(TRC) << "MainControl::insert_bezier()" << std::endl;
+
+		Gtk::TreeView *tree;
+		std::vector<model::Vector> vectors;
+
+		_builder->get_widget("tree_vectors", tree);
+
+		for (auto row : _list_model_vectors->children())
+		{
+			if (model::Vector::dimension == 4)
+		  		vectors.push_back(model::Vector(
+					row[_tree_model_vectors._column_x],
+					row[_tree_model_vectors._column_y],
+					row[_tree_model_vectors._column_z]
+				));
+			else
+		  		vectors.push_back(model::Vector(
+					row[_tree_model_vectors._column_x],
+					row[_tree_model_vectors._column_y]
+				));
+		}
+
+		if (vectors.size() < 4 || (vectors.size() - 4) % 3)
+			return;
+
+		add_entry(_objects_control, name, "Bezier Curve");
+
+		_shapes.emplace_back(new model::Bezier(name, vectors));
 		_shapes_map[_objects_control++] = _shapes.back();
 
 		build_objects({_shapes.back()});

@@ -79,6 +79,9 @@ namespace model
 		double& operator[](const int position);
 		const double& operator[](int position) const;
 
+		Vector operator+(const Vector& v) const;
+		Vector operator-(const Vector& v) const;
+
 		double operator*(const Vector& v) const;
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
@@ -197,6 +200,26 @@ namespace model
 		return _coordinates.at(position);
 	}
 
+	Vector Vector::operator+(const Vector& v) const
+	{
+		if (dimension == 4)
+			return Vector(
+				_coordinates[0] + v[0],
+				_coordinates[1] + v[1],
+				_coordinates[2] + v[2]
+		);
+
+		return Vector(
+			_coordinates[0] + v[0],
+			_coordinates[1] + v[1]
+		);
+	}
+	
+	Vector Vector::operator-(const Vector& v) const
+	{
+		return (*this) + (v * -1);
+	}
+
 	double Vector::operator*(const Vector& v) const
 	{
 		return _coordinates[0] * v[0]
@@ -207,7 +230,7 @@ namespace model
 
 	Vector Vector::operator*(const double scalar) const
 	{
-		Vector v(0, 0, 0, 0);
+		Vector v(0, 0);
 
 		for (int i = 0; i < dimension-1; ++i)
 			v[i] = scalar * _coordinates.at(i);
@@ -223,7 +246,7 @@ namespace model
 
 	Vector Vector::operator*(const Matrix& M) const
 	{
-		Vector v(0, 0, 0, 0);
+		Vector v(0, 0, 0, 1);
 
 		for (int j = 0; j < dimension; ++j)
 			for (int i = 0; i < dimension; ++i)

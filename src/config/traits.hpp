@@ -97,6 +97,11 @@ template<> struct Traits<model::Polygon> : public Traits<void>
     static const bool debugged = hysterically_debugged;
 };
 
+template<> struct Traits<model::Bezier> : public Traits<void>
+{
+    static const bool debugged = hysterically_debugged;
+};
+
 template<> struct Traits<model::Window> : public Traits<void>
 {
     static const bool need_clipping = true;                  /* Enables clipping. */
