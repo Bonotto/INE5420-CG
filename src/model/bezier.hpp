@@ -52,6 +52,7 @@ namespace model
 
 		virtual void clipping(const Vector & min, const Vector & max);
 		
+		void transformation(const Matrix & world_T);
 		void w_transformation(const Matrix & window_T);
 
 		void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T);
@@ -59,6 +60,8 @@ namespace model
 		virtual std::string type();
 
 		static const double precision;
+		static const double world_max_size;
+		static const double window_max_size;
 	};
 
 /*================================================================================*/
@@ -66,9 +69,34 @@ namespace model
 /*================================================================================*/
 
 	const double Bezier::precision = 0.01;
+	const double Bezier::world_max_size = 800;
+	const double Bezier::window_max_size = 10;
+
+	void Bezier::transformation(const Matrix & world_T)
+	{
+		if (_world_vectors.size() < 4)
+			return;
+
+		auto p1 = (_world_vectors[0] * world_T);
+		auto p2 = (_world_vectors[1] * world_T);
+		auto p3 = (_world_vectors[2] * world_T);
+		auto p4 = (_world_vectors[3] * world_T);
+
+		/* Calculates the second point in window coordinates (the first point is the p1) */
+		auto pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
+
+		if (calculation::euclidean_distance(p1, pa) >= world_max_size)
+			return;
+
+		for (auto & v : _world_vectors)
+			v = v * world_T;
+	}
 
 	void Bezier::w_transformation(const Matrix & window_T)
 	{
+		if (_world_vectors.size() < 4)
+			return;
+
 		std::vector<Vector> vectors;
 
 		Vector p1 = _world_vectors[0] * window_T;
@@ -78,7 +106,12 @@ namespace model
 
 		/* Calculates the second point in window coordinates (the first point is the p1) */
 		Vector pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
-		
+
+		std::cout << std::endl << std::endl << "WORLD DISTANCE = " << calculation::euclidean_distance(p1, pa) << " | " << std::endl << std::endl;
+
+		if (calculation::euclidean_distance(p1, pa) >= window_max_size)
+			return;
+
 		/* Calculates the points generation precision where 0.0153106 is de maximum distance between two points
 		   When the object is scaled then the distance between points grow, therefore, this distance under the
 		   maximum distance allows calculating the proportion to decrease 0.01 precision and make the curve
@@ -115,6 +148,9 @@ namespace model
 
 	void Bezier::clipping(const Vector & min, const Vector & max)
 	{
+		if (_window_vectors.size() < 4)
+			return;
+
 		std::vector<Vector> vectors;
 
 		Vector aux;
