@@ -58,14 +58,14 @@ namespace model
 
 		virtual std::string type();
 
-		static const double precicion;
+		static const double precision;
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-	const double Bezier::precicion = 0.01;
+	const double Bezier::precision = 0.01;
 
 	void Bezier::w_transformation(const Matrix & window_T)
 	{
@@ -76,13 +76,21 @@ namespace model
 		Vector p3 = _world_vectors[2] * window_T;
 		Vector p4 = _world_vectors[3] * window_T;
 
-		int bezier_curves = (_world_vectors.size() - 4) / 3;
+		/* Calculates the second point in window coordinates (the first point is the p1) */
+		Vector pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
+		
+		/* Calculates the points generation precision where 0.0153106 is de maximum distance between two points
+		   When the object is scaled then the distance between points grow, therefore, this distance under the
+		   maximum distance allows calculating the proportion to decrease 0.01 precision and make the curve
+		   maintains the same smooth */
+		double gen_prec = precision / (calculation::euclidean_distance(p1, pa) / 0.0153106);
 
-		std::cout << "BEZIER CURVES" << bezier_curves << std::endl;
+		/* Amount of anothers bezier curves interconnected */
+		int bezier_curves = (_world_vectors.size() - 4) / 3;
 
 		for (int k = 0; k <= bezier_curves; ++k)
 		{
-			for (double t = 0; t <= 1.0; t += precicion)
+			for (double t = 0; t <= 1.0; t += gen_prec)
 			{			
 				Vector p =               std::pow(1 - t, 3) * p1
 				         + 3 * t       * std::pow(1 - t, 2) * p2
@@ -92,6 +100,7 @@ namespace model
 	            vectors.push_back(std::move(p));
 			}
 
+			/* Get the points of next bezier curve (if has next) */
 			if (k < bezier_curves)
 			{
 				p1 = p4;
@@ -192,7 +201,7 @@ namespace model
 		{
 			Vector vi = v * viewport_T;
 			
-			if (calculation::euclidean_distance(v, v0) > 2 * precicion)
+			if (calculation::euclidean_distance(v, v0) > 2 * precision)
 				cr->move_to(vi[0], vi[1]);
 			else
 				cr->line_to(vi[0], vi[1]);
