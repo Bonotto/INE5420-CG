@@ -934,9 +934,11 @@ namespace control
 	{
 		ObjectLoader loader;
 
-		_shapes = loader.load(path_name);
+		auto new_shapes = loader.load(path_name);
 
-		for (auto & s : _shapes)
+		_shapes.insert(_shapes.end(), new_shapes.begin(), new_shapes.end());
+
+		for (auto & s : new_shapes)
 		{
 			_shapes_map[_objects_control] = s;
 			add_entry(_objects_control++, s->name(), s->type());
