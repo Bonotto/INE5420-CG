@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 		main_window->set_default_size(800, 600);
 		main_window->show_all();
 
-		main_control = new control::MainControl(refBuilder);
+		main_control = new control::MainControl(refBuilder, "load/basicman.obj");
 
 		app->run(*main_window);
 	}

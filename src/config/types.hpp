@@ -40,6 +40,7 @@ namespace gui
 namespace control
 {
     class MainControl;
+    class ObjectLoader;
 } //! namespace control
 
 namespace model

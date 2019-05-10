@@ -41,6 +41,7 @@
 #include "../model/b_spline_surface.hpp"
 #include "../model/window.hpp"
 #include "../model/viewport.hpp"
+#include "object_loader.hpp"
 
 namespace control
 {
@@ -107,7 +108,7 @@ namespace control
 
 	public:
 
-		MainControl(Glib::RefPtr<Gtk::Builder>& builder) :
+		MainControl(Glib::RefPtr<Gtk::Builder>& builder, std::string path_name = "undefined") :
 			_builder(builder)
 		{
 			build_window();
@@ -120,6 +121,9 @@ namespace control
 
 			if (model::Vector::dimension == 3)
 				disable_unused_interface_objects(ButtonID::Null);
+
+			if (path_name != "undefined")
+				load_objects(path_name);
 		}
 
 		~MainControl()
@@ -172,6 +176,7 @@ namespace control
 		void build_numeric_entrys();
 		void reset_dialog_entries();
 		void build_advanced_options();
+		void load_objects(std::string path_name);
 		/**@}*/
 
 		/**
@@ -925,6 +930,19 @@ namespace control
 /*                                Build interface                                 */
 /*--------------------------------------------------------------------------------*/
 
+	void MainControl::load_objects(std::string path_name)
+	{
+		ObjectLoader loader;
+
+		_shapes = loader.load(path_name);
+
+		for (auto & s : _shapes)
+		{
+			_shapes_map[_objects_control] = s;
+			add_entry(_objects_control++, s->name(), s->type());
+		}
+	}
+
 	void MainControl::build_window()
 	{
 		db<MainControl>(TRC) << "Build window" << std::endl;
@@ -1611,7 +1629,6 @@ namespace control
 			_builder->get_widget("entry_point_z", entry);
 			z = atof(std::string(entry->get_text()).c_str());
 		}
-			
 
 		add_entry(_objects_control, name, "Point");
 

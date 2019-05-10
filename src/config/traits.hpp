@@ -57,6 +57,11 @@ template<> struct Traits<control::MainControl> : public Traits<void>
     static const bool debugged = hysterically_debugged;
 };
 
+template<> struct Traits<control::ObjectLoader> : public Traits<void>
+{
+    static const bool debugged = hysterically_debugged;
+};
+
 template<> struct Traits<model::Vector> : public Traits<void>
 {
     static const int dimension = 4;

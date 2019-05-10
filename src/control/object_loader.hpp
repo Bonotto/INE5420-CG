@@ -25,6 +25,7 @@
 #define CONTROL_OBJECT_LOADER_HPP
 
 /* External includes */
+#include <fstream>
 
 /* Local includes */
 #include "../config/traits.hpp"
@@ -42,10 +43,10 @@ namespace control
 		ObjectLoader()  = default;
 		~ObjectLoader() = default;
 
-		std::vector<std::shared_ptr<model::Shape>> load();
+		std::vector<std::shared_ptr<model::Shape>> load(std::string path_name);
 	
 	private:
-		std::vector<std::string> split(std::string line, std::string separator);
+		std::vector<std::string> split(std::string s, const std::string & delimiter);
 	};
 
 /*================================================================================*/
@@ -66,83 +67,95 @@ namespace control
 
 			tokens.push_back(token);
 		}
+
+		if(s.size())
+			tokens.push_back(s);
+
+		return tokens;
 	}
 
 	std::vector<std::shared_ptr<model::Shape>> ObjectLoader::load(std::string path_name)
 	{
+		db<ObjectLoader>(INF) << "ObjectLoader::load() => " << path_name << std::endl;
+
 		std::ifstream file(path_name);
 
 		if (!file.is_open())
-			std::cout << "Unable to open file" << std::endl;
+		{
+			db<ObjectLoader>(ERR) << "Unable to open file" << std::endl;
+			return {};
+		}
 		
+		int count = 0;
 		std::string line;
 		std::string name;
-		bool new_vectors = true;
 
 		std::vector<model::Vector> vectors;
 		std::vector<std::shared_ptr<model::Shape>> shapes;
 		
 		while (std::getline(file, line))
 		{
-			auto words = split(line, " ");
+			std::vector<std::string> words = split(line, " ");
+
+			if (words.empty())
+				continue;
 
 			switch (words[0][0])
 			{
 			case 'o':
-				name = words[1] + shapes.size();
+				count = 0;
+				name = words[1];
 				break;
 
-			case 'v': {
-				if (new_vectors)
+			case 'v':
+				if (words[0] == "v")
 				{
-					vectors.clear();
-					new_vectors = false;
+					double x = std::stod(words[1]);
+					double y = std::stod(words[2]);
+					double z = std::stod(words[3]);
+
+					if (model::Vector::dimension == 3)
+						z = 1;
+					
+					vectors.emplace_back(x, y, z);
 				}
 
-				double x = std::stod(words[1]);
-				double y = std::stod(words[2]);
-				double z = std::stod(words[3]);
-				
-				vectors.emplace_back(x, y, z);
-
 				break;
-			}
 
 			case 'p': {
-				new_vectors = true;
-
 				int p = std::stoi(split(words[1], "/")[0]) - 1;
 
-				shapes.emplace_back(new model::Point(name, vectors[p]));
+				shapes.emplace_back(
+					new model::Point(name + std::to_string(count++), vectors[p])
+				);
 
 				break;
 			}
 
 			case 'l': {
-				new_vectors = true;
-
 				int p0 = std::stoi(split(words[1], "/")[0]) - 1;
 				int p1 = std::stoi(split(words[2], "/")[0]) - 1;
 
-				shapes.emplace_back(new model::Line(name, vectors[p0], vectors[p1]));
+				shapes.emplace_back(
+					new model::Line(name + std::to_string(count++), vectors[p0], vectors[p1])
+				);
 
 				break;
 			}
 
 			case 'f': {
-				new_vectors = true;
-
-				words.pop_front();
+				words.erase(words.begin());
 				std::vector<model::Vector> pvectors;
 
 				for (const auto & v : words)
 				{
 					int idx = std::stoi(split(v, "/")[0]) - 1;
-
 					pvectors.push_back(vectors[idx]);
 				}
 
-				shapes.emplace_back(new model::Polygon(name, pvectors));
+				shapes.emplace_back(
+					new model::Polygon(name + std::to_string(count++), pvectors)
+				);
 
 				break;
 			}
