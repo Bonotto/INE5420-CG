@@ -65,6 +65,14 @@ namespace model
 
 	private:
 		bool over_perpendicular_edges(const Vector & pa, const Vector & pb);
+		
+		void forward_differences(
+			const double d,
+			Vector dX,
+			Vector dY,
+			Vector dZ,
+			std::vector<Vector> & vectors
+		);
 	};
 
 /*================================================================================*/
@@ -95,54 +103,76 @@ namespace model
 			v = v * world_T;
 	}
 
+	void BSpline::forward_differences(
+		const double d,
+		Vector dX,
+		Vector dY,
+		Vector dZ,
+		std::vector<Vector> & vectors
+	)
+	{
+		if (vectors.empty())
+			vectors.emplace_back(dX[0], dY[0], dZ[0]);
+		
+		for (double k = d; k <= 1; k += d)
+		{
+			dX[0] += dX[1];
+			dY[0] += dY[1];
+			dZ[0] += dZ[1];
+
+			dX[1] += dX[2];
+			dY[1] += dY[2];
+			dZ[1] += dZ[2];
+
+			dX[2] += dX[3];
+			dY[2] += dY[3];
+			dZ[2] += dZ[3];
+
+			vectors.emplace_back(dX[0], dY[0], dZ[0]);
+		}
+	}
+
 	void BSpline::w_transformation(const Matrix & window_T)
 	{
 		if (_world_vectors.size() < 4)
 			return;
 
+		static const double d = 0.01;    /**< Const delta.                   */
+
+		static const Matrix D{           /**<  Deltas matrix.                */
+			{      0,     0, 0, 1},
+			{  d*d*d,   d*d, d, 0},
+			{6*d*d*d, 2*d*d, 0, 0},
+			{6*d*d*d,     0, 0, 0}
+		};
+
+		static const Matrix IBs{ /**< Inverse of the B-Spline Method Matrix. */
+			{0,  2/3, -1, 1},
+			{0, -1/3,  0, 1},
+			{0,  2/3,  1, 1},
+			{6, 11/3,  2, 1}
+		};
+
+		static const Matrix D_IBs = D * IBs; /**< D * IBs */
+
 		std::vector<Vector> vectors;
 
-		Vector p1 = _world_vectors[0] * window_T;
-		Vector p2 = _world_vectors[1] * window_T;
-		Vector p3 = _world_vectors[2] * window_T;
-		Vector p4 = _world_vectors[3] * window_T;
-
-		/* Calculates the second point in window coordinates (the first point is the p1) */
-		Vector pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
-
-		if (calculation::euclidean_distance(p1, pa) >= window_max_size)
-			return;
-
-		/* Calculates the points generation precision where 0.0153106 is de maximum distance between two points
-		 * When the object is scaled then the distance between points grow, therefore, this distance under the
-		 * maximum distance allows calculating the proportion to decrease 0.01 precision and make the curve
-		 * maintains the same smooth
-		 */
-		double gen_prec = precision / (calculation::euclidean_distance(p1, pa) / 0.0153106);
-
-		/* Amount of anothers bezier curves interconnected */
-		int bezier_curves = (_world_vectors.size() - 4) / 3;
-
-		for (int k = 0; k <= bezier_curves; ++k)
+		for (size_t k = 0; k < (_world_vectors.size() - 3); ++k)
 		{
-			for (double t = 0; t <= 1.0; t += gen_prec)
-			{			
-				Vector p =               std::pow(1 - t, 3) * p1
-				         + 3 * t       * std::pow(1 - t, 2) * p2
-				         + 3 * (1 - t) * std::pow(t, 2)     * p3
-	                     +               std::pow(t, 3)     * p4;
+			Vector p1 = _world_vectors[k    ] * window_T;
+			Vector p2 = _world_vectors[k + 1] * window_T;
+			Vector p3 = _world_vectors[k + 2] * window_T;
+			Vector p4 = _world_vectors[k + 3] * window_T;
 
-	            vectors.push_back(std::move(p));
-			}
+			Vector pX{p1[0], p2[0], p3[0], p4[0]};
+			Vector pY{p1[1], p2[1], p3[1], p4[1]};
+			Vector pZ{p1[2], p2[2], p3[2], p4[2]};
 
-			/* Get the points of next bezier curve (if has next) */
-			if (k < bezier_curves)
-			{
-				p1 = p4;
-				p2 = _world_vectors[3 * k + 4] * window_T;
-				p3 = _world_vectors[3 * k + 5] * window_T;
-				p4 = _world_vectors[3 * k + 6] * window_T;
-			}
+			Vector dX = D_IBs * pX; //! D * IBs * pX => D * Cx => dX
+			Vector dY = D_IBs * pY;
+			Vector dZ = D_IBs * pZ;
+
+			forward_differences(d, dX, dY, dZ, vectors);
 		}
 
 		_window_vectors = std::move(vectors);

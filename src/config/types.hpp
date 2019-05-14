@@ -52,6 +52,7 @@ namespace model
     class Rectangle;
     class Polygon;
     class Bezier;
+    class BSpline;
     class Window;
     class Viewport;
 } //! namespace model

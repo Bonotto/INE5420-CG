@@ -138,6 +138,7 @@ namespace model
 		MatrixLine& operator[](const int position);
 		const MatrixLine& operator[](const int position) const;
 
+		Vector operator*(const Vector& v) const;
 		Matrix operator*(const Matrix& M) const;
 		bool operator==(const Matrix& M) const;
 
@@ -279,6 +280,19 @@ namespace model
 		return _vectors.at(position);
 	}
 
+	Vector Matrix::operator*(const Vector& v) const
+	{
+		Vector R( //! Result
+			{0, 0, 0, 0}
+		);
+
+		for (int j = 0; j < dimension; ++j)
+			for (int i = 0; i < dimension; ++i)
+				R[i] += _vectors[i][j] * v[j];
+
+		return R;
+	}
+
 	Matrix Matrix::operator*(const Matrix& M) const
 	{
 		Matrix R( //! Result
@@ -288,10 +302,10 @@ namespace model
 			{0, 0, 0, 0}
 		);
 
-		for (int h = 0; h < dimension; ++h)
-			for (int j = 0; j < dimension; ++j)
-				for (int i = 0; i < dimension; ++i)
-					R[h][j] += _vectors[h][i] * M[i][j];
+		for (int i = 0; i < dimension; i++)
+			for (int j = 0; j < dimension; j++)
+				for (int k = 0; k < dimension; k++)
+					R[i][j] += (_vectors[i][k] * M[k][j]);
 
 		return R;
 	}
