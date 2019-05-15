@@ -137,23 +137,54 @@ namespace model
 		if (_world_vectors.size() < 4)
 			return;
 
-		static const double d = 0.01;    /**< Const delta.                   */
+		const double d = 0.01;    /**< Const delta.                   */
 
-		static const Matrix D{           /**<  Deltas matrix.                */
+		Matrix D{           /**<  Deltas matrix.                */
 			{      0,     0, 0, 1},
 			{  d*d*d,   d*d, d, 0},
 			{6*d*d*d, 2*d*d, 0, 0},
 			{6*d*d*d,     0, 0, 0}
 		};
 
-		static const Matrix IBs{ /**< Inverse of the B-Spline Method Matrix. */
-			{0,  2/3, -1, 1},
-			{0, -1/3,  0, 1},
-			{0,  2/3,  1, 1},
-			{6, 11/3,  2, 1}
+		// static const Matrix IBs{ /**< Inverse of the B-Spline Method Matrix. */
+		// 	{0,  2/3, -1, 1},
+		// 	{0, -1/3,  0, 1},
+		// 	{0,  2/3,  1, 1},
+		// 	{6, 11/3,  2, 1}
+		// };
+
+		Matrix IBs{ /**< Inverse of the B-Spline Method Matrix. */
+			{-(1.0/6.0), 3.0/6.0, -(3.0/6.0), 1.0/6.0},
+			{   3.0/6.0,  -1.0,    3.0/6.0,   0.0},
+			{-(3.0/6.0),   0.0,    3.0/6.0,   0.0},
+			{   1.0/6.0, 4.0/6.0,    1.0/6.0,   0.0}
 		};
 
-		static const Matrix D_IBs = D * IBs; /**< D * IBs */
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 4; ++j)
+				std::cout << IBs[i][j] << " ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl << std::endl;
+
+		Matrix D_IBs = D * IBs; /**< D * IBs */
+
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 4; ++j)
+				std::cout << D[i][j] << " ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl << std::endl;
+
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 4; ++j)
+				std::cout << D_IBs[i][j] << " ";
+			std::cout << std::endl;
+		}
+		std::cout << std::endl << std::endl;
 
 		std::vector<Vector> vectors;
 

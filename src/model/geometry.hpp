@@ -286,8 +286,8 @@ namespace model
 			{0, 0, 0, 0}
 		);
 
-		for (int j = 0; j < dimension; ++j)
-			for (int i = 0; i < dimension; ++i)
+		for (int i = 0; i < dimension; ++i)
+			for (int j = 0; j < dimension; ++j)
 				R[i] += _vectors[i][j] * v[j];
 
 		return R;
@@ -296,10 +296,10 @@ namespace model
 	Matrix Matrix::operator*(const Matrix& M) const
 	{
 		Matrix R( //! Result
-			{0, 0, 0, 0},
-			{0, 0, 0, 0},
-			{0, 0, 0, 0},
-			{0, 0, 0, 0}
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0}
 		);
 
 		for (int i = 0; i < dimension; i++)
