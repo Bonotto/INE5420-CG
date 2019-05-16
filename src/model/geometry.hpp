@@ -143,6 +143,9 @@ namespace model
 		Matrix operator*(const Matrix& M) const;
 		bool operator==(const Matrix& M) const;
 
+		template<int D>
+		Matrix multiply(const Matrix &M) const;
+
 		friend Debug & operator<<(Debug & db, const Matrix & M)
 		{
 			for (auto i = 0; i < Vector::dimension; ++i)
@@ -283,13 +286,15 @@ namespace model
 
 	std::vector<double> Matrix::operator*(const std::vector<double>& v) const
 	{
-		if (v.size() != _vectors.size())
-			return {};
-
 		std::vector<double> R(
 			{0, 0, 0, 0}
 		);
+		
+		if (v.size() != _vectors.size())
+			return R;
 
+		std::cout << "Mult " << std::endl;
+		
 		for (int i = 0; i < v.size(); ++i)
 			for (int j = 0; j < v.size(); ++j)
 				R[i] += _vectors[i][j] * v[j];
@@ -335,6 +340,24 @@ namespace model
 					return false;
 
 		return true;
+	}
+
+	template<int D>
+	Matrix Matrix::multiply(const Matrix& M) const
+	{
+		Matrix R( //! Result
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0}
+		);
+
+		for (int i = 0; i < D; i++)
+			for (int j = 0; j < D; j++)
+				for (int k = 0; k < D; k++)
+					R[i][j] += (_vectors[i][k] * M[k][j]);
+
+		return R;
 	}
 
 /*--------------------------------------------------------------------------------*/

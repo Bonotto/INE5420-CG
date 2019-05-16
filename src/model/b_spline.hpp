@@ -111,11 +111,11 @@ namespace model
 		std::vector<Vector> & vectors
 	)
 	{
-		if (vectors.empty())
-		{
+		// if (vectors.empty())
+		// {
 			std::cout << vectors.size() << ": "<< dX[0] << ", " << dY[0] << ", " << dZ[0] << std::endl;
 			vectors.emplace_back(dX[0], dY[0]);
-		}
+		// }
 		
 		for (double k = d; k <= 1; k += d)
 		{
@@ -141,61 +141,23 @@ namespace model
 		if (_world_vectors.size() < 4)
 			return;
 
-		const double d = 0.01;    /**< Const delta.                   */
+		static const double d = 0.01;
 
-		// Matrix D{           /**<  Deltas matrix.                */
-		// 	{      0,     0, 0, 1},
-		// 	{  d*d*d,   d*d, d, 0},
-		// 	{6*d*d*d, 2*d*d, 0, 0},
-		// 	{6*d*d*d,     0, 0, 0}
-		// };
-
-		// static const Matrix IBs{ /**< Inverse of the B-Spline Method Matrix. */
-		// 	{0,  2/3, -1, 1},
-		// 	{0, -1/3,  0, 1},
-		// 	{0,  2/3,  1, 1},
-		// 	{6, 11/3,  2, 1}
-		// };
-
-		// Matrix IBs{ /**< Inverse of the B-Spline Method Matrix. */
-		// 	{-(1.0/6.0), 3.0/6.0, -(3.0/6.0), 1.0/6.0},
-		// 	{   3.0/6.0,  -1.0,    3.0/6.0,   0.0},
-		// 	{-(3.0/6.0),   0.0,    3.0/6.0,   0.0},
-		// 	{   1.0/6.0, 4.0/6.0,    1.0/6.0,   0.0}
-		// };
-
-		const Matrix D_IBs{
-			{1.0/6.0, 2.0/3.0, 1.0/6.0, 0},
-			{-29701.0/1000000.0, -199.0/2000000.0, 10099.0/2000000.0, 1.0/6000000.0},
-			{99.0/1000000.0, -197.0/1000000.0, 97.0/1000000.0, 1.0/1000000.0},
-			{-1.0/1000000.0, 3.0/1000000.0, -3.0/1000000.0, 1.0/1000000.0}
+		static const Matrix D{
+			{      0,     0, 0, 1},
+			{  d*d*d,   d*d, d, 0},
+			{6*d*d*d, 2*d*d, 0, 0},
+			{6*d*d*d,     0, 0, 0}
 		};
 
-		// for (int i = 0; i < 4; ++i)
-		// {
-		// 	for (int j = 0; j < 4; ++j)
-		// 		std::cout << IBs[i][j] << " ";
-		// 	std::cout << std::endl;
-		// }
-		// std::cout << std::endl << std::endl;
+		static const Matrix Mbs{
+			{-1.0/6.0, 1.0/2.0, -1.0/2.0, 1.0/6.0},
+			{ 1.0/2.0,    -1.0,  1.0/2.0,       0},
+			{-1.0/2.0,     0.0,  1.0/2.0,       0},
+			{ 1.0/6.0, 2.0/3.0,  1.0/6.0,       0}
+		};
 
-		// Matrix D_IBs = D * IBs; /**< D * IBs */
-
-		// for (int i = 0; i < 4; ++i)
-		// {
-		// 	for (int j = 0; j < 4; ++j)
-		// 		std::cout << D[i][j] << " ";
-		// 	std::cout << std::endl;
-		// }
-		// std::cout << std::endl << std::endl;
-
-		// for (int i = 0; i < 4; ++i)
-		// {
-		// 	for (int j = 0; j < 4; ++j)
-		// 		std::cout << D_IBs[i][j] << " ";
-		// 	std::cout << std::endl;
-		// }
-		// std::cout << std::endl << std::endl;
+		static const Matrix D_Mbs = D.multiply<4>(Mbs);
 
 		std::vector<Vector> vectors;
 
@@ -208,11 +170,26 @@ namespace model
 
 			std::vector<double> pX{p1[0], p2[0], p3[0], p4[0]};
 			std::vector<double> pY{p1[1], p2[1], p3[1], p4[1]};
-			std::vector<double> pZ{p1[2], p2[2], p3[2], p4[2]};
+			std::vector<double> pZ{p1[1], p2[1], p3[1], p4[1]};
 
-			std::vector<double> dX = D_IBs * pX;
-			std::vector<double> dY = D_IBs * pY;
-			std::vector<double> dZ = D_IBs * pZ;
+			std::vector<double> dX = D_Mbs * pX;
+			std::vector<double> dY = D_Mbs * pY;
+			std::vector<double> dZ = D_Mbs * pZ;
+
+			std::cout << "dX: ";
+			for (int i = 0; i < 4; ++i)
+				std::cout << dX[i] << " ";
+			std::cout << std::endl;
+			
+			std::cout << "dY: ";
+			for (int i = 0; i < 4; ++i)
+				std::cout << dY[i] << " ";
+			std::cout << std::endl;
+			
+			std::cout << "dZ: ";
+			for (int i = 0; i < 4; ++i)
+				std::cout << dZ[i] << " ";
+			std::cout << std::endl;
 
 			forward_differences(d, dX, dY, dZ, vectors);
 		}
