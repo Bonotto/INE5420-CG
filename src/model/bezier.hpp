@@ -99,6 +99,13 @@ namespace model
 	{
 		if (_world_vectors.size() < 4)
 			return;
+		
+		static const Matrix M{
+			{-1.0,  3.0, -3.0, 1.0},
+			{ 3.0, -6.0,  3.0, 0.0},
+			{-3.0,  3.0,  0.0, 0.0},
+			{ 1.0,  0.0,  0.0, 0.0}
+		};
 
 		std::vector<Vector> vectors;
 
@@ -107,32 +114,24 @@ namespace model
 		Vector p3 = _world_vectors[2] * window_T;
 		Vector p4 = _world_vectors[3] * window_T;
 
-		/* Calculates the second point in window coordinates (the first point is the p1) */
-		Vector pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
-
-		if (calculation::euclidean_distance(p1, pa) >= window_max_size)
-			return;
-
-		/* Calculates the points generation precision where 0.0153106 is de maximum distance between two points
-		 * When the object is scaled then the distance between points grow, therefore, this distance under the
-		 * maximum distance allows calculating the proportion to decrease 0.01 precision and make the curve
-		 * maintains the same smooth
-		 */
-		double gen_prec = precision / (calculation::euclidean_distance(p1, pa) / 0.0153106);
-
 		/* Amount of anothers bezier curves interconnected */
 		int bezier_curves = (_world_vectors.size() - 4) / 3;
 
 		for (int k = 0; k <= bezier_curves; ++k)
 		{
-			for (double t = 0; t <= 1.0; t += gen_prec)
-			{			
-				Vector p =               std::pow(1 - t, 3) * p1
-				         + 3 * t       * std::pow(1 - t, 2) * p2
-				         + 3 * (1 - t) * std::pow(t, 2)     * p3
-	                     +               std::pow(t, 3)     * p4;
+			const Vector vx = {p1[0], p2[0], p3[0], p4[0]};
+			const Vector vy = {p1[1], p2[1], p3[1], p4[1]};
+			const Vector vz = {p1[2], p2[2], p3[2], p4[2]};
 
-	            vectors.push_back(std::move(p));
+			for (double t = 0; t <= 1.0; t += precision)
+			{
+				const Vector vt = Vector{t*t*t, t*t, t, 1}.multiply<4>(M);
+
+				double x = vt * vx;
+				double y = vt * vy;
+				double z = vt * vz;
+
+	            vectors.emplace_back(x, y, z);
 			}
 
 			/* Get the points of next bezier curve (if has next) */
@@ -214,8 +213,8 @@ namespace model
 			if (rn1 > rn2)
 				continue;
 
-			vectors.emplace_back(std::move(Vector({pa[0] + p2 * rn1, pa[1] + p4 * rn1})));
-			vectors.emplace_back(std::move(Vector({pa[0] + p2 * rn2, pa[1] + p4 * rn2})));
+			vectors.emplace_back(pa[0] + p2 * rn1, pa[1] + p4 * rn1);
+			vectors.emplace_back(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
 		}
 
 		_window_vectors = vectors;

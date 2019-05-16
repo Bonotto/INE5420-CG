@@ -86,6 +86,9 @@ namespace model
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
 
+		template<int D>
+		Vector multiply(const Matrix &M) const;
+
 		friend Debug & operator<<(Debug & db, const Vector & v)
 		{
 			db << "[" << v._coordinates[0];
@@ -255,6 +258,18 @@ namespace model
 
 		for (int j = 0; j < dimension; ++j)
 			for (int i = 0; i < dimension; ++i)
+				v[j] += _coordinates.at(i) * M[i][j];
+
+		return v;
+	}
+
+	template<int D>
+	Vector Vector::multiply(const Matrix& M) const
+	{
+		Vector v(0, 0, 0, 0);
+
+		for (int j = 0; j < D; ++j)
+			for (int i = 0; i < D; ++i)
 				v[j] += _coordinates.at(i) * M[i][j];
 
 		return v;
