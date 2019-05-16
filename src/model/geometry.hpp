@@ -138,6 +138,7 @@ namespace model
 		MatrixLine& operator[](const int position);
 		const MatrixLine& operator[](const int position) const;
 
+		std::vector<double> operator*(const std::vector<double>& v) const;
 		Vector operator*(const Vector& v) const;
 		Matrix operator*(const Matrix& M) const;
 		bool operator==(const Matrix& M) const;
@@ -278,6 +279,22 @@ namespace model
 	const Matrix::MatrixLine& Matrix::operator[](const int position) const
 	{
 		return _vectors.at(position);
+	}
+
+	std::vector<double> Matrix::operator*(const std::vector<double>& v) const
+	{
+		if (v.size() != _vectors.size())
+			return {};
+
+		std::vector<double> R(
+			{0, 0, 0, 0}
+		);
+
+		for (int i = 0; i < v.size(); ++i)
+			for (int j = 0; j < v.size(); ++j)
+				R[i] += _vectors[i][j] * v[j];
+
+		return R;
 	}
 
 	Vector Matrix::operator*(const Vector& v) const
