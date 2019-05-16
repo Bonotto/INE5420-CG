@@ -307,11 +307,9 @@ namespace model
 		
 		if (v.size() != _vectors.size())
 			return R;
-
-		std::cout << "Mult " << std::endl;
 		
-		for (int i = 0; i < v.size(); ++i)
-			for (int j = 0; j < v.size(); ++j)
+		for (size_t i = 0; i < v.size(); ++i)
+			for (size_t j = 0; j < v.size(); ++j)
 				R[i] += _vectors[i][j] * v[j];
 
 		return R;

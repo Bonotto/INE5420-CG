@@ -67,7 +67,6 @@ namespace model
 		bool over_perpendicular_edges(const Vector & pa, const Vector & pb);
 		
 		void forward_differences(
-			const double d,
 			std::vector<double> & dX,
 			std::vector<double> & dY,
 			std::vector<double> & dZ,
@@ -104,20 +103,16 @@ namespace model
 	}
 
 	void BSpline::forward_differences(
-		const double d,
 		std::vector<double> & dX,
 		std::vector<double> & dY,
 		std::vector<double> & dZ,
 		std::vector<Vector> & vectors
 	)
 	{
-		// if (vectors.empty())
-		// {
-			std::cout << vectors.size() << ": "<< dX[0] << ", " << dY[0] << ", " << dZ[0] << std::endl;
-			vectors.emplace_back(dX[0], dY[0]);
-		// }
+		if (vectors.empty())
+			vectors.emplace_back(dX[0], dY[0], dZ[0]);
 		
-		for (double k = d; k <= 1; k += d)
+		for (double k = precision; k <= 1; k += precision)
 		{
 			dX[0] += dX[1];
 			dY[0] += dY[1];
@@ -131,8 +126,7 @@ namespace model
 			dY[2] += dY[3];
 			dZ[2] += dZ[3];
 
-			std::cout << vectors.size() << ": "<< dX[0] << ", " << dY[0] << ", " << dZ[0] << std::endl;
-			vectors.emplace_back(dX[0], dY[0]);
+			vectors.emplace_back(dX[0], dY[0], dZ[0]);
 		}
 	}
 
@@ -141,23 +135,21 @@ namespace model
 		if (_world_vectors.size() < 4)
 			return;
 
-		static const double d = 0.01;
-
 		static const Matrix D{
-			{      0,     0, 0, 1},
-			{  d*d*d,   d*d, d, 0},
-			{6*d*d*d, 2*d*d, 0, 0},
-			{6*d*d*d,     0, 0, 0}
+			{                    0,                     0,         0, 1},
+			{    pow(precision, 3),     pow(precision, 2), precision, 0},
+			{6 * pow(precision, 3), 2 * pow(precision, 2),         0, 0},
+			{6 * pow(precision, 3),                     0,         0, 0}
 		};
 
-		static const Matrix Mbs{
-			{-1.0/6.0, 1.0/2.0, -1.0/2.0, 1.0/6.0},
-			{ 1.0/2.0,    -1.0,  1.0/2.0,       0},
-			{-1.0/2.0,     0.0,  1.0/2.0,       0},
-			{ 1.0/6.0, 2.0/3.0,  1.0/6.0,       0}
+		static const Matrix IMbs{
+			{-1.0/5.0, 3.0/5.0, -3.0/5.0, 1.0/5.0},
+			{ 3.0/5.0,-6.0/5.0,  3.0/5.0,       0},
+			{-3.0/5.0,     0.0,  3.0/5.0,       0},
+			{ 1.0/5.0, 2.0/3.0,  1.0/5.0,       0}
 		};
 
-		static const Matrix D_Mbs = D.multiply<4>(Mbs);
+		static const Matrix D_IMbs = D.multiply<4>(IMbs);
 
 		std::vector<Vector> vectors;
 
@@ -170,28 +162,13 @@ namespace model
 
 			std::vector<double> pX{p1[0], p2[0], p3[0], p4[0]};
 			std::vector<double> pY{p1[1], p2[1], p3[1], p4[1]};
-			std::vector<double> pZ{p1[1], p2[1], p3[1], p4[1]};
+			std::vector<double> pZ{p1[2], p2[2], p3[2], p4[2]};
 
-			std::vector<double> dX = D_Mbs * pX;
-			std::vector<double> dY = D_Mbs * pY;
-			std::vector<double> dZ = D_Mbs * pZ;
+			std::vector<double> dX = D_IMbs * pX;
+			std::vector<double> dY = D_IMbs * pY;
+			std::vector<double> dZ = D_IMbs * pZ;
 
-			std::cout << "dX: ";
-			for (int i = 0; i < 4; ++i)
-				std::cout << dX[i] << " ";
-			std::cout << std::endl;
-			
-			std::cout << "dY: ";
-			for (int i = 0; i < 4; ++i)
-				std::cout << dY[i] << " ";
-			std::cout << std::endl;
-			
-			std::cout << "dZ: ";
-			for (int i = 0; i < 4; ++i)
-				std::cout << dZ[i] << " ";
-			std::cout << std::endl;
-
-			forward_differences(d, dX, dY, dZ, vectors);
+			forward_differences(dX, dY, dZ, vectors);
 		}
 
 		_window_vectors = std::move(vectors);
