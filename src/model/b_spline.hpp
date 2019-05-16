@@ -21,8 +21,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_BEZIER_HPP
-#define MODEL_BEZIER_HPP
+#ifndef MODEL_BSPLINE_HPP
+#define MODEL_BSPLINE_HPP
 
 /* External includes */
 
@@ -37,18 +37,18 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class Bezier : public Shape
+	class BSpline : public Shape
 	{
 	public:
-		Bezier(std::string name, const std::initializer_list<Vector>& vs) :
+		BSpline(std::string name, const std::initializer_list<Vector>& vs) :
 			Shape(name, vs)
 		{}
 
-		Bezier(std::string name, const std::vector<Vector>& vs) :
+		BSpline(std::string name, const std::vector<Vector>& vs) :
 			Shape(name, vs)
 		{}
 
-		~Bezier() = default;
+		~BSpline() = default;
 
 		virtual void clipping(const Vector & min, const Vector & max);
 		
@@ -65,89 +65,105 @@ namespace model
 
 	private:
 		bool over_perpendicular_edges(const Vector & pa, const Vector & pb);
+		
+		void forward_differences(
+			std::vector<double> & dX,
+			std::vector<double> & dY,
+			std::vector<double> & dZ,
+			std::vector<Vector> & vectors
+		);
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-	const double Bezier::precision = 0.01;
-	const double Bezier::world_max_size = 800;
-	const double Bezier::window_max_size = 10;
+	const double BSpline::precision = 0.01;
+	const double BSpline::world_max_size = 800;
+	const double BSpline::window_max_size = 10;
 
-	void Bezier::transformation(const Matrix & world_T)
+	void BSpline::transformation(const Matrix & world_T)
 	{
 		if (_world_vectors.size() < 4)
-			return;
-
-		auto p1 = (_world_vectors[0] * world_T);
-		auto p2 = (_world_vectors[1] * world_T);
-		auto p3 = (_world_vectors[2] * world_T);
-		auto p4 = (_world_vectors[3] * world_T);
-
-		/* Calculates the second point in window coordinates (the first point is the p1) */
-		auto pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
-
-		if (calculation::euclidean_distance(p1, pa) >= world_max_size)
 			return;
 
 		for (auto & v : _world_vectors)
 			v = v * world_T;
 	}
 
-	void Bezier::w_transformation(const Matrix & window_T)
+	void BSpline::forward_differences(
+		std::vector<double> & dX,
+		std::vector<double> & dY,
+		std::vector<double> & dZ,
+		std::vector<Vector> & vectors
+	)
+	{
+		if (!vectors.empty())
+			vectors.emplace_back(dX[0], dY[0], dZ[0]);
+
+		for (double k = precision; k <= 1; k += precision)
+		{
+			dX[0] += dX[1];
+			dY[0] += dY[1];
+			dZ[0] += dZ[1];
+
+			dX[1] += dX[2];
+			dY[1] += dY[2];
+			dZ[1] += dZ[2];
+
+			dX[2] += dX[3];
+			dY[2] += dY[3];
+			dZ[2] += dZ[3];
+
+			vectors.emplace_back(dX[0], dY[0], dZ[0]);
+		}
+	}
+
+	void BSpline::w_transformation(const Matrix & window_T)
 	{
 		if (_world_vectors.size() < 4)
 			return;
-		
-		static const Matrix M{
-			{-1.0,  3.0, -3.0, 1.0},
-			{ 3.0, -6.0,  3.0, 0.0},
-			{-3.0,  3.0,  0.0, 0.0},
-			{ 1.0,  0.0,  0.0, 0.0}
+
+		static const Matrix D{
+			{                    0,                     0,         0, 1},
+			{    pow(precision, 3),     pow(precision, 2), precision, 0},
+			{6 * pow(precision, 3), 2 * pow(precision, 2),         0, 0},
+			{6 * pow(precision, 3),                     0,         0, 0}
 		};
+
+		static const Matrix IMbs{
+			{-1.0/6.0, 1.0/2.0, -1.0/2.0, 1.0/6.0},
+			{ 1.0/2.0,    -1.0,  1.0/2.0,       0},
+			{-1.0/2.0,     0.0,  1.0/2.0,       0},
+			{ 1.0/6.0, 2.0/3.0,  1.0/6.0,       0}
+		};
+
+		static const Matrix D_IMbs = D.multiply<4>(IMbs);
 
 		std::vector<Vector> vectors;
 
-		Vector p1 = _world_vectors[0] * window_T;
-		Vector p2 = _world_vectors[1] * window_T;
-		Vector p3 = _world_vectors[2] * window_T;
-		Vector p4 = _world_vectors[3] * window_T;
-
-		/* Amount of anothers bezier curves interconnected */
-		int bezier_curves = (_world_vectors.size() - 4) / 3;
-
-		for (int k = 0; k <= bezier_curves; ++k)
+		for (size_t k = 0; k < (_world_vectors.size() - 3); ++k)
 		{
-			const Vector vx = {p1[0], p2[0], p3[0], p4[0]};
-			const Vector vy = {p1[1], p2[1], p3[1], p4[1]};
-			const Vector vz = {p1[2], p2[2], p3[2], p4[2]};
+			Vector p1 = _world_vectors[k    ] * window_T;
+			Vector p2 = _world_vectors[k + 1] * window_T;
+			Vector p3 = _world_vectors[k + 2] * window_T;
+			Vector p4 = _world_vectors[k + 3] * window_T;
 
-			for (double t = 0; t <= 1.0; t += precision)
-			{
-				const Vector vt = Vector{t*t*t, t*t, t, 1}.multiply<4>(M);
+			std::vector<double> pX{p1[0], p2[0], p3[0], p4[0]};
+			std::vector<double> pY{p1[1], p2[1], p3[1], p4[1]};
+			std::vector<double> pZ{p1[2], p2[2], p3[2], p4[2]};
 
-				double x = vt * vx;
-				double y = vt * vy;
-				double z = vt * vz;
+			std::vector<double> dX = D_IMbs * pX;
+			std::vector<double> dY = D_IMbs * pY;
+			std::vector<double> dZ = D_IMbs * pZ;
 
-	            vectors.emplace_back(x, y, z);
-			}
-
-			/* Get the points of next bezier curve (if has next) */
-			if (k < bezier_curves)
-			{
-				p1 = p4;
-				p2 = _world_vectors[3 * k + 4] * window_T;
-				p3 = _world_vectors[3 * k + 5] * window_T;
-				p4 = _world_vectors[3 * k + 6] * window_T;
-			}
+			forward_differences(dX, dY, dZ, vectors);
 		}
 
 		_window_vectors = std::move(vectors);
 	}
 
-	void Bezier::clipping(const Vector & min, const Vector & max)
+	void BSpline::clipping(const Vector & min, const Vector & max)
 	{
 		if (_window_vectors.size() < 4)
 			return;
@@ -220,7 +236,7 @@ namespace model
 		_window_vectors = vectors;
 	}
 
-	bool Bezier::over_perpendicular_edges(const Vector & pa, const Vector & pb)
+	bool BSpline::over_perpendicular_edges(const Vector & pa, const Vector & pb)
 	{
 		static const double TOP    =  0.95;
 		static const double RIGHT  =  0.95;
@@ -228,15 +244,25 @@ namespace model
 		static const double LEFT   = -0.95;
 
 		if (pa[1] == TOP || pa[1] == BOTTOM)
-			return (pb[0] == LEFT || pb[0] == RIGHT);
+		{
+			if (pb[0] == LEFT || pb[0] == RIGHT)
+				return true;
+
+			return pb[1] == TOP || pb[1] == BOTTOM;
+		}
 
 		else if (pa[0] == LEFT || pa[0] == RIGHT)
-			return (pb[1] == TOP || pb[1] == BOTTOM);
+		{
+			if (pb[1] == TOP || pb[1] == BOTTOM)
+				return true;
+
+			return pb[0] == LEFT || pb[0] == RIGHT;
+		}
 
 		return false;
 	}
 
-	void Bezier::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
+	void BSpline::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
 	{
 		if (_window_vectors.empty())
 			return;
@@ -263,12 +289,12 @@ namespace model
 		}
 	}
 
-	std::string Bezier::type()
+	std::string BSpline::type()
 	{
-		return "Bezier Curve";
+		return "B-Spline Curve";
 	}
 
 
 } //! namespace model
 
-#endif  // MODEL_BEZIER_HPP
+#endif  // MODEL_BSPLINE_HPP

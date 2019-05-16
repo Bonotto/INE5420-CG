@@ -86,6 +86,9 @@ namespace model
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
 
+		template<int D>
+		Vector multiply(const Matrix &M) const;
+
 		friend Debug & operator<<(Debug & db, const Vector & v)
 		{
 			db << "[" << v._coordinates[0];
@@ -138,8 +141,13 @@ namespace model
 		MatrixLine& operator[](const int position);
 		const MatrixLine& operator[](const int position) const;
 
+		std::vector<double> operator*(const std::vector<double>& v) const;
+		Vector operator*(const Vector& v) const;
 		Matrix operator*(const Matrix& M) const;
 		bool operator==(const Matrix& M) const;
+
+		template<int D>
+		Matrix multiply(const Matrix &M) const;
 
 		friend Debug & operator<<(Debug & db, const Matrix & M)
 		{
@@ -255,6 +263,18 @@ namespace model
 		return v;
 	}
 
+	template<int D>
+	Vector Vector::multiply(const Matrix& M) const
+	{
+		Vector v(0, 0, 0, 0);
+
+		for (int j = 0; j < D; ++j)
+			for (int i = 0; i < D; ++i)
+				v[j] += _coordinates.at(i) * M[i][j];
+
+		return v;
+	}
+
 /*--------------------------------------------------------------------------------*/
 /*                                    Matrix                                      */
 /*--------------------------------------------------------------------------------*/
@@ -279,19 +299,48 @@ namespace model
 		return _vectors.at(position);
 	}
 
-	Matrix Matrix::operator*(const Matrix& M) const
+	std::vector<double> Matrix::operator*(const std::vector<double>& v) const
 	{
-		Matrix R( //! Result
-			{0, 0, 0, 0},
-			{0, 0, 0, 0},
-			{0, 0, 0, 0},
+		std::vector<double> R(
+			{0, 0, 0, 0}
+		);
+		
+		if (v.size() != _vectors.size())
+			return R;
+		
+		for (size_t i = 0; i < v.size(); ++i)
+			for (size_t j = 0; j < v.size(); ++j)
+				R[i] += _vectors[i][j] * v[j];
+
+		return R;
+	}
+
+	Vector Matrix::operator*(const Vector& v) const
+	{
+		Vector R( //! Result
 			{0, 0, 0, 0}
 		);
 
-		for (int h = 0; h < dimension; ++h)
+		for (int i = 0; i < dimension; ++i)
 			for (int j = 0; j < dimension; ++j)
-				for (int i = 0; i < dimension; ++i)
-					R[h][j] += _vectors[h][i] * M[i][j];
+				R[i] += _vectors[i][j] * v[j];
+
+		return R;
+	}
+
+	Matrix Matrix::operator*(const Matrix& M) const
+	{
+		Matrix R( //! Result
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0}
+		);
+
+		for (int i = 0; i < dimension; i++)
+			for (int j = 0; j < dimension; j++)
+				for (int k = 0; k < dimension; k++)
+					R[i][j] += (_vectors[i][k] * M[k][j]);
 
 		return R;
 	}
@@ -304,6 +353,24 @@ namespace model
 					return false;
 
 		return true;
+	}
+
+	template<int D>
+	Matrix Matrix::multiply(const Matrix& M) const
+	{
+		Matrix R( //! Result
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0}
+		);
+
+		for (int i = 0; i < D; i++)
+			for (int j = 0; j < D; j++)
+				for (int k = 0; k < D; k++)
+					R[i][j] += (_vectors[i][k] * M[k][j]);
+
+		return R;
 	}
 
 /*--------------------------------------------------------------------------------*/
