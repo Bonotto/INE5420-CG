@@ -87,17 +87,6 @@ namespace model
 		if (_world_vectors.size() < 4)
 			return;
 
-		auto p1 = (_world_vectors[0] * world_T);
-		auto p2 = (_world_vectors[1] * world_T);
-		auto p3 = (_world_vectors[2] * world_T);
-		auto p4 = (_world_vectors[3] * world_T);
-
-		/* Calculates the second point in window coordinates (the first point is the p1) */
-		auto pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
-
-		if (calculation::euclidean_distance(p1, pa) >= world_max_size)
-			return;
-
 		for (auto & v : _world_vectors)
 			v = v * world_T;
 	}
@@ -109,9 +98,9 @@ namespace model
 		std::vector<Vector> & vectors
 	)
 	{
-		if (vectors.empty())
+		if (!vectors.empty())
 			vectors.emplace_back(dX[0], dY[0], dZ[0]);
-		
+
 		for (double k = precision; k <= 1; k += precision)
 		{
 			dX[0] += dX[1];
@@ -143,10 +132,10 @@ namespace model
 		};
 
 		static const Matrix IMbs{
-			{-1.0/5.0, 3.0/5.0, -3.0/5.0, 1.0/5.0},
-			{ 3.0/5.0,-6.0/5.0,  3.0/5.0,       0},
-			{-3.0/5.0,     0.0,  3.0/5.0,       0},
-			{ 1.0/5.0, 2.0/3.0,  1.0/5.0,       0}
+			{-1.0/6.0, 1.0/2.0, -1.0/2.0, 1.0/6.0},
+			{ 1.0/2.0,    -1.0,  1.0/2.0,       0},
+			{-1.0/2.0,     0.0,  1.0/2.0,       0},
+			{ 1.0/6.0, 2.0/3.0,  1.0/6.0,       0}
 		};
 
 		static const Matrix D_IMbs = D.multiply<4>(IMbs);
@@ -240,8 +229,8 @@ namespace model
 			if (rn1 > rn2)
 				continue;
 
-			vectors.emplace_back(std::move(Vector({pa[0] + p2 * rn1, pa[1] + p4 * rn1})));
-			vectors.emplace_back(std::move(Vector({pa[0] + p2 * rn2, pa[1] + p4 * rn2})));
+			vectors.emplace_back(pa[0] + p2 * rn1, pa[1] + p4 * rn1);
+			vectors.emplace_back(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
 		}
 
 		_window_vectors = vectors;
@@ -255,10 +244,20 @@ namespace model
 		static const double LEFT   = -0.95;
 
 		if (pa[1] == TOP || pa[1] == BOTTOM)
-			return (pb[0] == LEFT || pb[0] == RIGHT);
+		{
+			if (pb[0] == LEFT || pb[0] == RIGHT)
+				return true;
+
+			return pb[1] == TOP || pb[1] == BOTTOM;
+		}
 
 		else if (pa[0] == LEFT || pa[0] == RIGHT)
-			return (pb[1] == TOP || pb[1] == BOTTOM);
+		{
+			if (pb[1] == TOP || pb[1] == BOTTOM)
+				return true;
+
+			return pb[0] == LEFT || pb[0] == RIGHT;
+		}
 
 		return false;
 	}

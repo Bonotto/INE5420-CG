@@ -1424,11 +1424,14 @@ namespace control
 				));
 		}
 
-		if (vectors.size() < 4 || (vectors.size() - 4) % 3)
+		if (vectors.size() < 4)
 			return;
 
 		if (!type.compare("Bezier"))
 		{
+			if (vectors.size() % 3 != 1)
+				return;
+
 			add_entry(_objects_control, name, "Bezier Curve");
 			_shapes.emplace_back(new model::Bezier(name, vectors));
 		}
