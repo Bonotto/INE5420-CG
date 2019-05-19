@@ -86,6 +86,9 @@ namespace model
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
 
+		double norm() const;
+		double angle(const Vector& w) const;
+
 		template<int D>
 		Vector multiply(const Matrix &M) const;
 
@@ -188,6 +191,52 @@ namespace model
 			const Vector& win_min,
 			const Vector& win_max
 		);
+
+		/* Anonymous namespace: This does not export the following features */
+		namespace
+		{
+			enum class Axis
+			{
+				X, Y, Z
+			};
+
+			Matrix rotation(const double radians, const Axis ax = Axis::Z)
+			{
+				const double cos = std::cos(radians);
+				const double sin = std::sin(radians);
+
+				switch (ax)
+				{
+				case Axis::X :
+					return Matrix(
+						{1,    0,   0, 0},
+						{0,  cos, sin, 0},
+						{0, -sin, cos, 0},
+						{0,    0,   0, 1}
+					);
+				
+				case Axis::Y :
+					return Matrix(
+						{cos, 0, -sin, 0},
+						{  0, 1,    0, 0},
+						{sin, 0,  cos, 0},
+						{  0, 0,    0, 1}
+					);
+				
+				case Axis::Z :
+					return Matrix(
+						{ cos, sin, 0, 0},
+						{-sin, cos, 0, 0},
+						{   0,   0, 1, 0},
+						{   0,   0, 0, 1}
+					);
+					break;
+				
+				default:
+					return Matrix();
+				}
+			}
+		}
 	} //! namespace transformation
 
 /*================================================================================*/
@@ -261,6 +310,25 @@ namespace model
 				v[j] += _coordinates.at(i) * M[i][j];
 
 		return v;
+	}
+
+	double Vector::norm() const
+	{
+		double sum = 0;
+
+		for (auto x : _coordinates)
+			sum += std::pow(x, 2);
+
+		return std::sqrt(sum);
+	}
+
+	double Vector::angle(const Vector& w) const
+	{
+		const Vector& v = *this;
+
+		return std::acos(
+			(v * w) / (v.norm() * w.norm())
+		);
 	}
 
 	template<int D>
@@ -424,17 +492,36 @@ namespace model
 
 	Matrix transformation::rotation(const double radians, const Vector& mass_center)
 	{
-		auto to_origin = translation(-1 * mass_center);
-		auto go_back   = translation(mass_center);
+		if (Vector::dimension == 3)
+		{
+			const auto to_origin = translation(-1 * mass_center);
+			const auto rotating  = rotation(radians, Axis::Z);
+			const auto go_back   = translation(mass_center);
 
-		Matrix rotating(
-			{ std::cos(radians), std::sin(radians), 0, 0},
-			{-std::sin(radians), std::cos(radians), 0, 0},
-			{               0,               0, 1, 0},
-			{               0,               0, 0, 1}
-		);
+			return (to_origin * rotating) * go_back;
+		}
 
-		return (to_origin * rotating) * go_back;
+		/* Vector::dimention = 4 */
+		else
+		{
+			const double radians_x = mass_center.angle({1, 0, 0});
+			const double radians_y = mass_center.angle({0, 1, 0});
+
+			const auto to_origin = translation(-1 * mass_center);
+			const auto go_back   = translation(mass_center);
+
+			const auto do_rx   = rotation( radians_y, Axis::X);
+			const auto do_ry   = rotation( radians_x, Axis::Y);
+			const auto real_r  = rotation(   radians, Axis::Z);
+			const auto undo_ry = rotation(-radians_x, Axis::Y);
+			const auto undo_rx = rotation(-radians_y, Axis::X);
+
+			return to_origin 
+			     * do_rx * do_ry
+			     * real_r
+			     * undo_ry * undo_rx
+			     * go_back;
+		}
 	}
 
 	Matrix transformation::viewport_transformation(
