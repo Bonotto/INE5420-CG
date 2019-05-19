@@ -303,7 +303,7 @@ namespace model
 
 	Vector Vector::operator*(const Matrix& M) const
 	{
-		Vector v(0, 0, 0, 1);
+		Vector v(0, 0, 0, 0);
 
 		for (int j = 0; j < dimension; ++j)
 			for (int i = 0; i < dimension; ++i)
