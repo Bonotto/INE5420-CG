@@ -183,7 +183,7 @@ namespace model
 
 		Matrix scaling(const double scalar, const Vector& mass_center);
 
-		Matrix rotation(const double radians, const Vector& mass_center);
+		Matrix rotation(const double radians, const Vector& mass_center, const Vector& normal);
 
 		Matrix viewport_transformation(
 			const Vector& vp_min,
@@ -209,26 +209,26 @@ namespace model
 				{
 				case Axis::X :
 					return Matrix(
-						{1,    0,   0, 0},
-						{0,  cos, sin, 0},
-						{0, -sin, cos, 0},
-						{0,    0,   0, 1}
+						{1,    0,    0, 0},
+						{0,  cos, -sin, 0},
+						{0,  sin,  cos, 0},
+						{0,    0,    0, 1}
 					);
 				
 				case Axis::Y :
 					return Matrix(
-						{cos, 0, -sin, 0},
-						{  0, 1,    0, 0},
-						{sin, 0,  cos, 0},
-						{  0, 0,    0, 1}
+						{ cos, 0,  sin, 0},
+						{   0, 1,    0, 0},
+						{-sin, 0,  cos, 0},
+						{   0, 0,    0, 1}
 					);
 				
 				case Axis::Z :
 					return Matrix(
-						{ cos, sin, 0, 0},
-						{-sin, cos, 0, 0},
-						{   0,   0, 1, 0},
-						{   0,   0, 0, 1}
+						{ cos, -sin, 0, 0},
+						{ sin,  cos, 0, 0},
+						{   0,    0, 1, 0},
+						{   0,    0, 0, 1}
 					);
 					break;
 				
@@ -490,7 +490,7 @@ namespace model
 		return (to_origin * scalling) * go_back;
 	}
 
-	Matrix transformation::rotation(const double radians, const Vector& mass_center)
+	Matrix transformation::rotation(const double radians, const Vector& mass_center, const Vector& normal)
 	{
 		if (Vector::dimension == 3)
 		{
@@ -501,25 +501,28 @@ namespace model
 			return (to_origin * rotating) * go_back;
 		}
 
+
 		/* Vector::dimention = 4 */
 		else
 		{
-			const double radians_x = mass_center.angle({1, 0, 0});
-			const double radians_y = mass_center.angle({0, 1, 0});
-
 			const auto to_origin = translation(-1 * mass_center);
 			const auto go_back   = translation(mass_center);
 
-			const auto do_rx   = rotation( radians_y, Axis::X);
-			const auto do_ry   = rotation( radians_x, Axis::Y);
-			const auto real_r  = rotation(   radians, Axis::Z);
-			const auto undo_ry = rotation(-radians_x, Axis::Y);
-			const auto undo_rx = rotation(-radians_y, Axis::X);
+			const double radians_x = normal.angle({1, 0, 0});
+			const double radians_z = normal.angle({0, 0, 1});
 
-			return to_origin 
-			     * do_rx * do_ry
+			std::cout << radians_x << " | " << radians_z << std::endl;
+
+			const auto do_rz   = rotation( radians_x, Axis::Z);
+			const auto do_ry   = rotation( radians_z, Axis::Y);
+			const auto real_r  = rotation(   radians, Axis::Z);
+			const auto undo_ry = rotation(-radians_z, Axis::Y);
+			const auto undo_rz = rotation(-radians_x, Axis::Z);
+
+			return to_origin
+			     * do_rz * do_ry
 			     * real_r
-			     * undo_ry * undo_rx
+			     * undo_ry * undo_rz
 			     * go_back;
 		}
 	}

@@ -385,6 +385,7 @@ namespace control
 		Gtk::SpinButton *spin;
 		Gtk::RadioButton *radio;
 		model::Vector mass_center;
+		model::Vector normal;
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_degrees", spin);
@@ -406,10 +407,12 @@ namespace control
 		{
 			case ButtonID::CenterObject:
 				mass_center = _shapes_map[_shape_selected]->mass_center();
+				normal = _shapes_map[_shape_selected]->normal();
 				break;
 
 			case ButtonID::CenterWorld:
 				mass_center = model::Vector(0, 0);
+				normal = model::Vector(0, 0, 1);
 				break;
 
 			case ButtonID::CenterSpecific: {
@@ -427,7 +430,7 @@ namespace control
 					z = atof(std::string(entry->get_text()).c_str());
 				}
 				
-				mass_center = model::Vector(x, y, z);
+				normal = mass_center = model::Vector(x, y, z);
 			} break;
 
 			/* Undefined */
@@ -436,7 +439,7 @@ namespace control
 		}
 
 		/* Calculate the rotation matrix */
-		auto T = model::transformation::rotation(angle, mass_center);
+		auto T = model::transformation::rotation(angle, mass_center, normal);
 
 		if (_shape_selected)
 		{
@@ -456,10 +459,11 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::counterclockwise()" << std::endl;
 
-		model::Vector mass_center;
 		Gtk::Entry *entry;
 		Gtk::SpinButton *spin;
 		Gtk::RadioButton *radio;
+		model::Vector mass_center;
+		model::Vector normal;
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_degrees", spin);
@@ -481,10 +485,12 @@ namespace control
 		{
 			case ButtonID::CenterObject:
 				mass_center = _shapes_map[_shape_selected]->mass_center();
+				normal = _shapes_map[_shape_selected]->normal();
 				break;
 
 			case ButtonID::CenterWorld:
 				mass_center = model::Vector(0, 0);
+				normal = model::Vector(0, 0, 1);
 				break;
 
 			case ButtonID::CenterSpecific: {
@@ -502,7 +508,7 @@ namespace control
 					z = atof(std::string(entry->get_text()).c_str());
 				}
 				
-				mass_center = model::Vector(x, y, z);
+				normal = mass_center = model::Vector(x, y, z);
 			} break;
 
 			/* Undefined */
@@ -511,7 +517,7 @@ namespace control
 		}
 
 		/* Calculate the rotation matrix */
-		auto T = model::transformation::rotation(angle, mass_center);
+		auto T = model::transformation::rotation(angle, mass_center, normal);
 
 		if (_shape_selected)
 		{
@@ -827,7 +833,7 @@ namespace control
 		width = alloc.get_width() / 2;
 		height = alloc.get_height() / 2;
 
-		_window = new model::Window(model::Vector(-width, -height), model::Vector(width, height));
+		_window = new model::Window(model::Vector(-width, -height, 0), model::Vector(width, height, 0));
 
 		_shapes.emplace_back(&_window->drawable());
 		_shapes_map[_objects_control++] = _shapes.back();

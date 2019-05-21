@@ -49,8 +49,8 @@ namespace model
 			_visible_world(
 				Rectangle(
 					"window",
-					Vector(min[0] - 0.05*min[0], min[1] - 0.05*min[1]),
-					Vector(max[0] - 0.05*max[0], max[1] - 0.05*max[1])
+					Vector(min[0] - 0.05*min[0], min[1] - 0.05*min[1], 0),
+					Vector(max[0] - 0.05*max[0], max[1] - 0.05*max[1], 0)
 				)
 			)
 		{
@@ -133,14 +133,14 @@ namespace model
 		Vector l2{-a, -b, 1, 0};
 		Vector l3{ 0,  0, 0, 1};
 
-		if (Vector::dimension == 4)
-		{
-			double z = 2 / (_max[2] - _min[2]);
-			double c = (2 * _min[2]) / (_max[2] - _min[2]) + 1;
+		// if (Vector::dimension == 4)
+		// {
+		// 	double z = 2 / (_max[2] - _min[2]);
+		// 	double c = (2 * _min[2]) / (_max[2] - _min[2]) + 1;
 
-			l2 = Vector{ 0,  0,  z, 0};
-			l3 = Vector{-a, -b, -c, 1};
-		}
+		// 	l2 = Vector{ 0,  0,  z, 0};
+		// 	l3 = Vector{-a, -b, -c, 1};
+		// }
 
 		return Matrix(l0, l1, l2, l3);
 	}

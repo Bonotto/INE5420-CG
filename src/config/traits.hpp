@@ -59,7 +59,7 @@ template<> struct Traits<control::MainControl> : public Traits<void>
 
 template<> struct Traits<model::Vector> : public Traits<void>
 {
-    static const int dimension = 3;
+    static const int dimension = 4;
     static const int x = 0;
     static const int y = 0;
     static const int z = (dimension == 3 ? 1 : 0);
