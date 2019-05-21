@@ -89,6 +89,8 @@ namespace model
 		double norm() const;
 		double angle(const Vector& w) const;
 
+		Vector projection(const Vector &w1, const Vector &w2) const;
+
 		template<int D>
 		Vector multiply(const Matrix &M) const;
 
@@ -331,6 +333,13 @@ namespace model
 		);
 	}
 
+	Vector Vector::projection(const Vector &w1, const Vector &w2) const
+	{
+		const Vector &y = *this;
+
+		return (((y * w1) / (w1 * w1)) * w1) + (((y * w2) / (w2 * w2)) * w2);
+	}
+
 	template<int D>
 	Vector Vector::multiply(const Matrix& M) const
 	{
@@ -508,16 +517,19 @@ namespace model
 			const auto to_origin = translation(-1 * mass_center);
 			const auto go_back   = translation(mass_center);
 
-			const double radians_x = normal.angle({1, 0, 0});
-			const double radians_z = normal.angle({0, 0, 1});
+			auto proj_xz = normal.projection({1, 0, 0}, {0, 0, 1});
+			auto proj_yz = normal.projection({0, 1, 0}, {0, 0, 1});
 
-			std::cout << radians_x << " | " << radians_z << std::endl;
+			const double radians_x = proj_yz.angle({0, 0, 1});
+			const double radians_y = proj_xz.angle({0, 0, 1});
 
-			const auto do_rz   = rotation( radians_x, Axis::Z);
-			const auto do_ry   = rotation( radians_z, Axis::Y);
+			std::cout << radians_x << " | " << radians_y << std::endl;
+
+			const auto do_rz   = rotation(-radians_x, Axis::X);
+			const auto do_ry   = rotation(-radians_y, Axis::Y);
 			const auto real_r  = rotation(   radians, Axis::Z);
-			const auto undo_ry = rotation(-radians_z, Axis::Y);
-			const auto undo_rz = rotation(-radians_x, Axis::Z);
+			const auto undo_ry = rotation( radians_y, Axis::Y);
+			const auto undo_rz = rotation( radians_x, Axis::X);
 
 			return to_origin
 			     * do_rz * do_ry
