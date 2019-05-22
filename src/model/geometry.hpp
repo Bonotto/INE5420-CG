@@ -283,8 +283,7 @@ namespace model
 	{
 		return _coordinates[0] * v[0]
 			 + _coordinates[1] * v[1]
-			 + _coordinates[2] * v[2]
-			 + _coordinates[3] * v[3];
+			 + _coordinates[2] * v[2];
 	}
 
 	Vector Vector::operator*(const double scalar) const
@@ -318,8 +317,8 @@ namespace model
 	{
 		double sum = 0;
 
-		for (auto x : _coordinates)
-			sum += std::pow(x, 2);
+		for (int i = 0; i < dimension-1; ++i)
+			sum += std::pow(_coordinates[i], 2);
 
 		return std::sqrt(sum);
 	}
@@ -327,9 +326,13 @@ namespace model
 	double Vector::angle(const Vector& w) const
 	{
 		const Vector& v = *this;
+		const double norms = v.norm() * w.norm();
+
+		if (!norms)
+			return (0);
 
 		return std::acos(
-			(v * w) / (v.norm() * w.norm())
+			(v * w) / norms
 		);
 	}
 
@@ -523,7 +526,24 @@ namespace model
 			const double radians_x = proj_yz.angle({0, 0, 1});
 			const double radians_y = proj_xz.angle({0, 0, 1});
 
-			std::cout << radians_x << " | " << radians_y << std::endl;
+			std::cout << "Radianos" << radians_x << " | " << radians_y << std::endl;
+
+			// Vector test_normal(1, 1, 1);
+			// auto test_proj_xz = test_normal.projection({1, 0, 0}, {0, 0, 1});
+			// auto test_proj_yz = test_normal.projection({0, 1, 0}, {0, 0, 1});
+
+			// Vector X(1, 0, 0);
+			// Vector Y(0, 1, 0);
+			// Vector Z(0, 0, 1);
+			// auto t = X + Z;
+
+			// const double test_radians_x = test_proj_yz.angle({0, 0, 1});
+			// const double test_radians_y = test_proj_xz.angle({0, 0, 1});
+
+			std::cout << "Test: (" << normal[0] << ", " << normal[1] << ", " << normal[2] << ")" << std::endl;
+			// std::cout << "t: (" << t[0] << ", " << t[1] << ", " << t[2] << ")" << std::endl;
+			std::cout << "xz: (" << proj_xz[0] << ", " << proj_xz[1] << ", " << proj_xz[2] << ") (1,0,1) => angulo: " << radians_y << std::endl;
+			std::cout << "yz: (" << proj_yz[0] << ", " << proj_yz[1] << ", " << proj_yz[2] << ") (0,1,1) => angulo: " << radians_x << std::endl;
 
 			const auto do_rz   = rotation(-radians_x, Axis::X);
 			const auto do_ry   = rotation(-radians_y, Axis::Y);
