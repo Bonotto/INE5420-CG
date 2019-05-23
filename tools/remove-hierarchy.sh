@@ -33,13 +33,23 @@ do
 
 		echo -e "$pathfile -> $OUTDIR/$filename"
 
-		cat $pathfile                      \
-			| sed -e 's/..\/model\///g'    \
-			| sed -e 's/..\/config\///g'   \
-			| sed -e 's/src\/control\///g' \
-			| sed -e 's/src\/view\///g'    \
+		cat $pathfile                      				 \
+			| sed -e 's/..\/model\///g'     			 \
+			| sed -e 's/..\/config\///g'   				 \
+			| sed -e 's/src\/control\///g' 				 \
+			| sed -e 's/src\/view\///g'    				 \
+			| sed -e 's/version="3.12"/version="3.10"/g' \
 		> $OUTDIR/$filename
 	done
 done
+
+filename="main.cpp"
+
+cat $filename                      \
+	| sed -e 's/..\/model\///g'    \
+	| sed -e 's/..\/config\///g'   \
+	| sed -e 's/src\/control\///g' \
+	| sed -e 's/src\/view\///g'    \
+> $OUTDIR/$filename
 
 echo -e "${GREEN}===== Successfully parse =====${NORMAL}"

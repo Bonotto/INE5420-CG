@@ -1184,7 +1184,8 @@ namespace control
 			case ButtonID::Polygon:
 				entry_names = {
 					"entry_polygon_x",
-					"entry_polygon_y"
+					"entry_polygon_y",
+					"entry_polygon_z"
 				};
 				button_names = {
 					"button_insert_vector",
