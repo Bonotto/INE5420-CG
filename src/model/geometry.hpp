@@ -197,9 +197,15 @@ namespace model
 		/* Anonymous namespace: This does not export the following features */
 		namespace
 		{
-			enum class Axis
+			enum Axis
 			{
-				X, Y, Z
+				X = 0x1,
+				Y = 0x2,
+				Z = 0x4,
+				XY = 0x3,
+				XZ = 0x5,
+				YZ = 0x6,
+				XYZ = 0x7
 			};
 
 			Matrix rotation(const double radians, const Axis ax = Axis::Z)
@@ -502,7 +508,7 @@ namespace model
 		return (to_origin * scalling) * go_back;
 	}
 
-	Matrix transformation::rotation(const double radians, const Vector& mass_center, const Vector& normal)
+	Matrix transformation::rotation(const double radians, const Vector& mass_center, const Vector& n)
 	{
 		if (Vector::dimension == 3)
 		{
@@ -517,45 +523,87 @@ namespace model
 		/* Vector::dimention = 4 */
 		else
 		{
+			auto normal = n - mass_center;
+
+			int hash = 0;
+
+			hash |= (normal[0] != 0) << 0;
+			hash |= (normal[1] != 0) << 1;
+			hash |= (normal[2] != 0) << 2;
+
 			const auto to_origin = translation(-1 * mass_center);
 			const auto go_back   = translation(mass_center);
 
-			auto proj_xz = normal.projection({1, 0, 0}, {0, 0, 1});
-			auto proj_yz = normal.projection({0, 1, 0}, {0, 0, 1});
+			switch (hash)
+			{
+				case X:
+					return to_origin
+						* rotation(radians, Axis::X)
+						* go_back;
 
-			const double radians_x = proj_yz.angle({0, 0, 1});
-			const double radians_y = proj_xz.angle({0, 0, 1});
+				case Y:
+					return to_origin
+						* rotation(radians, Axis::Y)
+						* go_back;
 
-			std::cout << "Radianos" << radians_x << " | " << radians_y << std::endl;
+				case Z:
+					return to_origin
+						* rotation(radians, Axis::Z)
+						* go_back;
 
-			// Vector test_normal(1, 1, 1);
-			// auto test_proj_xz = test_normal.projection({1, 0, 0}, {0, 0, 1});
-			// auto test_proj_yz = test_normal.projection({0, 1, 0}, {0, 0, 1});
+				case XY: {
+					const double radians_z = normal.angle({1, 0, 0});
 
-			// Vector X(1, 0, 0);
-			// Vector Y(0, 1, 0);
-			// Vector Z(0, 0, 1);
-			// auto t = X + Z;
+					return to_origin
+						* rotation( radians_z, Axis::Z)
+						* rotation( radians,   Axis::X)
+						* rotation(-radians_z, Axis::Z)
+						* go_back;
+				}
+				
+				case XZ: {
+					const double radians_y = normal.angle({1, 0, 0});
 
-			// const double test_radians_x = test_proj_yz.angle({0, 0, 1});
-			// const double test_radians_y = test_proj_xz.angle({0, 0, 1});
+					return to_origin
+						* rotation( radians_y, Axis::Y)
+						* rotation( radians,   Axis::X)
+						* rotation(-radians_y, Axis::Y)
+						* go_back;
+				}
 
-			std::cout << "Test: (" << normal[0] << ", " << normal[1] << ", " << normal[2] << ")" << std::endl;
-			// std::cout << "t: (" << t[0] << ", " << t[1] << ", " << t[2] << ")" << std::endl;
-			std::cout << "xz: (" << proj_xz[0] << ", " << proj_xz[1] << ", " << proj_xz[2] << ") (1,0,1) => angulo: " << radians_y << std::endl;
-			std::cout << "yz: (" << proj_yz[0] << ", " << proj_yz[1] << ", " << proj_yz[2] << ") (0,1,1) => angulo: " << radians_x << std::endl;
+				case YZ: {
+					const double radians_x = normal.angle({0, 0, 1});
 
-			const auto do_rz   = rotation(-radians_x, Axis::X);
-			const auto do_ry   = rotation(-radians_y, Axis::Y);
-			const auto real_r  = rotation(   radians, Axis::Z);
-			const auto undo_ry = rotation( radians_y, Axis::Y);
-			const auto undo_rz = rotation( radians_x, Axis::X);
+					return to_origin
+						* rotation( radians_x, Axis::X)
+						* rotation( radians,   Axis::Z)
+						* rotation(-radians_x, Axis::X)
+						* go_back;
+				}
 
-			return to_origin
-			     * do_rz * do_ry
-			     * real_r
-			     * undo_ry * undo_rz
-			     * go_back;
+				case XYZ: {
+					auto proj_xy = normal.projection({1, 0, 0}, {0, 1, 0});
+					auto proj_xz = normal.projection({1, 0, 0}, {0, 0, 1});
+
+					const double radians_z = proj_xy.angle({1, 0, 0});
+					const double radians_y = proj_xz.angle({0, 0, 1});
+
+					const auto do_rz   = rotation( radians_z, Axis::Z);
+					const auto do_ry   = rotation(-radians_y, Axis::Y);
+					const auto real_r  = rotation(   radians, Axis::Z);
+					const auto undo_ry = rotation( radians_y, Axis::Y);
+					const auto undo_rz = rotation(-radians_z, Axis::Z);
+
+					return to_origin
+					     * do_rz * do_ry
+					     * real_r
+					     * undo_ry * undo_rz
+					     * go_back;
+				}
+
+				default:
+					return Matrix();
+			}	
 		}
 	}
 

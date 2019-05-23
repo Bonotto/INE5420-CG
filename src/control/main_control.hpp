@@ -133,6 +133,8 @@ namespace control
 		void zoom_in();
 		void zoom_out();
 		void clockwise();
+		void upclockwise();
+		void downclockwise();
 		void counterclockwise();
 		/**@}*/
 
@@ -384,6 +386,7 @@ namespace control
 		Gtk::Entry *entry;
 		Gtk::SpinButton *spin;
 		Gtk::RadioButton *radio;
+		Gtk::CheckButton *check;
 		model::Vector mass_center;
 		model::Vector normal;
 
@@ -430,13 +433,39 @@ namespace control
 					z = atof(std::string(entry->get_text()).c_str());
 				}
 				
-				normal = mass_center = model::Vector(x, y, z);
-			} break;
+				mass_center = model::Vector(x, y, z);
+				normal = _shapes_map[_shape_selected]->normal() - _shapes_map[_shape_selected]->mass_center() + mass_center;
+
+				break;
+			}
 
 			/* Undefined */
 			default:
 				return;
 		}
+		
+		_builder->get_widget("check_specific_axis", check);
+
+		if (check->get_active())
+		{
+			double axis_x{0}, axis_y{0}, axis_z{model::Vector::z};
+			
+			_builder->get_widget("entry_rotation_x_axis", entry);
+			axis_x = atof(std::string(entry->get_text()).c_str());
+
+			_builder->get_widget("entry_rotation_y_axis", entry);
+			axis_y = atof(std::string(entry->get_text()).c_str());
+
+			if (model::Vector::dimension == 4)
+			{
+				_builder->get_widget("entry_rotation_z_axis", entry);
+				axis_z = atof(std::string(entry->get_text()).c_str());
+			}
+
+			normal = model::Vector(axis_x, axis_y, axis_z) + mass_center;
+		}
+
+		std::cout << std::endl << std::endl << "'" << _shapes_map[_shape_selected]->name() << "'" << std::endl << std::endl;
 
 		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center, normal);
@@ -462,6 +491,7 @@ namespace control
 		Gtk::Entry *entry;
 		Gtk::SpinButton *spin;
 		Gtk::RadioButton *radio;
+		Gtk::CheckButton *check;
 		model::Vector mass_center;
 		model::Vector normal;
 
@@ -508,13 +538,39 @@ namespace control
 					z = atof(std::string(entry->get_text()).c_str());
 				}
 				
-				normal = mass_center = model::Vector(x, y, z);
-			} break;
+				mass_center = model::Vector(x, y, z);
+				normal = _shapes_map[_shape_selected]->normal() - _shapes_map[_shape_selected]->mass_center() + mass_center;
+
+				break;
+			}
 
 			/* Undefined */
 			default:
 				return;
 		}
+		
+		_builder->get_widget("check_specific_axis", check);
+
+		if (check->get_active())
+		{
+			double axis_x{0}, axis_y{0}, axis_z{model::Vector::z};
+			
+			_builder->get_widget("entry_rotation_x_axis", entry);
+			axis_x = atof(std::string(entry->get_text()).c_str());
+
+			_builder->get_widget("entry_rotation_y_axis", entry);
+			axis_y = atof(std::string(entry->get_text()).c_str());
+
+			if (model::Vector::dimension == 4)
+			{
+				_builder->get_widget("entry_rotation_z_axis", entry);
+				axis_z = atof(std::string(entry->get_text()).c_str());
+			}
+
+			normal = model::Vector(axis_x, axis_y, axis_z) + mass_center;
+		}
+
+		std::cout << std::endl << std::endl << "'" << _shapes_map[_shape_selected]->name() << "'" << std::endl << std::endl;
 
 		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center, normal);
@@ -530,6 +586,16 @@ namespace control
 			build_objects(_shapes);
 		}
 
+		_viewport->update();
+	}
+
+	void MainControl::upclockwise()
+	{
+		_viewport->update();
+	}
+
+	void MainControl::downclockwise()
+	{
 		_viewport->update();
 	}
 
@@ -992,6 +1058,12 @@ namespace control
 
 		_builder->get_widget("button_r_right", btn);
 		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::clockwise));
+
+		_builder->get_widget("button_r_up", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::upclockwise));
+
+		_builder->get_widget("button_r_down", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::downclockwise));
 	}
 
 	void MainControl::build_numeric_entrys()

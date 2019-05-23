@@ -47,19 +47,37 @@ namespace model
 			_name(name),
 			_world_vectors({v}),
 			_close_path(close_path)
-		{}
+		{
+			auto mass = mass_center();
+			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
+			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass;
+			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+		}
 
 		Shape(std::string name, const std::initializer_list<Vector>& vs, bool close_path = false) :
 			_name(name),
 			_world_vectors(vs),
 			_close_path(close_path)
-		{}
+		{
+			auto mass = mass_center();
+			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
+			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass;
+			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+		}
 
 		Shape(std::string name, const std::vector<Vector>& vs, bool close_path = false) :
 			_name(name),
 			_world_vectors(vs),
 			_close_path(close_path)
-		{}
+		{
+			auto mass = mass_center();
+			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
+			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass;
+			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+		}
 
 		virtual ~Shape() = default;
 
@@ -136,7 +154,23 @@ namespace model
 		for (auto & v : _world_vectors)
 			v = v * world_T;
 
+
+		std::cout << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+
+		std::cout << std::endl;
+
+		for (int i = 0; i < Vector::dimension; ++i)
+		{
+			for (int j = 0; j < Vector::dimension; ++j)
+				std::cout << world_T[i][j] << " ";
+			std::cout << std::endl;
+		}
+		
+		std::cout << std::endl;
+
 		_normal = _normal * world_T;
+
+		std::cout << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
 	}
 
 	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
