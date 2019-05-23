@@ -465,8 +465,6 @@ namespace control
 			normal = model::Vector(axis_x, axis_y, axis_z) + mass_center;
 		}
 
-		std::cout << std::endl << std::endl << "'" << _shapes_map[_shape_selected]->name() << "'" << std::endl << std::endl;
-
 		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center, normal);
 
@@ -569,8 +567,6 @@ namespace control
 
 			normal = model::Vector(axis_x, axis_y, axis_z) + mass_center;
 		}
-
-		std::cout << std::endl << std::endl << "'" << _shapes_map[_shape_selected]->name() << "'" << std::endl << std::endl;
 
 		/* Calculate the rotation matrix */
 		auto T = model::transformation::rotation(angle, mass_center, normal);

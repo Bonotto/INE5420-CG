@@ -565,9 +565,9 @@ namespace model
 					const double radians_y = normal.angle({1, 0, 0});
 
 					return to_origin
-						* rotation( radians_y, Axis::Y)
-						* rotation( radians,   Axis::X)
 						* rotation(-radians_y, Axis::Y)
+						* rotation( radians,   Axis::X)
+						* rotation( radians_y, Axis::Y)
 						* go_back;
 				}
 
@@ -575,29 +575,40 @@ namespace model
 					const double radians_x = normal.angle({0, 0, 1});
 
 					return to_origin
-						* rotation( radians_x, Axis::X)
-						* rotation( radians,   Axis::Z)
 						* rotation(-radians_x, Axis::X)
+						* rotation( radians,   Axis::Z)
+						* rotation( radians_x, Axis::X)
 						* go_back;
 				}
 
 				case XYZ: {
-					auto proj_xy = normal.projection({1, 0, 0}, {0, 1, 0});
+					
+					/* Go to XZ */
 					auto proj_xz = normal.projection({1, 0, 0}, {0, 0, 1});
+					double radians_z = proj_xz.angle({0, 0, 1});
 
-					const double radians_z = proj_xy.angle({1, 0, 0});
-					const double radians_y = proj_xz.angle({0, 0, 1});
+					if (normal[0] < 0)
+						radians_z *= -1;
 
-					const auto do_rz   = rotation( radians_z, Axis::Z);
-					const auto do_ry   = rotation(-radians_y, Axis::Y);
-					const auto real_r  = rotation(   radians, Axis::Z);
-					const auto undo_ry = rotation( radians_y, Axis::Y);
-					const auto undo_rz = rotation(-radians_z, Axis::Z);
+					const auto do_ry   = rotation( radians_z, Axis::Y);
+					const auto undo_ry = rotation(-radians_z, Axis::Y);
+
+					auto temp_norm = normal * do_ry;
+
+					double radians_x = temp_norm.angle({0, 0, 1});
+
+					if (normal[1] < 0)
+						radians_x *= -1;
+
+					const auto do_rx   = rotation(-radians_x, Axis::X);
+					const auto undo_rx = rotation( radians_x, Axis::X);
 
 					return to_origin
-					     * do_rz * do_ry
-					     * real_r
-					     * undo_ry * undo_rz
+					     * do_ry
+					     * do_rx
+					     * rotation(radians, Axis::Z)
+					     * undo_rx
+					     * undo_ry
 					     * go_back;
 				}
 

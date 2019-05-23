@@ -154,23 +154,7 @@ namespace model
 		for (auto & v : _world_vectors)
 			v = v * world_T;
 
-
-		std::cout << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
-
-		std::cout << std::endl;
-
-		for (int i = 0; i < Vector::dimension; ++i)
-		{
-			for (int j = 0; j < Vector::dimension; ++j)
-				std::cout << world_T[i][j] << " ";
-			std::cout << std::endl;
-		}
-		
-		std::cout << std::endl;
-
 		_normal = _normal * world_T;
-
-		std::cout << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
 	}
 
 	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
