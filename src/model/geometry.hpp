@@ -197,15 +197,11 @@ namespace model
 		/* Anonymous namespace: This does not export the following features */
 		namespace
 		{
-			enum Axis
+			enum class Axis
 			{
-				X = 0x1,
-				Y = 0x2,
-				Z = 0x4,
-				XY = 0x3,
-				XZ = 0x5,
-				YZ = 0x6,
-				XYZ = 0x7
+				X,
+				Y,
+				Z
 			};
 
 			Matrix rotation(const double radians, const Axis ax = Axis::Z)
@@ -519,102 +515,40 @@ namespace model
 			return (to_origin * rotating) * go_back;
 		}
 
-
 		/* Vector::dimention = 4 */
 		else
 		{
 			auto normal = n - mass_center;
 
-			int hash = 0;
-
-			hash |= (normal[0] != 0) << 0;
-			hash |= (normal[1] != 0) << 1;
-			hash |= (normal[2] != 0) << 2;
-
 			const auto to_origin = translation(-1 * mass_center);
 			const auto go_back   = translation(mass_center);
 
-			switch (hash)
-			{
-				case X:
-					return to_origin
-						* rotation(radians, Axis::X)
-						* go_back;
+			auto proj_xz = normal.projection({1, 0, 0}, {0, 0, 1});
+			double radians_z = proj_xz.angle({0, 0, 1});
 
-				case Y:
-					return to_origin
-						* rotation(radians, Axis::Y)
-						* go_back;
+			if (normal[0] < 0)
+				radians_z *= -1;
 
-				case Z:
-					return to_origin
-						* rotation(radians, Axis::Z)
-						* go_back;
+			const auto do_ry   = rotation( radians_z, Axis::Y);
+			const auto undo_ry = rotation(-radians_z, Axis::Y);
 
-				case XY: {
-					const double radians_z = normal.angle({1, 0, 0});
+			auto temp_norm = normal * do_ry;
 
-					return to_origin
-						* rotation( radians_z, Axis::Z)
-						* rotation( radians,   Axis::X)
-						* rotation(-radians_z, Axis::Z)
-						* go_back;
-				}
-				
-				case XZ: {
-					const double radians_y = normal.angle({1, 0, 0});
+			double radians_x = temp_norm.angle({0, 0, 1});
 
-					return to_origin
-						* rotation(-radians_y, Axis::Y)
-						* rotation( radians,   Axis::X)
-						* rotation( radians_y, Axis::Y)
-						* go_back;
-				}
+			if (normal[1] < 0)
+				radians_x *= -1;
 
-				case YZ: {
-					const double radians_x = normal.angle({0, 0, 1});
+			const auto do_rx   = rotation(-radians_x, Axis::X);
+			const auto undo_rx = rotation( radians_x, Axis::X);
 
-					return to_origin
-						* rotation(-radians_x, Axis::X)
-						* rotation( radians,   Axis::Z)
-						* rotation( radians_x, Axis::X)
-						* go_back;
-				}
-
-				case XYZ: {
-					
-					/* Go to XZ */
-					auto proj_xz = normal.projection({1, 0, 0}, {0, 0, 1});
-					double radians_z = proj_xz.angle({0, 0, 1});
-
-					if (normal[0] < 0)
-						radians_z *= -1;
-
-					const auto do_ry   = rotation( radians_z, Axis::Y);
-					const auto undo_ry = rotation(-radians_z, Axis::Y);
-
-					auto temp_norm = normal * do_ry;
-
-					double radians_x = temp_norm.angle({0, 0, 1});
-
-					if (normal[1] < 0)
-						radians_x *= -1;
-
-					const auto do_rx   = rotation(-radians_x, Axis::X);
-					const auto undo_rx = rotation( radians_x, Axis::X);
-
-					return to_origin
-					     * do_ry
-					     * do_rx
-					     * rotation(radians, Axis::Z)
-					     * undo_rx
-					     * undo_ry
-					     * go_back;
-				}
-
-				default:
-					return Matrix();
-			}	
+			return to_origin
+			     * do_ry
+			     * do_rx
+			     * rotation(radians, Axis::Z)
+			     * undo_rx
+			     * undo_ry
+			     * go_back;
 		}
 	}
 
