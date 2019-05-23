@@ -36,15 +36,15 @@
 template<typename T>
 struct Traits
 {
-    static const bool debugged = false;              /* Enable debugging.        */
+    static const bool debugged = false;             /* Enable debugging.        */
     static const bool hysterically_debugged = true; /* Enables chain debugging. */
 };
 
 template<> struct Traits<Debug>
 {
-    static const bool error   = false;  /* Prints erros.                */
-    static const bool warning = false;  /* Prints warnings.             */
-    static const bool info    = true; /* Prints relevant information. */
+    static const bool error   = false; /* Prints erros.                */
+    static const bool warning = false; /* Prints warnings.             */
+    static const bool info    = true;  /* Prints relevant information. */
     static const bool trace   = true;  /* Prints function call trace.  */
 };
 
@@ -59,10 +59,10 @@ template<> struct Traits<control::MainControl> : public Traits<void>
 
 template<> struct Traits<model::Vector> : public Traits<void>
 {
-    static const int dimension = 3;
+    static const int dimension = 4;
     static const int x = 0;
     static const int y = 0;
-    static const int z = 1;
+    static const int z = (dimension == 3 ? 1 : 0);
     static const int w = 1;
     static const bool debugged = hysterically_debugged;
 };
@@ -114,6 +114,11 @@ template<> struct Traits<model::Window> : public Traits<void>
 };
 
 template<> struct Traits<model::Viewport> : public Traits<void>
+{
+    static const bool debugged = hysterically_debugged;
+};
+
+template<> struct Traits<model::ComplexShape> : public Traits<void>
 {
     static const bool debugged = hysterically_debugged;
 };

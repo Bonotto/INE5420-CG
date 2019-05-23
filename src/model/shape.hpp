@@ -47,23 +47,42 @@ namespace model
 			_name(name),
 			_world_vectors({v}),
 			_close_path(close_path)
-		{}
+		{
+			auto mass = mass_center();
+			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
+			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass;
+			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+		}
 
 		Shape(std::string name, const std::initializer_list<Vector>& vs, bool close_path = false) :
 			_name(name),
 			_world_vectors(vs),
 			_close_path(close_path)
-		{}
+		{
+			auto mass = mass_center();
+			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
+			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass;
+			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+		}
 
 		Shape(std::string name, const std::vector<Vector>& vs, bool close_path = false) :
 			_name(name),
 			_world_vectors(vs),
 			_close_path(close_path)
-		{}
+		{
+			auto mass = mass_center();
+			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
+			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass;
+			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+		}
 
 		virtual ~Shape() = default;
 
 		virtual Vector mass_center() const;
+		virtual Vector normal() const;
 
 		virtual void clipping(const Vector & min, const Vector & max);
 
@@ -86,6 +105,7 @@ namespace model
 		std::string _name{"Shape"};
 		std::vector<Vector> _world_vectors{{0, 0}};
 		std::vector<Vector> _window_vectors{{0, 0}};
+		Vector _normal{0, 0, 1};
 		const bool _close_path;
 	};
 
@@ -114,6 +134,11 @@ namespace model
 		);
 	}
 
+	Vector Shape::normal() const
+	{
+		return _normal;
+	}
+
 	void Shape::w_transformation(const Matrix & window_T)
 	{
 		std::vector<Vector> vectors;
@@ -128,12 +153,19 @@ namespace model
 	{	
 		for (auto & v : _world_vectors)
 			v = v * world_T;
+
+		_normal = _normal * world_T;
 	}
 
 	void Shape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
 	{
 		if (_window_vectors.empty())
 			return;
+
+		std::cout << name() << std::endl;
+		
+		for (auto v: _window_vectors)
+			std::cout << "(" << v[0] << ", " << v[1] << ", " << v[2] << ")" << std::endl;
 
 		Vector v0 = _window_vectors[0] * viewport_T;
 

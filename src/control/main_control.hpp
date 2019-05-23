@@ -133,6 +133,8 @@ namespace control
 		void zoom_in();
 		void zoom_out();
 		void clockwise();
+		void upclockwise();
+		void downclockwise();
 		void counterclockwise();
 		/**@}*/
 
@@ -384,7 +386,9 @@ namespace control
 		Gtk::Entry *entry;
 		Gtk::SpinButton *spin;
 		Gtk::RadioButton *radio;
+		Gtk::CheckButton *check;
 		model::Vector mass_center;
+		model::Vector normal;
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_degrees", spin);
@@ -406,10 +410,12 @@ namespace control
 		{
 			case ButtonID::CenterObject:
 				mass_center = _shapes_map[_shape_selected]->mass_center();
+				normal = _shapes_map[_shape_selected]->normal();
 				break;
 
 			case ButtonID::CenterWorld:
 				mass_center = model::Vector(0, 0);
+				normal = model::Vector(0, 0, 1);
 				break;
 
 			case ButtonID::CenterSpecific: {
@@ -428,15 +434,39 @@ namespace control
 				}
 				
 				mass_center = model::Vector(x, y, z);
-			} break;
+				normal = _shapes_map[_shape_selected]->normal() - _shapes_map[_shape_selected]->mass_center() + mass_center;
+
+				break;
+			}
 
 			/* Undefined */
 			default:
 				return;
 		}
+		
+		_builder->get_widget("check_specific_axis", check);
+
+		if (check->get_active())
+		{
+			double axis_x{0}, axis_y{0}, axis_z{model::Vector::z};
+			
+			_builder->get_widget("entry_rotation_x_axis", entry);
+			axis_x = atof(std::string(entry->get_text()).c_str());
+
+			_builder->get_widget("entry_rotation_y_axis", entry);
+			axis_y = atof(std::string(entry->get_text()).c_str());
+
+			if (model::Vector::dimension == 4)
+			{
+				_builder->get_widget("entry_rotation_z_axis", entry);
+				axis_z = atof(std::string(entry->get_text()).c_str());
+			}
+
+			normal = model::Vector(axis_x, axis_y, axis_z) + mass_center;
+		}
 
 		/* Calculate the rotation matrix */
-		auto T = model::transformation::rotation(angle, mass_center);
+		auto T = model::transformation::rotation(angle, mass_center, normal);
 
 		if (_shape_selected)
 		{
@@ -456,10 +486,12 @@ namespace control
 	{
 		db<MainControl>(TRC) << "MainControl::counterclockwise()" << std::endl;
 
-		model::Vector mass_center;
 		Gtk::Entry *entry;
 		Gtk::SpinButton *spin;
 		Gtk::RadioButton *radio;
+		Gtk::CheckButton *check;
+		model::Vector mass_center;
+		model::Vector normal;
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_degrees", spin);
@@ -481,10 +513,12 @@ namespace control
 		{
 			case ButtonID::CenterObject:
 				mass_center = _shapes_map[_shape_selected]->mass_center();
+				normal = _shapes_map[_shape_selected]->normal();
 				break;
 
 			case ButtonID::CenterWorld:
 				mass_center = model::Vector(0, 0);
+				normal = model::Vector(0, 0, 1);
 				break;
 
 			case ButtonID::CenterSpecific: {
@@ -503,15 +537,39 @@ namespace control
 				}
 				
 				mass_center = model::Vector(x, y, z);
-			} break;
+				normal = _shapes_map[_shape_selected]->normal() - _shapes_map[_shape_selected]->mass_center() + mass_center;
+
+				break;
+			}
 
 			/* Undefined */
 			default:
 				return;
 		}
+		
+		_builder->get_widget("check_specific_axis", check);
+
+		if (check->get_active())
+		{
+			double axis_x{0}, axis_y{0}, axis_z{model::Vector::z};
+			
+			_builder->get_widget("entry_rotation_x_axis", entry);
+			axis_x = atof(std::string(entry->get_text()).c_str());
+
+			_builder->get_widget("entry_rotation_y_axis", entry);
+			axis_y = atof(std::string(entry->get_text()).c_str());
+
+			if (model::Vector::dimension == 4)
+			{
+				_builder->get_widget("entry_rotation_z_axis", entry);
+				axis_z = atof(std::string(entry->get_text()).c_str());
+			}
+
+			normal = model::Vector(axis_x, axis_y, axis_z) + mass_center;
+		}
 
 		/* Calculate the rotation matrix */
-		auto T = model::transformation::rotation(angle, mass_center);
+		auto T = model::transformation::rotation(angle, mass_center, normal);
 
 		if (_shape_selected)
 		{
@@ -524,6 +582,16 @@ namespace control
 			build_objects(_shapes);
 		}
 
+		_viewport->update();
+	}
+
+	void MainControl::upclockwise()
+	{
+		_viewport->update();
+	}
+
+	void MainControl::downclockwise()
+	{
 		_viewport->update();
 	}
 
@@ -827,7 +895,7 @@ namespace control
 		width = alloc.get_width() / 2;
 		height = alloc.get_height() / 2;
 
-		_window = new model::Window(model::Vector(-width, -height), model::Vector(width, height));
+		_window = new model::Window(model::Vector(-width, -height, 0), model::Vector(width, height, 0));
 
 		_shapes.emplace_back(&_window->drawable());
 		_shapes_map[_objects_control++] = _shapes.back();
@@ -986,6 +1054,12 @@ namespace control
 
 		_builder->get_widget("button_r_right", btn);
 		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::clockwise));
+
+		_builder->get_widget("button_r_up", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::upclockwise));
+
+		_builder->get_widget("button_r_down", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::downclockwise));
 	}
 
 	void MainControl::build_numeric_entrys()

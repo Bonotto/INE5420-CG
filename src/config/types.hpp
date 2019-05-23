@@ -55,6 +55,7 @@ namespace model
     class BSpline;
     class Window;
     class Viewport;
+    class ComplexShape;
 } //! namespace model
 
 namespace view

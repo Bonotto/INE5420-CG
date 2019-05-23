@@ -86,6 +86,11 @@ namespace model
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
 
+		double norm() const;
+		double angle(const Vector& w) const;
+
+		Vector projection(const Vector &w1, const Vector &w2) const;
+
 		template<int D>
 		Vector multiply(const Matrix &M) const;
 
@@ -180,7 +185,7 @@ namespace model
 
 		Matrix scaling(const double scalar, const Vector& mass_center);
 
-		Matrix rotation(const double radians, const Vector& mass_center);
+		Matrix rotation(const double radians, const Vector& mass_center, const Vector& normal);
 
 		Matrix viewport_transformation(
 			const Vector& vp_min,
@@ -188,6 +193,54 @@ namespace model
 			const Vector& win_min,
 			const Vector& win_max
 		);
+
+		/* Anonymous namespace: This does not export the following features */
+		namespace
+		{
+			enum class Axis
+			{
+				X,
+				Y,
+				Z
+			};
+
+			Matrix rotation(const double radians, const Axis ax = Axis::Z)
+			{
+				const double cos = std::cos(radians);
+				const double sin = std::sin(radians);
+
+				switch (ax)
+				{
+				case Axis::X :
+					return Matrix(
+						{1,    0,    0, 0},
+						{0,  cos, -sin, 0},
+						{0,  sin,  cos, 0},
+						{0,    0,    0, 1}
+					);
+				
+				case Axis::Y :
+					return Matrix(
+						{ cos, 0,  sin, 0},
+						{   0, 1,    0, 0},
+						{-sin, 0,  cos, 0},
+						{   0, 0,    0, 1}
+					);
+				
+				case Axis::Z :
+					return Matrix(
+						{ cos, -sin, 0, 0},
+						{ sin,  cos, 0, 0},
+						{   0,    0, 1, 0},
+						{   0,    0, 0, 1}
+					);
+					break;
+				
+				default:
+					return Matrix();
+				}
+			}
+		}
 	} //! namespace transformation
 
 /*================================================================================*/
@@ -232,8 +285,7 @@ namespace model
 	{
 		return _coordinates[0] * v[0]
 			 + _coordinates[1] * v[1]
-			 + _coordinates[2] * v[2]
-			 + _coordinates[3] * v[3];
+			 + _coordinates[2] * v[2];
 	}
 
 	Vector Vector::operator*(const double scalar) const
@@ -254,13 +306,43 @@ namespace model
 
 	Vector Vector::operator*(const Matrix& M) const
 	{
-		Vector v(0, 0, 0, 1);
+		Vector v(0, 0, 0, 0);
 
 		for (int j = 0; j < dimension; ++j)
 			for (int i = 0; i < dimension; ++i)
 				v[j] += _coordinates.at(i) * M[i][j];
 
 		return v;
+	}
+
+	double Vector::norm() const
+	{
+		double sum = 0;
+
+		for (int i = 0; i < dimension-1; ++i)
+			sum += std::pow(_coordinates[i], 2);
+
+		return std::sqrt(sum);
+	}
+
+	double Vector::angle(const Vector& w) const
+	{
+		const Vector& v = *this;
+		const double norms = v.norm() * w.norm();
+
+		if (!norms)
+			return (0);
+
+		return std::acos(
+			(v * w) / norms
+		);
+	}
+
+	Vector Vector::projection(const Vector &w1, const Vector &w2) const
+	{
+		const Vector &y = *this;
+
+		return (((y * w1) / (w1 * w1)) * w1) + (((y * w2) / (w2 * w2)) * w2);
 	}
 
 	template<int D>
@@ -422,19 +504,52 @@ namespace model
 		return (to_origin * scalling) * go_back;
 	}
 
-	Matrix transformation::rotation(const double radians, const Vector& mass_center)
+	Matrix transformation::rotation(const double radians, const Vector& mass_center, const Vector& n)
 	{
-		auto to_origin = translation(-1 * mass_center);
-		auto go_back   = translation(mass_center);
+		if (Vector::dimension == 3)
+		{
+			const auto to_origin = translation(-1 * mass_center);
+			const auto rotating  = rotation(radians, Axis::Z);
+			const auto go_back   = translation(mass_center);
 
-		Matrix rotating(
-			{ std::cos(radians), std::sin(radians), 0, 0},
-			{-std::sin(radians), std::cos(radians), 0, 0},
-			{               0,               0, 1, 0},
-			{               0,               0, 0, 1}
-		);
+			return (to_origin * rotating) * go_back;
+		}
 
-		return (to_origin * rotating) * go_back;
+		/* Vector::dimention = 4 */
+		else
+		{
+			auto normal = n - mass_center;
+
+			const auto to_origin = translation(-1 * mass_center);
+			const auto go_back   = translation(mass_center);
+
+			auto proj_xz = normal.projection({1, 0, 0}, {0, 0, 1});
+			double radians_z = proj_xz.angle({0, 0, 1});
+
+			if (normal[0] < 0)
+				radians_z *= -1;
+
+			const auto do_ry   = rotation( radians_z, Axis::Y);
+			const auto undo_ry = rotation(-radians_z, Axis::Y);
+
+			auto temp_norm = normal * do_ry;
+
+			double radians_x = temp_norm.angle({0, 0, 1});
+
+			if (normal[1] < 0)
+				radians_x *= -1;
+
+			const auto do_rx   = rotation(-radians_x, Axis::X);
+			const auto undo_rx = rotation( radians_x, Axis::X);
+
+			return to_origin
+			     * do_ry
+			     * do_rx
+			     * rotation(radians, Axis::Z)
+			     * undo_rx
+			     * undo_ry
+			     * go_back;
+		}
 	}
 
 	Matrix transformation::viewport_transformation(
