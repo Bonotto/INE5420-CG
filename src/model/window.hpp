@@ -54,6 +54,9 @@ namespace model
 				)
 			)
 		{
+			_min[2] = -100;
+			_max[2] = 100;
+
 			_visible_world.w_transformation(normalization());
 		}
 

@@ -84,6 +84,7 @@ namespace model
 		virtual Vector mass_center() const;
 		virtual Vector normal() const;
 
+		virtual void perspective();
 		virtual void clipping(const Vector & min, const Vector & max);
 
 		virtual void w_transformation(const Matrix & window_T);
@@ -192,6 +193,32 @@ namespace model
 	std::string Shape::type()
 	{
 		return "Shape_t";
+	}
+	
+	void Shape::perspective()
+	{
+		const double d = Traits<model::Window>::perspective_factor;
+
+		Matrix M(
+			{1, 0, 0, 0},
+			{0, 1, 0, 0},
+			{0, 0, 1, 0},
+			{0, 0, d, 1}
+		);
+
+		for (auto &v: _window_vectors)
+		{
+			v = v * M;
+
+			std::cout << v[2] << std::endl << std::endl << std::endl;
+			
+			if (!v[2])
+				continue;
+
+			v[0] = v[0] * d / v[2];
+			v[1] = v[1] * d / v[2];
+			v[2] = d;
+		}
 	}
 
 	void Shape::clipping(const Vector & min, const Vector & max)

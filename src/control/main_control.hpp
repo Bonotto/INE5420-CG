@@ -1137,6 +1137,9 @@ namespace control
 			{
 				shape->w_transformation(T);
 
+				if (Traits<model::Window>::has_perspective)
+					shape->perspective();
+
 				if (Traits<model::Window>::need_clipping)
 					shape->clipping(cmin, cmax);
 			}
