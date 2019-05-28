@@ -82,6 +82,7 @@ namespace model
 		Vector operator+(const Vector& v) const;
 		Vector operator-(const Vector& v) const;
 
+		double operator*(const std::vector<double>& v) const;
 		double operator*(const Vector& v) const;
 		Vector operator*(const double scalar) const;
 		Vector operator*(const Matrix& M) const;
@@ -279,6 +280,14 @@ namespace model
 	Vector Vector::operator-(const Vector& v) const
 	{
 		return (*this) + (v * -1);
+	}
+	
+	double Vector::operator*(const std::vector<double>& v) const
+	{
+		return _coordinates[0] * v[0]
+			 + _coordinates[1] * v[1]
+			 + _coordinates[2] * v[2]
+			 + _coordinates[3] * v[3];
 	}
 
 	double Vector::operator*(const Vector& v) const

@@ -21,8 +21,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_BEZIER_HPP
-#define MODEL_BEZIER_HPP
+#ifndef MODEL_BEZIER_SURFACE_HPP
+#define MODEL_BEZIER_SURFACE_HPP
 
 /* External includes */
 
@@ -37,18 +37,19 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class Bezier : public Shape
+	class BezierSurface : public Shape
 	{
+		enum COORD {x, y, z};
+
 	public:
-		Bezier(std::string name, const std::initializer_list<Vector>& vs) :
-			Shape(name, vs)
-		{}
+		BezierSurface(std::string name, const std::vector<std::vector<Vector>>& vs) :
+			Shape(name),
+			_control_vectors(vs)
+		{
+			_normal = _normal + mass_center();
+		}
 
-		Bezier(std::string name, const std::vector<Vector>& vs) :
-			Shape(name, vs)
-		{}
-
-		~Bezier() = default;
+		~BezierSurface() = default;
 
 		virtual void clipping(const Vector & min, const Vector & max);
 		
@@ -57,6 +58,10 @@ namespace model
 
 		void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T);
 
+		virtual Vector mass_center() const;
+
+		virtual void perspective();
+
 		virtual std::string type();
 
 		static const double precision;
@@ -64,29 +69,36 @@ namespace model
 		static const double window_max_size;
 
 	private:
+		std::vector<std::vector<Vector>> _control_vectors;
+		std::vector<std::vector<Vector>> _surface_vectors;
+
 		bool over_perpendicular_edges(const Vector & pa, const Vector & pb);
+		Matrix build_snip(COORD coord, int i, int j, const Matrix & W);
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-	const double Bezier::precision = 0.01;
-	const double Bezier::world_max_size = 800;
-	const double Bezier::window_max_size = 10;
+	const double BezierSurface::precision = 0.01;
+	const double BezierSurface::world_max_size = 800;
+	const double BezierSurface::window_max_size = 10;
 
-	void Bezier::transformation(const Matrix & world_T)
+	void BezierSurface::transformation(const Matrix & world_T)
 	{
-		if (_world_vectors.size() < 4)
+		if (_control_vectors.size() < 4 || _control_vectors.begin()->size() < 4)
 			return;
 
-		for (auto & v : _world_vectors)
-			v = v * world_T;
+		for (auto & line : _control_vectors)
+			for (auto & v : line)
+				v = v * world_T;
+
+		_normal = _normal * world_T;
 	}
 
-	void Bezier::w_transformation(const Matrix & window_T)
+	void BezierSurface::w_transformation(const Matrix & window_T)
 	{
-		if (_world_vectors.size() < 4)
+		if (_control_vectors.size() < 4)
 			return;
 		
 		static const Matrix M{
@@ -96,47 +108,43 @@ namespace model
 			{ 1.0,  0.0,  0.0, 0.0}
 		};
 
-		std::vector<Vector> vectors;
-
-		Vector p1 = _world_vectors[0] * window_T;
-		Vector p2 = _world_vectors[1] * window_T;
-		Vector p3 = _world_vectors[2] * window_T;
-		Vector p4 = _world_vectors[3] * window_T;
+		std::vector<std::vector<Vector>> vectors;
 
 		/* Amount of anothers bezier curves interconnected */
-		int bezier_curves = (_world_vectors.size() - 4) / 3;
+		size_t bezier_surfaces = (_control_vectors.size() - 4) / 3;
 
-		for (int k = 0; k <= bezier_curves; ++k)
-		{
-			const std::vector<double> vx = {p1[0], p2[0], p3[0], p4[0]};
-			const std::vector<double> vy = {p1[1], p2[1], p3[1], p4[1]};
-			const std::vector<double> vz = {p1[2], p2[2], p3[2], p4[2]};
-
-			for (double t = 0; t <= 1.0; t += precision)
+		for (size_t m = 0; m <= bezier_surfaces; m += 3)
+			for (size_t n = 0; n <= bezier_surfaces; n += 3)
 			{
-				const Vector vt = Vector{t*t*t, t*t, t, 1}.multiply<4>(M);
+				const auto Mx = build_snip(COORD::x, m, n, window_T) * M;
+				const auto My = build_snip(COORD::y, m, n, window_T) * M;
+				const auto Mz = build_snip(COORD::z, m, n, window_T) * M;
 
-				double x = vt * vx;
-				double y = vt * vy;
-				double z = vt * vz;
+				size_t si = 0;
 
-	            vectors.emplace_back(x, y, z);
+				for (double s = 0; s <= 1.0; s += precision, ++si)
+				{
+					const Vector sx = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * Mx;
+					const Vector sy = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * My;
+					const Vector sz = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * Mz;
+
+					for (double t = 0; t <= 1.0; t += precision)
+					{
+						const std::vector<double> vt{t*t*t, t*t, t, 1};
+
+						double x = sx * vt;
+						double y = sy * vt;
+						double z = sz * vt;
+
+			            vectors[si].emplace_back(x, y, z);
+					}
+				}
 			}
 
-			/* Get the points of next bezier curve (if has next) */
-			if (k < bezier_curves)
-			{
-				p1 = p4;
-				p2 = _world_vectors[3 * k + 4] * window_T;
-				p3 = _world_vectors[3 * k + 5] * window_T;
-				p4 = _world_vectors[3 * k + 6] * window_T;
-			}
-		}
-
-		_window_vectors = std::move(vectors);
+		_surface_vectors = std::move(vectors);
 	}
 
-	void Bezier::clipping(const Vector & min, const Vector & max)
+	void BezierSurface::clipping(const Vector & min, const Vector & max)
 	{
 		if (_window_vectors.size() < 4)
 			return;
@@ -209,7 +217,23 @@ namespace model
 		_window_vectors = vectors;
 	}
 
-	bool Bezier::over_perpendicular_edges(const Vector & pa, const Vector & pb)
+	Matrix BezierSurface::build_snip(COORD coord, int i, int j, const Matrix & W)
+	{
+		Matrix R( //! Result
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0},
+			{0.0, 0.0, 0.0, 0.0}
+		);
+
+		for (int m = i; m < i + 4; ++m)
+			for (int n = j; n < j + 4; ++n)
+				R[m - i][n - j] = (_control_vectors[m][n] * W)[coord];
+
+		return std::move(R);
+	}
+
+	bool BezierSurface::over_perpendicular_edges(const Vector & pa, const Vector & pb)
 	{
 		static const double TOP    =  0.95;
 		static const double RIGHT  =  0.95;
@@ -225,39 +249,88 @@ namespace model
 		return false;
 	}
 
-	void Bezier::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
+	void BezierSurface::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
 	{
-		if (_window_vectors.empty())
+		if (_surface_vectors.empty())
 			return;
 
-		Vector v0 = _window_vectors[0] * viewport_T;
+		std::cout << "\n\nHERE\n" << std::endl;
 
-		/* First point */
-		cr->move_to(v0[0], v0[1]);
-
-		/* First point to verify coordinates */
-		v0 = _window_vectors[0];
-
-		/* Draw all other points */
-		for (Vector& v : _window_vectors)
+		for (const auto &line: _surface_vectors)
 		{
-			Vector vi = v * viewport_T;
+			/* First point to verify coordinates */
+			Vector v0 = line[0] * viewport_T;
+			
+			cr->move_to(v0[0], v0[1]);
 
-			if (over_perpendicular_edges(v, v0))
-				cr->move_to(vi[0], vi[1]);
-			else
-				cr->line_to(vi[0], vi[1]);
+			/* Draw all other points */
+			for (const Vector& v : line)
+			{
+				Vector vi = v * viewport_T;
 
-			v0 = v;
+				if (over_perpendicular_edges(v, v0))
+					cr->move_to(vi[0], vi[1]);
+				else
+					cr->line_to(vi[0], vi[1]);
+
+				v0 = v;
+			}
+		}
+
+		for (size_t m = 0; m < _surface_vectors[0].size(); ++m)
+		{
+			/* First point to verify coordinates */
+			Vector v0 = _surface_vectors[0][m] * viewport_T;
+			
+			cr->move_to(v0[0], v0[1]);
+
+			/* Draw all other points */
+			for (size_t n = 0; n < _surface_vectors.size(); ++n)
+			{
+				Vector vi = _surface_vectors[n][m] * viewport_T;
+
+				if (over_perpendicular_edges(_surface_vectors[n][m], v0))
+					cr->move_to(vi[0], vi[1]);
+				else
+					cr->line_to(vi[0], vi[1]);
+
+				v0 = _surface_vectors[n][m];
+			}
 		}
 	}
 
-	std::string Bezier::type()
+	Vector BezierSurface::mass_center() const
 	{
-		return "Bezier Curve";
+		double total = _control_vectors.size() * _control_vectors.begin()->size();
+		double x = 0, y = 0, z = 0, w = 0;
+
+		for (const auto &l : _control_vectors)
+			for (const auto &v : l)
+			{
+				x += v[0];
+				y += v[1];
+				z += v[2];
+				w += v[3];
+			}
+
+		return Vector(
+			x/total,
+			y/total,
+			z/total,
+			w/total
+		);
+	}
+
+	void BezierSurface::perspective()
+	{
+	}
+
+	std::string BezierSurface::type()
+	{
+		return "Bezier Surface";
 	}
 
 
 } //! namespace model
 
-#endif  // MODEL_BEZIER_HPP
+#endif  // MODEL_BEZIER_SURFACE_HPP

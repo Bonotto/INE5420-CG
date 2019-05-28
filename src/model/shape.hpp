@@ -43,16 +43,16 @@ namespace model
 	public:
 		Shape()  = default;
 
+		Shape(std::string name) :
+			_name(name)
+		{}
+
 		Shape(std::string name, const Vector& v, bool close_path = false) :
 			_name(name),
 			_world_vectors({v}),
 			_close_path(close_path)
 		{
-			auto mass = mass_center();
-			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
-			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
-			_normal = _normal + mass;
-			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass_center();
 		}
 
 		Shape(std::string name, const std::initializer_list<Vector>& vs, bool close_path = false) :
@@ -60,11 +60,7 @@ namespace model
 			_world_vectors(vs),
 			_close_path(close_path)
 		{
-			auto mass = mass_center();
-			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
-			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
-			_normal = _normal + mass;
-			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass_center();
 		}
 
 		Shape(std::string name, const std::vector<Vector>& vs, bool close_path = false) :
@@ -72,11 +68,7 @@ namespace model
 			_world_vectors(vs),
 			_close_path(close_path)
 		{
-			auto mass = mass_center();
-			std::cout << std::endl << "Mass: (" << mass[0] << ", " << mass[1] << ", " << mass[2] << ")" << std::endl;
-			std::cout << std::endl << "Normal before: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
-			_normal = _normal + mass;
-			std::cout << std::endl << "Normal after: (" << _normal[0] << ", " << _normal[1] << ", " << _normal[2] << ")" << std::endl;
+			_normal = _normal + mass_center();
 		}
 
 		virtual ~Shape() = default;
@@ -107,7 +99,7 @@ namespace model
 		std::vector<Vector> _world_vectors{{0, 0}};
 		std::vector<Vector> _window_vectors{{0, 0}};
 		Vector _normal{0, 0, 1};
-		const bool _close_path;
+		const bool _close_path{false};
 	};
 
 /*================================================================================*/
