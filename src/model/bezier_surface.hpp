@@ -148,75 +148,84 @@ namespace model
 
 	void BezierSurface::clipping(const Vector & min, const Vector & max)
 	{
-		if (_window_vectors.size() < 4)
+		std::cout << "+ BezierSurface::clipping" << std::endl;
+
+		if (true) //! It was not easy like draw().
 			return;
 
-		std::vector<Vector> vectors;
+		if (_surface_vectors.empty())
+			return;
 
-		Vector aux;
-
-		for (size_t a = 0; a < _window_vectors.size() - 1; ++a)
+		for (auto & line_vectors : _surface_vectors)
 		{
-			Vector pa = _window_vectors[a];
-			Vector pb = _window_vectors[a + 1];
+			std::vector<Vector> vectors;
+			Vector aux;
 
-			double p4 = pb[1] - pa[1];
-			double p3 = -p4;
-			double p2 = pb[0] - pa[0];
-			double p1 = -p2;
-
-			double q1 = pa[0] - min[0];
-			double q2 = max[0] - pa[0];
-			double q3 = pa[1] - min[1];
-			double q4 = max[1] - pa[1];
-
-			double positive[5], negative[5];
-
-			int pos_index = 1, neg_index = 1;
-
-			positive[0] = 1;
-			negative[0] = 0;
-
-			if ((p1 == 0 && q1 < 0) || (p3 == 0 && q3 < 0))
-				continue;
-
-			if (p1 != 0)
+			for (size_t a = 0; a < line_vectors.size() - 1; ++a)
 			{
-				double r1 = q1 / p1;
-				double r2 = q2 / p2;
+				Vector pa = line_vectors[a];
+				Vector pb = line_vectors[a + 1];
 
-				negative[neg_index++] = p1 < 0 ? r1 : r2;
-				positive[pos_index++] = p1 < 0 ? r2 : r1;
+				double p4 = pb[1] - pa[1];
+				double p3 = -p4;
+				double p2 = pb[0] - pa[0];
+				double p1 = -p2;
+
+				double q1 = pa[0] - min[0];
+				double q2 = max[0] - pa[0];
+				double q3 = pa[1] - min[1];
+				double q4 = max[1] - pa[1];
+
+				double positive[5], negative[5];
+
+				int pos_index = 1, neg_index = 1;
+
+				positive[0] = 1;
+				negative[0] = 0;
+
+				if ((p1 == 0 && q1 < 0) || (p3 == 0 && q3 < 0))
+					continue;
+
+				if (p1 != 0)
+				{
+					double r1 = q1 / p1;
+					double r2 = q2 / p2;
+
+					negative[neg_index++] = p1 < 0 ? r1 : r2;
+					positive[pos_index++] = p1 < 0 ? r2 : r1;
+				}
+
+				if (p3 != 0)
+				{
+					double r3 = q3 / p3;
+					double r4 = q4 / p4;
+
+					negative[neg_index++] = p3 < 0 ? r3: r4;
+					positive[pos_index++] = p3 < 0 ? r4: r3;
+				}
+
+				double rn1 = negative[0];
+				double rn2 = positive[0];
+
+				for (int i = 1; i < neg_index; ++i)
+					if (rn1 < negative[i])
+						rn1 = negative[i];
+
+				for (int i = 1; i < pos_index; ++i)
+					if (rn2 > positive[i])
+						rn2 = positive[i];
+
+				if (rn1 > rn2)
+					continue;
+
+				vectors.emplace_back(pa[0] + p2 * rn1, pa[1] + p4 * rn1);
+				vectors.emplace_back(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
 			}
 
-			if (p3 != 0)
-			{
-				double r3 = q3 / p3;
-				double r4 = q4 / p4;
-
-				negative[neg_index++] = p3 < 0 ? r3: r4;
-				positive[pos_index++] = p3 < 0 ? r4: r3;
-			}
-
-			double rn1 = negative[0];
-			double rn2 = positive[0];
-
-			for (int i = 1; i < neg_index; ++i)
-				if (rn1 < negative[i])
-					rn1 = negative[i];
-
-			for (int i = 1; i < pos_index; ++i)
-				if (rn2 > positive[i])
-					rn2 = positive[i];
-
-			if (rn1 > rn2)
-				continue;
-
-			vectors.emplace_back(pa[0] + p2 * rn1, pa[1] + p4 * rn1);
-			vectors.emplace_back(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
+			line_vectors = vectors;
 		}
 
-		_window_vectors = vectors;
+		std::cout << "- BezierSurface::clipping" << std::endl;
 	}
 
 	Matrix BezierSurface::build_snip(COORD coord, int i, int j, const Matrix & W)
