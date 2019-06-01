@@ -912,6 +912,11 @@ namespace control
 
 		_shapes.emplace_back(surface);
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		// auto line = new model::Line("Teste", {0, 0, 0}, {100, 100, 0} );
+
+		// _shapes.emplace_back(line);
+		// _shapes_map[_objects_control++] = _shapes.back();
 	}
 
 	void MainControl::build_viewport()
@@ -921,6 +926,8 @@ namespace control
 		Gtk::DrawingArea *draw;
 		_builder->get_widget("area_draw", draw);
 		_viewport = new model::Viewport(*_window, _shapes, *draw);
+
+		_viewport->update();
 	}
 
 	void MainControl::build_tree_views()

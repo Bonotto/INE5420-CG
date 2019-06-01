@@ -80,7 +80,7 @@ namespace model
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-	const double BezierSurface::precision = 0.01;
+	const double BezierSurface::precision = 0.05;
 	const double BezierSurface::world_max_size = 800;
 	const double BezierSurface::window_max_size = 10;
 
@@ -113,17 +113,18 @@ namespace model
 		/* Amount of anothers bezier curves interconnected */
 		size_t bezier_surfaces = (_control_vectors.size() - 4) / 3;
 
-		for (size_t m = 0; m <= bezier_surfaces; m += 3)
+		for (size_t m = 0, si = 0; m <= bezier_surfaces; m += 3)
+		{
 			for (size_t n = 0; n <= bezier_surfaces; n += 3)
 			{
 				const auto Mx = build_snip(COORD::x, m, n, window_T) * M;
 				const auto My = build_snip(COORD::y, m, n, window_T) * M;
 				const auto Mz = build_snip(COORD::z, m, n, window_T) * M;
 
-				size_t si = 0;
-
 				for (double s = 0; s <= 1.0; s += precision, ++si)
 				{
+					vectors.push_back({});
+
 					const Vector sx = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * Mx;
 					const Vector sy = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * My;
 					const Vector sz = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * Mz;
@@ -140,6 +141,7 @@ namespace model
 					}
 				}
 			}
+		}
 
 		_surface_vectors = std::move(vectors);
 	}
@@ -253,8 +255,6 @@ namespace model
 	{
 		if (_surface_vectors.empty())
 			return;
-
-		std::cout << "\n\nHERE\n" << std::endl;
 
 		for (const auto &line: _surface_vectors)
 		{
