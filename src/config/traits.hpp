@@ -109,9 +109,14 @@ template<> struct Traits<model::BSpline> : public Traits<void>
 
 template<> struct Traits<model::Window> : public Traits<void>
 {
-    static const bool need_clipping = true;                  /* Enables clipping. */
-    static const bool debugged      = hysterically_debugged; /* Enables debug.    */
+    static const bool need_clipping   = true;                  /* Enables clipping. */
+    static const bool debugged        = hysterically_debugged; /* Enables debug.    */
+    static const bool has_perspective = true;                  /* Enables debug.    */
+    
+    static const double perspective_factor;              /* Enables debug.    */
 };
+
+const double Traits<model::Window>::perspective_factor = -1000;
 
 template<> struct Traits<model::Viewport> : public Traits<void>
 {

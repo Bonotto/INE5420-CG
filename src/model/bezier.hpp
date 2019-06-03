@@ -80,17 +80,6 @@ namespace model
 		if (_world_vectors.size() < 4)
 			return;
 
-		auto p1 = (_world_vectors[0] * world_T);
-		auto p2 = (_world_vectors[1] * world_T);
-		auto p3 = (_world_vectors[2] * world_T);
-		auto p4 = (_world_vectors[3] * world_T);
-
-		/* Calculates the second point in window coordinates (the first point is the p1) */
-		auto pa = 0.970299 * p1 + 0.029403 * p2 + 0.000297 * p3 + 0.000001 * p4;
-
-		if (calculation::euclidean_distance(p1, pa) >= world_max_size)
-			return;
-
 		for (auto & v : _world_vectors)
 			v = v * world_T;
 	}
@@ -119,9 +108,9 @@ namespace model
 
 		for (int k = 0; k <= bezier_curves; ++k)
 		{
-			const Vector vx = {p1[0], p2[0], p3[0], p4[0]};
-			const Vector vy = {p1[1], p2[1], p3[1], p4[1]};
-			const Vector vz = {p1[2], p2[2], p3[2], p4[2]};
+			const std::vector<double> vx = {p1[0], p2[0], p3[0], p4[0]};
+			const std::vector<double> vy = {p1[1], p2[1], p3[1], p4[1]};
+			const std::vector<double> vz = {p1[2], p2[2], p3[2], p4[2]};
 
 			for (double t = 0; t <= 1.0; t += precision)
 			{
@@ -213,8 +202,14 @@ namespace model
 			if (rn1 > rn2)
 				continue;
 
-			vectors.emplace_back(pa[0] + p2 * rn1, pa[1] + p4 * rn1);
-			vectors.emplace_back(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
+			auto new_xa = pa[0] + p2 * rn1;
+			auto new_xb = pa[0] + p2 * rn2;
+
+			if (new_xa > max[0] && new_xb > max[0])
+				continue;
+
+			vectors.emplace_back(new_xa, pa[1] + p4 * rn1);
+			vectors.emplace_back(new_xb, pa[1] + p4 * rn2);
 		}
 
 		_window_vectors = vectors;

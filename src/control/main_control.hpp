@@ -37,6 +37,7 @@
 #include "../model/polygon.hpp"
 #include "../model/bezier.hpp"
 #include "../model/b_spline.hpp"
+#include "../model/bezier_surface.hpp"
 #include "../model/window.hpp"
 #include "../model/viewport.hpp"
 
@@ -899,6 +900,23 @@ namespace control
 
 		_shapes.emplace_back(&_window->drawable());
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		auto surface = new model::BezierSurface("Teste",
+			{
+				{model::Vector(0, 0, 0), model::Vector(25, 0, 0), model::Vector(75, 0, 0), model::Vector(100, 0, 0)},
+				{model::Vector(0, 25, 0), model::Vector(25, 25, 100), model::Vector(75, 25, 100),  model::Vector(100, 25, 0)},
+				{model::Vector(0, 75, 0), model::Vector(25, 75, 100), model::Vector(75, 75, 100), model::Vector(100, 75, 0)},
+				{model::Vector(0, 100, 0), model::Vector(25, 100, 0), model::Vector(75, 100, 0), model::Vector(100, 100, 0)}
+			}
+		);
+
+		_shapes.emplace_back(surface);
+		_shapes_map[_objects_control++] = _shapes.back();
+
+		// auto line = new model::Line("Teste", {0, 0, 0}, {100, 100, 0} );
+
+		// _shapes.emplace_back(line);
+		// _shapes_map[_objects_control++] = _shapes.back();
 	}
 
 	void MainControl::build_viewport()
@@ -908,6 +926,8 @@ namespace control
 		Gtk::DrawingArea *draw;
 		_builder->get_widget("area_draw", draw);
 		_viewport = new model::Viewport(*_window, _shapes, *draw);
+
+		_viewport->update();
 	}
 
 	void MainControl::build_tree_views()
@@ -1137,6 +1157,9 @@ namespace control
 			{
 				shape->w_transformation(T);
 
+				if (Traits<model::Window>::has_perspective)
+					shape->perspective();
+
 				if (Traits<model::Window>::need_clipping)
 					shape->clipping(cmin, cmax);
 			}
@@ -1181,7 +1204,8 @@ namespace control
 			case ButtonID::Polygon:
 				entry_names = {
 					"entry_polygon_x",
-					"entry_polygon_y"
+					"entry_polygon_y",
+					"entry_polygon_z"
 				};
 				button_names = {
 					"button_insert_vector",

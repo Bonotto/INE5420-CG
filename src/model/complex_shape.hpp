@@ -73,7 +73,7 @@ namespace model
 		}
 
 	protected:
-		std::string _name{"ComplexShape"};
+		std::string _name{"Complex Shape"};
 		std::vector<std::shared_ptr<Shape>> _shapes;
 	};
 
