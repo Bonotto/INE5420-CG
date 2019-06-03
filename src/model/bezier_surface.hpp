@@ -108,7 +108,7 @@ namespace model
 			{ 1.0,  0.0,  0.0, 0.0}
 		};
 
-		std::vector<std::vector<Vector>> vectors;
+		std::vector<std::vector<Vector>> lines;
 
 		/* Amount of anothers bezier curves interconnected */
 		size_t bezier_surfaces = (_control_vectors.size() - 4) / 3;
@@ -123,7 +123,7 @@ namespace model
 
 				for (double s = 0; s <= 1.0; s += precision, ++si)
 				{
-					vectors.push_back({});
+					lines.push_back({});
 
 					const Vector sx = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * Mx;
 					const Vector sy = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * My;
@@ -137,34 +137,39 @@ namespace model
 						double y = sy * vt;
 						double z = sz * vt;
 
-			            vectors[si].emplace_back(x, y, z);
+			            lines[si].emplace_back(x, y, z);
 					}
 				}
 			}
 		}
 
-		_surface_vectors = std::move(vectors);
+		std::vector<std::vector<Vector>> columns(lines[0].size());
+
+		for (size_t j = 0; j < lines[0].size(); ++j)
+			for (size_t i = 0; i < lines.size(); ++i)
+				columns[j].push_back(lines[i][j]);
+
+		_surface_vectors = std::move(lines);
+
+		for (auto line: columns)
+			_surface_vectors.push_back(line);
 	}
 
 	void BezierSurface::clipping(const Vector & min, const Vector & max)
 	{
-		std::cout << "+ BezierSurface::clipping" << std::endl;
-
-		if (true) //! It was not easy like draw().
+		if (_surface_vectors.size() < 4)
 			return;
 
-		if (_surface_vectors.empty())
-			return;
-
-		for (auto & line_vectors : _surface_vectors)
+		for (auto &line: _surface_vectors)
 		{
 			std::vector<Vector> vectors;
+
 			Vector aux;
 
-			for (size_t a = 0; a < line_vectors.size() - 1; ++a)
+			for (size_t a = 0; a < line.size() - 1; ++a)
 			{
-				Vector pa = line_vectors[a];
-				Vector pb = line_vectors[a + 1];
+				Vector pa = line[a];
+				Vector pb = line[a + 1];
 
 				double p4 = pb[1] - pa[1];
 				double p3 = -p4;
@@ -218,14 +223,18 @@ namespace model
 				if (rn1 > rn2)
 					continue;
 
-				vectors.emplace_back(pa[0] + p2 * rn1, pa[1] + p4 * rn1);
-				vectors.emplace_back(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
+				auto new_xa = pa[0] + p2 * rn1;
+				auto new_xb = pa[0] + p2 * rn2;
+
+				if (new_xa > max[0] && new_xb > max[0])
+					continue;
+
+				vectors.emplace_back(new_xa, pa[1] + p4 * rn1);
+				vectors.emplace_back(new_xb, pa[1] + p4 * rn2);
 			}
 
-			line_vectors = vectors;
+			line = vectors;
 		}
-
-		std::cout << "- BezierSurface::clipping" << std::endl;
 	}
 
 	Matrix BezierSurface::build_snip(COORD coord, int i, int j, const Matrix & W)
@@ -265,15 +274,15 @@ namespace model
 		if (_surface_vectors.empty())
 			return;
 
-		for (const auto &line: _surface_vectors)
+		for (const auto &curve: _surface_vectors)
 		{
 			/* First point to verify coordinates */
-			Vector v0 = line[0] * viewport_T;
+			Vector v0 = curve[0] * viewport_T;
 			
 			cr->move_to(v0[0], v0[1]);
 
 			/* Draw all other points */
-			for (const Vector& v : line)
+			for (const Vector& v : curve)
 			{
 				Vector vi = v * viewport_T;
 
@@ -283,27 +292,6 @@ namespace model
 					cr->line_to(vi[0], vi[1]);
 
 				v0 = v;
-			}
-		}
-
-		for (size_t m = 0; m < _surface_vectors[0].size(); ++m)
-		{
-			/* First point to verify coordinates */
-			Vector v0 = _surface_vectors[0][m] * viewport_T;
-			
-			cr->move_to(v0[0], v0[1]);
-
-			/* Draw all other points */
-			for (size_t n = 0; n < _surface_vectors.size(); ++n)
-			{
-				Vector vi = _surface_vectors[n][m] * viewport_T;
-
-				if (over_perpendicular_edges(_surface_vectors[n][m], v0))
-					cr->move_to(vi[0], vi[1]);
-				else
-					cr->line_to(vi[0], vi[1]);
-
-				v0 = _surface_vectors[n][m];
 			}
 		}
 	}
@@ -332,6 +320,29 @@ namespace model
 
 	void BezierSurface::perspective()
 	{
+		const double d = Traits<model::Window>::perspective_factor;
+
+		Matrix M(
+			{1, 0, 0, 0},
+			{0, 1, 0, 0},
+			{0, 0, 1, 0},
+			{0, 0, d, 1}
+		);
+
+		for (auto &line: _surface_vectors)
+			for (auto &v: line)
+			{
+				v = v * M;
+
+				std::cout << v[2] << std::endl << std::endl << std::endl;
+				
+				if (!v[2])
+					continue;
+
+				v[0] = v[0] * d / v[2];
+				v[1] = v[1] * d / v[2];
+				v[2] = d;
+			}
 	}
 
 	std::string BezierSurface::type()

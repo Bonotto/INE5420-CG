@@ -202,8 +202,14 @@ namespace model
 			if (rn1 > rn2)
 				continue;
 
-			vectors.emplace_back(pa[0] + p2 * rn1, pa[1] + p4 * rn1);
-			vectors.emplace_back(pa[0] + p2 * rn2, pa[1] + p4 * rn2);
+			auto new_xa = pa[0] + p2 * rn1;
+			auto new_xb = pa[0] + p2 * rn2;
+
+			if (new_xa > max[0] && new_xb > max[0])
+				continue;
+
+			vectors.emplace_back(new_xa, pa[1] + p4 * rn1);
+			vectors.emplace_back(new_xb, pa[1] + p4 * rn2);
 		}
 
 		_window_vectors = vectors;
