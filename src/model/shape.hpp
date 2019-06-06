@@ -155,11 +155,6 @@ namespace model
 		if (_window_vectors.empty())
 			return;
 
-		std::cout << name() << std::endl;
-		
-		for (auto v: _window_vectors)
-			std::cout << "(" << v[0] << ", " << v[1] << ", " << v[2] << ")" << std::endl;
-
 		Vector v0 = _window_vectors[0] * viewport_T;
 
 		/* First point */
@@ -201,8 +196,6 @@ namespace model
 		for (auto &v: _window_vectors)
 		{
 			v = v * M;
-
-			std::cout << v[2] << std::endl << std::endl << std::endl;
 			
 			if (!v[2])
 				continue;

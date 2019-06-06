@@ -38,6 +38,7 @@
 #include "../model/bezier.hpp"
 #include "../model/b_spline.hpp"
 #include "../model/bezier_surface.hpp"
+#include "../model/b_spline_surface.hpp"
 #include "../model/window.hpp"
 #include "../model/viewport.hpp"
 
@@ -901,7 +902,7 @@ namespace control
 		_shapes.emplace_back(&_window->drawable());
 		_shapes_map[_objects_control++] = _shapes.back();
 
-		auto surface = new model::BezierSurface("Teste",
+		auto surface = new model::BSplineSurface("Teste1",
 			{
 				{model::Vector(0, 0, 0), model::Vector(25, 0, 0), model::Vector(75, 0, 0), model::Vector(100, 0, 0)},
 				{model::Vector(0, 25, 0), model::Vector(25, 25, 100), model::Vector(75, 25, 100),  model::Vector(100, 25, 0)},
@@ -912,6 +913,18 @@ namespace control
 
 		_shapes.emplace_back(surface);
 		_shapes_map[_objects_control++] = _shapes.back();
+
+		// auto surface2 = new model::BezierSurface("Teste2",
+		// 	{
+		// 		{model::Vector(0, 0, 0), model::Vector(25, 0, 0), model::Vector(75, 0, 0), model::Vector(100, 0, 0)},
+		// 		{model::Vector(0, 25, 0), model::Vector(25, 25, 100), model::Vector(75, 25, 100),  model::Vector(100, 25, 0)},
+		// 		{model::Vector(0, 75, 0), model::Vector(25, 75, 100), model::Vector(75, 75, 100), model::Vector(100, 75, 0)},
+		// 		{model::Vector(0, 100, 0), model::Vector(25, 100, 0), model::Vector(75, 100, 0), model::Vector(100, 100, 0)}
+		// 	}
+		// );
+
+		// _shapes.emplace_back(surface2);
+		// _shapes_map[_objects_control++] = _shapes.back();
 
 		// auto line = new model::Line("Teste", {0, 0, 0}, {100, 100, 0} );
 
