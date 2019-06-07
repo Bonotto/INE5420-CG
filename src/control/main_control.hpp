@@ -119,11 +119,7 @@ namespace control
 			build_numeric_entrys();
 			build_advanced_options();
 
-			if (model::Vector::dimension == 3)
-				disable_unused_interface_objects(ButtonID::Null);
-
-			if (path_name != "undefined")
-				load_objects(path_name);
+			disable_unused_interface_objects(ButtonID::Null);
 		}
 
 		~MainControl()
@@ -142,8 +138,6 @@ namespace control
 		void zoom_in();
 		void zoom_out();
 		void clockwise();
-		void upclockwise();
-		void downclockwise();
 		void counterclockwise();
 		/**@}*/
 
@@ -161,6 +155,9 @@ namespace control
 		void on_dialog_insert_clicked();
 		void on_dialog_delete_clicked();
 		void on_combo_line_clipp_changed();
+		void on_load_object();
+		void on_dialog_file_ok_clicked();
+		void on_dialog_file_cancel_clicked();
 		/**@}*/
 
 	private:
@@ -403,7 +400,7 @@ namespace control
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_degrees", spin);
-		double angle = (_shape_selected ? -1 : 1) * spin->get_value() * (M_PI / 180);
+		double angle = (_shape_selected ? 1 : -1) * spin->get_value() * (M_PI / 180);
 
 		/* Calculate the center of mass */
 		unsigned hash = 0;
@@ -506,7 +503,7 @@ namespace control
 
 		/* Calculate the angle */
 		_builder->get_widget("spin_degrees", spin);
-		double angle = (_shape_selected ? 1 : -1) * spin->get_value() * (M_PI / 180);
+		double angle = (_shape_selected ? -1 : 1) * spin->get_value() * (M_PI / 180);
 
 		/* Calculate the center of mass */
 		unsigned hash = 0;
@@ -593,16 +590,6 @@ namespace control
 			build_objects(_shapes);
 		}
 
-		_viewport->update();
-	}
-
-	void MainControl::upclockwise()
-	{
-		_viewport->update();
-	}
-
-	void MainControl::downclockwise()
-	{
 		_viewport->update();
 	}
 
@@ -926,6 +913,35 @@ namespace control
 		_vector_selected = -1;
 	}
 
+	void MainControl::on_load_object()
+	{
+		db<MainControl>(TRC) << "MainControl::on_load_object()" << std::endl;
+
+		Gtk::FileChooserDialog *dialog;
+		_builder->get_widget("dialog_file", dialog);
+  		dialog->run();
+	}
+
+	void MainControl::on_dialog_file_cancel_clicked()
+	{
+		db<MainControl>(TRC) << "MainControl::on_dialog_file_cancel_clicked()" << std::endl;
+
+		Gtk::FileChooserDialog *dialog;
+		_builder->get_widget("dialog_file", dialog);
+  		dialog->hide();
+	}
+
+	void MainControl::on_dialog_file_ok_clicked()
+	{
+		db<MainControl>(TRC) << "MainControl::on_dialog_file_cancel_clicked()" << std::endl;
+
+		Gtk::FileChooserDialog *dialog;
+		_builder->get_widget("dialog_file", dialog);
+
+		load_objects(dialog->get_filename());
+  		dialog->hide();
+	}
+
 /*--------------------------------------------------------------------------------*/
 /*                                Build interface                                 */
 /*--------------------------------------------------------------------------------*/
@@ -1149,12 +1165,6 @@ namespace control
 
 		_builder->get_widget("button_r_right", btn);
 		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::clockwise));
-
-		_builder->get_widget("button_r_up", btn);
-		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::upclockwise));
-
-		_builder->get_widget("button_r_down", btn);
-		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::downclockwise));
 	}
 
 	void MainControl::build_numeric_entrys()
@@ -1167,6 +1177,7 @@ namespace control
 	void MainControl::build_advanced_options()
 	{
 		Gtk::ComboBoxText* combo_box;
+		Gtk::Button *btn;
 
 		_builder->get_widget("combo_line_clipp", combo_box);
 
@@ -1176,6 +1187,15 @@ namespace control
 		combo_box->set_active_text("Cohen Sutherland");
 
 		combo_box->signal_changed().connect(sigc::mem_fun(*this, &MainControl::on_combo_line_clipp_changed));
+
+		_builder->get_widget("button_load_object", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_load_object));
+
+		_builder->get_widget("button_file_ok", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_file_ok_clicked));
+
+		_builder->get_widget("button_file_cancel", btn);
+		btn->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_dialog_file_cancel_clicked));
 	}
 
 	void MainControl::reset_dialog_entries()
@@ -1194,16 +1214,16 @@ namespace control
 			"entry_y2_Rectangle",
 			"entry_polygon_x",
 			"entry_polygon_y",
-			"entry_polygon_z"
-			// "entry_height_dimension",
-			// "entry_width_dimension"
+			"entry_polygon_z",
+			"entry_height_dimension",
+			"entry_width_dimension"
 		};
 
-		// std::string cell = "s_";
+		std::string cell = "s_";
 
-		// for (int i = 0; i < 20; ++i)
-		// 	for (int j = 0; j < 20; ++j)
-		// 		entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
+		for (int i = 0; i < 20; ++i)
+			for (int j = 0; j < 20; ++j)
+				entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
 		
 		Gtk::Entry *entry;
 

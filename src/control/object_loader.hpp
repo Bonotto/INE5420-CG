@@ -157,8 +157,6 @@ namespace control
 					string_y >> y;
 					string_z >> z;
 
-					std::cout << vectors.size() + 1 << ": " << x << ", " << y << ", " << z << std::endl;
-
 					if (model::Vector::dimension == 3)
 						z = 1;
 					
