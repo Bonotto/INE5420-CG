@@ -142,7 +142,7 @@ namespace model
 
 		~Matrix() = default;
 
-		Matrix column_oriented() const;
+		Matrix transpose() const;
 
 		MatrixLine& operator[](const int position);
 		const MatrixLine& operator[](const int position) const;
@@ -370,7 +370,7 @@ namespace model
 /*                                    Matrix                                      */
 /*--------------------------------------------------------------------------------*/
 
-	Matrix Matrix::column_oriented() const
+	Matrix Matrix::transpose() const
 	{
 		return Matrix(
 			{_vectors[0][0], _vectors[1][0], _vectors[2][0], _vectors[3][0]},

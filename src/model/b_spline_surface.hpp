@@ -21,8 +21,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODEL_BEZIER_SURFACE_HPP
-#define MODEL_BEZIER_SURFACE_HPP
+#ifndef MODEL_B_SPLINE_SURFACE_HPP
+#define MODEL_B_SPLINE_SURFACE_HPP
 
 /* External includes */
 
@@ -37,19 +37,19 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class BezierSurface : public Shape
+	class BSplineSurface : public Shape
 	{
 		enum COORD {x = 0, y = 1, z = 2};
 
 	public:
-		BezierSurface(std::string name, const std::vector<std::vector<Vector>>& vs) :
+		BSplineSurface(std::string name, const std::vector<std::vector<Vector>>& vs) :
 			Shape(name),
 			_control_vectors(vs)
 		{
 			_normal = _normal + mass_center();
 		}
 
-		~BezierSurface() = default;
+		~BSplineSurface() = default;
 
 		virtual void clipping(const Vector & min, const Vector & max);
 		
@@ -72,19 +72,28 @@ namespace model
 		std::vector<std::vector<Vector>> _control_vectors;
 		std::vector<std::vector<Vector>> _surface_vectors;
 
+		Matrix build_snip(COORD coord, int i, int j);
+
 		bool over_perpendicular_edges(const Vector & pa, const Vector & pb);
-		Matrix build_snip(COORD coord, int i, int j, const Matrix & W);
+
+		void foward_update(Matrix & Gx, Matrix & Gy, Matrix & Gz);
+		void forward_differences(
+			std::vector<double> & dX,
+			std::vector<double> & dY,
+			std::vector<double> & dZ,
+			std::vector<Vector> & vectors
+		);
 	};
 
 /*================================================================================*/
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-	const double BezierSurface::precision = 0.05;
-	const double BezierSurface::world_max_size = 800;
-	const double BezierSurface::window_max_size = 10;
+	const double BSplineSurface::precision = 0.05;
+	const double BSplineSurface::world_max_size = 800;
+	const double BSplineSurface::window_max_size = 10;
 
-	void BezierSurface::transformation(const Matrix & world_T)
+	void BSplineSurface::transformation(const Matrix & world_T)
 	{
 		if (_control_vectors.size() < 4 || _control_vectors.begin()->size() < 4)
 			return;
@@ -96,71 +105,186 @@ namespace model
 		_normal = _normal * world_T;
 	}
 
-	void BezierSurface::w_transformation(const Matrix & window_T)
+	void BSplineSurface::w_transformation(const Matrix & window_T)
 	{
 		if (_control_vectors.size() < 4)
 			return;
 
 		_surface_vectors.clear();
-		
-		static const Matrix M{
-			{-1.0,  3.0, -3.0, 1.0},
-			{ 3.0, -6.0,  3.0, 0.0},
-			{-3.0,  3.0,  0.0, 0.0},
-			{ 1.0,  0.0,  0.0, 0.0}
+
+		static const Matrix Ds{
+			{                    0.0,                     0.0,         0.0, 1.0},
+			{1.0 * pow(precision, 3), 1.0 * pow(precision, 2),   precision, 0.0},
+			{6.0 * pow(precision, 3), 2.0 * pow(precision, 2),         0.0, 0.0},
+			{6.0 * pow(precision, 3),                     0.0,         0.0, 0.0}
 		};
 
-		/* Amount of anothers bezier curves interconnected */
-		std::vector<std::vector<Vector>> lines;
+		static const Matrix Dt{
+			{0.0, 1.0 * pow(precision, 3), 6.0 * pow(precision, 3), 6.0 * pow(precision, 3)},
+			{0.0, 1.0 * pow(precision, 2), 2.0 * pow(precision, 2),                     0.0},
+			{0.0,               precision,                     0.0,                     0.0},
+			{1.0,                     0.0,                     0.0,                     0.0}
+		};
 
-		for (size_t m = 0; m < _control_vectors.size() - 1; m += 3)
+		static const Matrix IMbs{
+			{-1.0/6.0, 1.0/2.0, -1.0/2.0, 1.0/6.0},
+			{ 1.0/2.0,    -1.0,  1.0/2.0,     0.0},
+			{-1.0/2.0,     0.0,  1.0/2.0,     0.0},
+			{ 1.0/6.0, 2.0/3.0,  1.0/6.0,     0.0}
+		};
+
+		static const Matrix S = Ds.multiply<4>(IMbs);
+		static const Matrix T = IMbs.multiply<4>(Dt);
+
+		for (size_t m = 0; m < _control_vectors.size() - 3; ++m)
 		{
-			for (size_t n = 0; n < _control_vectors.front().size() - 1; n += 3)
+			for (size_t n = 0; n < _control_vectors[0].size() - 3; ++n)
 			{
-				size_t si = 0;
+				auto Gx = S.multiply<4>(build_snip(COORD::x, m, n).multiply<4>(T));
+				auto Gy = S.multiply<4>(build_snip(COORD::y, m, n).multiply<4>(T));
+				auto Gz = S.multiply<4>(build_snip(COORD::z, m, n).multiply<4>(T));
 
-				const auto Mx = build_snip(COORD::x, m, n, window_T) * M;
-				const auto My = build_snip(COORD::y, m, n, window_T) * M;
-				const auto Mz = build_snip(COORD::z, m, n, window_T) * M;
+				std::vector<Vector> vectors;
 
-				for (double s = 0; s <= 1.0; s += precision, ++si)
+				for (double k = 0; k < 1; k += precision)
 				{
-					lines.push_back({});
+					vectors.clear();
 
-					const Vector sx = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * Mx;
-					const Vector sy = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * My;
-					const Vector sz = Vector{s*s*s, s*s, s, 1}.multiply<4>(M) * Mz;
-
-					for (double t = 0; t <= 1.0; t += precision)
+					if (k > 0)
 					{
-						const std::vector<double> vt{t*t*t, t*t, t, 1};
+						_surface_vectors.push_back({});
+						
+						std::vector<double> dX{Gx[0][0], Gx[0][1], Gx[0][2], Gx[0][3]};
+						std::vector<double> dY{Gy[0][0], Gy[0][1], Gy[0][2], Gy[0][3]};
+						std::vector<double> dZ{Gz[0][0], Gz[0][1], Gz[0][2], Gz[0][3]};
 
-						double x = sx * vt;
-						double y = sy * vt;
-						double z = sz * vt;
+						forward_differences(dX, dY, dZ, vectors);
 
-			            lines[si].emplace_back(x, y, z);
+						for (auto &v: vectors)
+							_surface_vectors.back().push_back(v * window_T);
 					}
+				
+					foward_update(Gx, Gy, Gz);
 				}
 
-				std::vector<std::vector<Vector>> columns(lines[0].size());
+				Gx = (S * build_snip(COORD::x, m, n) * T).transpose();
+				Gy = (S * build_snip(COORD::y, m, n) * T).transpose();
+				Gz = (S * build_snip(COORD::z, m, n) * T).transpose();
 
-				for (size_t j = 0; j < lines[0].size(); ++j)
-					for (size_t i = 0; i < lines.size(); ++i)
-						columns[j].push_back(lines[i][j]);
+				for (double k = 0; k < 1; k += precision)
+				{
+					vectors.clear();
 
-				for (auto line: lines)
-					_surface_vectors.push_back(line);
+					if (k > 0)
+					{
+						_surface_vectors.push_back({});
+						
+						std::vector<double> dX{Gx[0][0], Gx[0][1], Gx[0][2], Gx[0][3]};
+						std::vector<double> dY{Gy[0][0], Gy[0][1], Gy[0][2], Gy[0][3]};
+						std::vector<double> dZ{Gz[0][0], Gz[0][1], Gz[0][2], Gz[0][3]};
 
-				for (auto line: columns)
-					_surface_vectors.push_back(line);
+						forward_differences(dX, dY, dZ, vectors);
 
-				lines.clear();
+						for (auto &v: vectors)
+							_surface_vectors.back().push_back(v * window_T);
+					}
+				
+					foward_update(Gx, Gy, Gz);
+				}
 			}
 		}
 	}
 
-	void BezierSurface::clipping(const Vector & min, const Vector & max)
+	// void BSplineSurface::foward_update(Matrix &Gx, Matrix &Gy, Matrix &Gz)
+	// {
+	// 	for (int i = 0; i < 3; ++i)
+	// 	{
+	// 		Gx[i] = Gx[i] + Gx[i + 1];
+	// 		Gy[i] = Gy[i] + Gy[i + 1];
+	// 		Gz[i] = Gz[i] + Gz[i + 1];
+	// 	}
+	// }
+
+	void BSplineSurface::forward_differences(
+		std::vector<double> & dX,
+		std::vector<double> & dY,
+		std::vector<double> & dZ,
+		std::vector<Vector> & vectors
+	)
+	{
+		if (!vectors.empty())
+			vectors.emplace_back(dX[0], dY[0], dZ[0]);
+
+		for (double k = precision; k < 1; k += precision)
+		{
+			dX[0] += dX[1];
+			dY[0] += dY[1];
+			dZ[0] += dZ[1];
+
+			dX[1] += dX[2];
+			dY[1] += dY[2];
+			dZ[1] += dZ[2];
+
+			dX[2] += dX[3];
+			dY[2] += dY[3];
+			dZ[2] += dZ[3];
+
+			vectors.emplace_back(dX[0], dY[0], dZ[0]);
+		}
+	}
+
+	void BSplineSurface::foward_update(Matrix & Gx, Matrix & Gy, Matrix & Gz)
+	{
+		Gx[0][0] += Gx[1][0];
+		Gx[0][1] += Gx[1][1];
+		Gx[0][2] += Gx[1][2];
+		Gx[0][3] += Gx[1][3];
+
+		Gy[0][0] += Gy[1][0];
+		Gy[0][1] += Gy[1][1];
+		Gy[0][2] += Gy[1][2];
+		Gy[0][3] += Gy[1][3];
+		
+		Gz[0][0] += Gz[1][0];
+		Gz[0][1] += Gz[1][1];
+		Gz[0][2] += Gz[1][2];
+		Gz[0][3] += Gz[1][3];
+
+		//row2 <- row2 + row3
+		Gx[1][0] += Gx[2][0];
+		Gx[1][1] += Gx[2][1];
+		Gx[1][2] += Gx[2][2];
+		Gx[1][3] += Gx[2][3];
+
+		Gy[1][0] += Gy[2][0];
+		Gy[1][1] += Gy[2][1];
+		Gy[1][2] += Gy[2][2];
+		Gy[1][3] += Gy[2][3];
+
+		Gz[1][0] += Gz[2][0];
+		Gz[1][1] += Gz[2][1];
+		Gz[1][2] += Gz[2][2];
+		Gz[1][3] += Gz[2][3];
+
+		//row2 <- row2 + row3
+		Gx[2][0] += Gx[3][0];
+		Gx[2][1] += Gx[3][1];
+		Gx[2][2] += Gx[3][2];
+		Gx[2][3] += Gx[3][3];
+
+		Gy[2][0] += Gy[3][0];
+		Gy[2][1] += Gy[3][1];
+		Gy[2][2] += Gy[3][2];
+		Gy[2][3] += Gy[3][3];
+
+		Gz[2][0] += Gz[3][0];
+		Gz[2][1] += Gz[3][1];
+		Gz[2][2] += Gz[3][2];
+		Gz[2][3] += Gz[3][3];
+
+	}
+
+	void BSplineSurface::clipping(const Vector & min, const Vector & max)
 	{
 		if (_surface_vectors.size() < 4)
 			return;
@@ -248,7 +372,7 @@ namespace model
 		}
 	}
 
-	Matrix BezierSurface::build_snip(COORD coord, int i, int j, const Matrix & W)
+	Matrix BSplineSurface::build_snip(COORD coord, int i, int j)
 	{
 		Matrix R( //! Result
 			{0.0, 0.0, 0.0, 0.0},
@@ -259,11 +383,12 @@ namespace model
 
 		for (int m = i; m < i + 4; ++m)
 			for (int n = j; n < j + 4; ++n)
-				R[m - i][n - j] = (_control_vectors[m][n] * W)[coord];
+				R[m - i][n - j] = _control_vectors[m][n][coord];
+
 		return std::move(R);
 	}
 
-	bool BezierSurface::over_perpendicular_edges(const Vector & pa, const Vector & pb)
+	bool BSplineSurface::over_perpendicular_edges(const Vector & pa, const Vector & pb)
 	{
 		static const double TOP    =  0.95;
 		static const double RIGHT  =  0.95;
@@ -279,7 +404,7 @@ namespace model
 		return false;
 	}
 
-	void BezierSurface::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
+	void BSplineSurface::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
 	{
 		if (_surface_vectors.empty())
 			return;
@@ -306,7 +431,7 @@ namespace model
 		}
 	}
 
-	Vector BezierSurface::mass_center() const
+	Vector BSplineSurface::mass_center() const
 	{
 		double total = _control_vectors.size() * _control_vectors.begin()->size();
 		double x = 0, y = 0, z = 0, w = 0;
@@ -328,7 +453,7 @@ namespace model
 		);
 	}
 
-	void BezierSurface::perspective()
+	void BSplineSurface::perspective()
 	{
 		const double d = Traits<model::Window>::perspective_factor;
 
@@ -353,7 +478,7 @@ namespace model
 			}
 	}
 
-	std::string BezierSurface::type()
+	std::string BSplineSurface::type()
 	{
 		return "Bezier Surface";
 	}
@@ -361,4 +486,4 @@ namespace model
 
 } //! namespace model
 
-#endif  // MODEL_BEZIER_SURFACE_HPP
+#endif  // MODEL_B_SPLINE_SURFACE_HPP
