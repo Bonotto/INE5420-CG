@@ -100,6 +100,8 @@ namespace model
 	{
 		if (_control_vectors.size() < 4)
 			return;
+
+		_surface_vectors.clear();
 		
 		static const Matrix M{
 			{-1.0,  3.0, -3.0, 1.0},
@@ -108,15 +110,15 @@ namespace model
 			{ 1.0,  0.0,  0.0, 0.0}
 		};
 
+		/* Amount of anothers bezier curves interconnected */
 		std::vector<std::vector<Vector>> lines;
 
-		/* Amount of anothers bezier curves interconnected */
-		size_t bezier_surfaces = (_control_vectors.size() - 4) / 3;
-
-		for (size_t m = 0, si = 0; m <= bezier_surfaces; m += 3)
+		for (size_t m = 0; m < _control_vectors.size() - 1; m += 3)
 		{
-			for (size_t n = 0; n <= bezier_surfaces; n += 3)
+			for (size_t n = 0; n < _control_vectors.front().size() - 1; n += 3)
 			{
+				size_t si = 0;
+
 				const auto Mx = build_snip(COORD::x, m, n, window_T) * M;
 				const auto My = build_snip(COORD::y, m, n, window_T) * M;
 				const auto Mz = build_snip(COORD::z, m, n, window_T) * M;
@@ -140,19 +142,22 @@ namespace model
 			            lines[si].emplace_back(x, y, z);
 					}
 				}
+
+				std::vector<std::vector<Vector>> columns(lines[0].size());
+
+				for (size_t j = 0; j < lines[0].size(); ++j)
+					for (size_t i = 0; i < lines.size(); ++i)
+						columns[j].push_back(lines[i][j]);
+
+				for (auto line: lines)
+					_surface_vectors.push_back(line);
+
+				for (auto line: columns)
+					_surface_vectors.push_back(line);
+
+				lines.clear();
 			}
 		}
-
-		std::vector<std::vector<Vector>> columns(lines[0].size());
-
-		for (size_t j = 0; j < lines[0].size(); ++j)
-			for (size_t i = 0; i < lines.size(); ++i)
-				columns[j].push_back(lines[i][j]);
-
-		_surface_vectors = std::move(lines);
-
-		for (auto line: columns)
-			_surface_vectors.push_back(line);
 	}
 
 	void BezierSurface::clipping(const Vector & min, const Vector & max)
@@ -229,8 +234,14 @@ namespace model
 				if (new_xa > max[0] && new_xb > max[0])
 					continue;
 
-				vectors.emplace_back(new_xa, pa[1] + p4 * rn1);
-				vectors.emplace_back(new_xb, pa[1] + p4 * rn2);
+				auto new_ya = pa[1] + p4 * rn1;
+				auto new_yb = pa[1] + p4 * rn2;
+
+				if (new_ya > max[1] && new_yb > max[1])
+					continue;
+
+				vectors.emplace_back(new_xa, new_ya);
+				vectors.emplace_back(new_xb, new_yb);
 			}
 
 			line = vectors;
@@ -249,7 +260,6 @@ namespace model
 		for (int m = i; m < i + 4; ++m)
 			for (int n = j; n < j + 4; ++n)
 				R[m - i][n - j] = (_control_vectors[m][n] * W)[coord];
-
 		return std::move(R);
 	}
 

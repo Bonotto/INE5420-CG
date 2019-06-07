@@ -89,17 +89,20 @@ namespace control
 		enum ButtonID
 		{
 			/* Objects */
-			Null           = 0,
-			Point          = 1,
-			Line           = 2,
-			Rectangle      = 3,
-			Polygon        = 4,
-			Bezier         = 5,
-			BSpline        = 6,
+			Null                 = 0,
+			Point                = 1,
+			Line                 = 2,
+			Rectangle            = 3,
+			Polygon              = 4,
+			Bezier               = 5,
+			BSpline              = 6,
+			BezierSurface        = 7,
+			BSplineSurface       = 8,
 			/* Rotation */
-			CenterObject   = 7,
-			CenterWorld    = 8,
-			CenterSpecific = 9
+			CenterObject         = 9,
+			CenterWorld          = 10,
+			CenterSpecific       = 11,
+			CenterAxisSpecific   = 12
 		};
 
 	public:
@@ -192,6 +195,7 @@ namespace control
 		void insert_polygon(std::string name);
 		void insert_object(std::string name, std::string type);
 		void insert_curve(std::string name, std::string type);
+		void insert_surface(std::string name, std::string type);
 		/**@}*/
 
 		/**
@@ -651,27 +655,34 @@ namespace control
 		db<MainControl>(TRC) << "MainControl::on_radio_clicked()" << std::endl;
 		
 		Gtk::RadioButton *radio;
+		Gtk::CheckButton *check;
 
 		/* Object type */
 		unsigned hash = 0;
 
 		_builder->get_widget("radio_point", radio);
-		hash += radio->get_active() ? ButtonID::Point     	   : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Point     	   	   : ButtonID::Null;
 
 		_builder->get_widget("radio_line", radio);
-		hash += radio->get_active() ? ButtonID::Line      	   : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Line      	   	   : ButtonID::Null;
 
 		_builder->get_widget("radio_rectangle", radio);
-		hash += radio->get_active() ? ButtonID::Rectangle 	   : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Rectangle 	   	   : ButtonID::Null;
 
 		_builder->get_widget("radio_polygon", radio);
-		hash += radio->get_active() ? ButtonID::Polygon   	   : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Polygon   	   	   : ButtonID::Null;
 
 		_builder->get_widget("radio_bezier", radio);
-		hash += radio->get_active() ? ButtonID::Bezier   	   : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Bezier   	   	   : ButtonID::Null;
 
 		_builder->get_widget("radio_bspline", radio);
-		hash += radio->get_active() ? ButtonID::BSpline   	   : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::BSpline   	   	   : ButtonID::Null;
+
+		_builder->get_widget("radio_bspline_surface", radio);
+		hash += radio->get_active() ? ButtonID::BSplineSurface 	   : ButtonID::Null;
+
+		_builder->get_widget("radio_bezier_surface", radio);
+		hash += radio->get_active() ? ButtonID::BezierSurface 	   : ButtonID::Null;
 
 		switch (hash)
 		{
@@ -703,6 +714,16 @@ namespace control
 			case ButtonID::BSpline:
 				disable_unused_interface_objects(ButtonID::BSpline);
 				enable_used_interface_objects(ButtonID::BSpline);
+				break;
+
+			case ButtonID::BSplineSurface:
+				disable_unused_interface_objects(ButtonID::BSplineSurface);
+				enable_used_interface_objects(ButtonID::BSplineSurface);
+				break;
+
+			case ButtonID::BezierSurface:
+				disable_unused_interface_objects(ButtonID::BezierSurface);
+				enable_used_interface_objects(ButtonID::BezierSurface);
 				break;
 
 			/* Undefined */
@@ -742,6 +763,14 @@ namespace control
 			default:
 				break;
 		}
+
+		_builder->get_widget("check_specific_axis", check);
+		
+		if (check->get_active() ? ButtonID::CenterAxisSpecific : ButtonID::Null)
+			enable_used_interface_objects(ButtonID::CenterAxisSpecific);
+		else
+			disable_unused_interface_objects(ButtonID::CenterAxisSpecific);
+
 	}
 
 	void MainControl::on_dialog_exit_clicked()
@@ -770,22 +799,28 @@ namespace control
 		unsigned hash = 0;
 
 		_builder->get_widget("radio_point", radio);
-		hash += radio->get_active() ? ButtonID::Point     : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Point     		 : ButtonID::Null;
 
 		_builder->get_widget("radio_line", radio);
-		hash += radio->get_active() ? ButtonID::Line      : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Line      		 : ButtonID::Null;
 
 		_builder->get_widget("radio_rectangle", radio);
-		hash += radio->get_active() ? ButtonID::Rectangle : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Rectangle 		 : ButtonID::Null;
 
 		_builder->get_widget("radio_polygon", radio);
-		hash += radio->get_active() ? ButtonID::Polygon   : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Polygon   		 : ButtonID::Null;
 
 		_builder->get_widget("radio_bezier", radio);
-		hash += radio->get_active() ? ButtonID::Bezier    : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::Bezier    		 : ButtonID::Null;
 
 		_builder->get_widget("radio_bspline", radio);
-		hash += radio->get_active() ? ButtonID::BSpline   : ButtonID::Null;
+		hash += radio->get_active() ? ButtonID::BSpline   		 : ButtonID::Null;
+
+		_builder->get_widget("radio_bspline_surface", radio);
+		hash += radio->get_active() ? ButtonID::BSplineSurface   : ButtonID::Null;
+
+		_builder->get_widget("radio_bezier_surface", radio);
+		hash += radio->get_active() ? ButtonID::BezierSurface    : ButtonID::Null;
 
 		switch (hash)
 		{
@@ -811,6 +846,14 @@ namespace control
 			
 			case ButtonID::BSpline:
 				insert_curve(name, "B-Spline");
+				break;
+			
+			case ButtonID::BSplineSurface:
+				insert_surface(name, "B-Spline Surface");
+				break;
+			
+			case ButtonID::BezierSurface:
+				insert_surface(name, "Bezier Surface");
 				break;
 
 			/* Undefined */
@@ -902,33 +945,20 @@ namespace control
 		_shapes.emplace_back(&_window->drawable());
 		_shapes_map[_objects_control++] = _shapes.back();
 
-		auto surface = new model::BSplineSurface("Teste1",
-			{
-				{model::Vector(0, 0, 0), model::Vector(25, 0, 0), model::Vector(75, 0, 0), model::Vector(100, 0, 0)},
-				{model::Vector(0, 25, 0), model::Vector(25, 25, 100), model::Vector(75, 25, 100),  model::Vector(100, 25, 0)},
-				{model::Vector(0, 75, 0), model::Vector(25, 75, 100), model::Vector(75, 75, 100), model::Vector(100, 75, 0)},
-				{model::Vector(0, 100, 0), model::Vector(25, 100, 0), model::Vector(75, 100, 0), model::Vector(100, 100, 0)}
-			}
-		);
-
-		_shapes.emplace_back(surface);
-		_shapes_map[_objects_control++] = _shapes.back();
-
-		// auto surface2 = new model::BezierSurface("Teste2",
+		// auto surface2 = new model::BSplineSurface("Teste2",
 		// 	{
-		// 		{model::Vector(0, 0, 0), model::Vector(25, 0, 0), model::Vector(75, 0, 0), model::Vector(100, 0, 0)},
-		// 		{model::Vector(0, 25, 0), model::Vector(25, 25, 100), model::Vector(75, 25, 100),  model::Vector(100, 25, 0)},
-		// 		{model::Vector(0, 75, 0), model::Vector(25, 75, 100), model::Vector(75, 75, 100), model::Vector(100, 75, 0)},
-		// 		{model::Vector(0, 100, 0), model::Vector(25, 100, 0), model::Vector(75, 100, 0), model::Vector(100, 100, 0)}
+		// 		{model::Vector(0, 0, 0),   model::Vector(25, 0, 0),    model::Vector(75, 0, 0),    model::Vector(100, 0, 0),   model::Vector(125, 0, 0),    model::Vector(175, 0, 0),    model::Vector(200, 0, 0)},
+		// 		{model::Vector(0, 25, 0),  model::Vector(25, 25, 100), model::Vector(75, 25, 100), model::Vector(100, 25, 0),  model::Vector(125, 25, 100), model::Vector(175, 25, 100), model::Vector(200, 25, 0)},
+		// 		{model::Vector(0, 75, 0),  model::Vector(25, 75, 100), model::Vector(75, 75, 100), model::Vector(100, 75, 0),  model::Vector(125, 75, 100), model::Vector(175, 75, 100), model::Vector(200, 75, 0)},
+		// 		{model::Vector(0, 100, 0), model::Vector(25, 100, 0),  model::Vector(75, 100, 0),  model::Vector(100, 100, 0), model::Vector(125, 100, 0),  model::Vector(175, 100, 0),  model::Vector(200, 100, 0)},
+
+		// 		{model::Vector(0, 125, 0), model::Vector(25, 125, 100), model::Vector(75, 125, 100), model::Vector(100, 125, 0), model::Vector(125, 125, 100), model::Vector(175, 125, 100), model::Vector(200, 125, 0)},
+		// 		{model::Vector(0, 175, 0), model::Vector(25, 175, 100), model::Vector(75, 175, 100), model::Vector(100, 175, 0), model::Vector(125, 175, 100), model::Vector(175, 175, 100), model::Vector(200, 175, 0)},
+		// 		{model::Vector(0, 200, 0), model::Vector(25, 200, 0),   model::Vector(75, 200, 0),   model::Vector(100, 200, 0), model::Vector(125, 200, 0),   model::Vector(175, 200, 0),   model::Vector(200, 200, 0)}
 		// 	}
 		// );
 
 		// _shapes.emplace_back(surface2);
-		// _shapes_map[_objects_control++] = _shapes.back();
-
-		// auto line = new model::Line("Teste", {0, 0, 0}, {100, 100, 0} );
-
-		// _shapes.emplace_back(line);
 		// _shapes_map[_objects_control++] = _shapes.back();
 	}
 
@@ -980,6 +1010,7 @@ namespace control
 	{
 		db<MainControl>(TRC) << "Build buttons" << std::endl;
 
+		Gtk::CheckButton *check;
 		Gtk::Button      *button;
 		Gtk::RadioButton *radio1;
 		Gtk::RadioButton *radio2;
@@ -1026,6 +1057,14 @@ namespace control
 		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 		radio2->join_group(*radio1);
 
+		_builder->get_widget("radio_bspline_surface", radio2);
+		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		radio2->join_group(*radio1);
+
+		_builder->get_widget("radio_bezier_surface", radio2);
+		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
+		radio2->join_group(*radio1);
+
 		/* Rotation group */
 		_builder->get_widget("radio_center_object", radio1);
 		radio1->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
@@ -1037,6 +1076,9 @@ namespace control
 		_builder->get_widget("radio_center_specific", radio2);
 		radio2->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 		radio2->join_group(*radio1);
+
+		_builder->get_widget("check_specific_axis", check);
+		check->signal_clicked().connect(sigc::mem_fun(*this, &MainControl::on_radio_clicked));
 	}
 
 	void MainControl::build_movements()
@@ -1133,7 +1175,15 @@ namespace control
 			"entry_polygon_x",
 			"entry_polygon_y",
 			"entry_polygon_z"
+			// "entry_height_dimension",
+			// "entry_width_dimension"
 		};
+
+		// std::string cell = "s_";
+
+		// for (int i = 0; i < 20; ++i)
+		// 	for (int j = 0; j < 20; ++j)
+		// 		entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
 		
 		Gtk::Entry *entry;
 
@@ -1190,7 +1240,8 @@ namespace control
 			case ButtonID::Point:
 				entry_names = {
 					"entry_point_x",
-					"entry_point_y"
+					"entry_point_y",
+					"entry_point_z"
 				};
 				break;
 
@@ -1199,7 +1250,9 @@ namespace control
 					"entry_x1_Line",
 					"entry_x2_Line",
 					"entry_y1_Line",
-					"entry_y2_Line"
+					"entry_y2_Line",
+					"entry_z1_Line",
+					"entry_z2_Line"
 				};
 				break;
 
@@ -1208,7 +1261,9 @@ namespace control
 					"entry_x1_Rectangle",
 					"entry_x2_Rectangle",
 					"entry_y1_Rectangle",
-					"entry_y2_Rectangle"
+					"entry_y2_Rectangle",
+					"entry_z1_Rectangle",
+					"entry_z2_Rectangle"
 				};
 				break;
 
@@ -1226,10 +1281,35 @@ namespace control
 				};
 				break;
 
+			case ButtonID::BezierSurface:
+			case ButtonID::BSplineSurface:
+				{
+					entry_names = {
+						"entry_height_dimension",
+						"entry_width_dimension"
+					};
+
+					std::string cell = "s_";
+
+					for (int i = 0; i < 20; ++i)
+						for (int j = 0; j < 20; ++j)
+							entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
+				}
+				break;
+
 			case ButtonID::CenterSpecific:
 				entry_names = {
 					"entry_rotation_x",
-					"entry_rotation_y"
+					"entry_rotation_y",
+					"entry_rotation_z"
+				};
+				break;
+
+			case ButtonID::CenterAxisSpecific:
+				entry_names = {
+					"entry_rotation_x_axis",
+					"entry_rotation_y_axis",
+					"entry_rotation_z_axis"
 				};
 				break;
 
@@ -1263,7 +1343,184 @@ namespace control
 		switch(selected)
 		{
 			case ButtonID::Null:
+				{
+					entry_names = {
+						"entry_x1_Line",
+						"entry_x2_Line",
+						"entry_y1_Line",
+						"entry_y2_Line",
+						"entry_z1_Line",
+						"entry_z2_Line",
+						"entry_x1_Rectangle",
+						"entry_x2_Rectangle",
+						"entry_y1_Rectangle",
+						"entry_y2_Rectangle",
+						"entry_z1_Rectangle",
+						"entry_z2_Rectangle",
+						"entry_polygon_x",
+						"entry_polygon_y",
+						"entry_polygon_z",
+						"entry_rotation_x",
+						"entry_rotation_y",
+						"entry_rotation_z",
+						"entry_rotation_x_axis",
+						"entry_rotation_y_axis",
+						"entry_rotation_z_axis",
+						"entry_height_dimension",
+						"entry_width_dimension"
+					};
+
+					std::string cell = "s_";
+
+					for (int i = 0; i < 20; ++i)
+						for (int j = 0; j < 20; ++j)
+							entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
+
+					button_names = {
+						"button_insert_vector",
+						"button_delete_vector"
+					};
+				}
+				break;
+
+			case ButtonID::Point:
+				{
+					entry_names = {
+						"entry_x1_Line",
+						"entry_x2_Line",
+						"entry_y1_Line",
+						"entry_y2_Line",
+						"entry_z1_Line",
+						"entry_z2_Line",
+						"entry_x1_Rectangle",
+						"entry_x2_Rectangle",
+						"entry_y1_Rectangle",
+						"entry_y2_Rectangle",
+						"entry_z1_Rectangle",
+						"entry_z2_Rectangle",
+						"entry_polygon_x",
+						"entry_polygon_y",
+						"entry_polygon_z",
+						"entry_height_dimension",
+						"entry_width_dimension"
+					};
+
+					std::string cell = "s_";
+
+					for (int i = 0; i < 20; ++i)
+						for (int j = 0; j < 20; ++j)
+							entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
+
+					button_names = {
+						"button_insert_vector",
+						"button_delete_vector"
+					};
+				}
+				break;
+
+			case ButtonID::Line:
+				{
+					entry_names = {
+						"entry_point_x",
+						"entry_point_y",
+						"entry_point_z",
+						"entry_x1_Rectangle",
+						"entry_x2_Rectangle",
+						"entry_y1_Rectangle",
+						"entry_y2_Rectangle",
+						"entry_z1_Rectangle",
+						"entry_z2_Rectangle",
+						"entry_polygon_x",
+						"entry_polygon_y",
+						"entry_polygon_z",
+						"entry_height_dimension",
+						"entry_width_dimension"
+					};
+
+					std::string cell = "s_";
+
+					for (int i = 0; i < 20; ++i)
+						for (int j = 0; j < 20; ++j)
+							entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
+
+					button_names = {
+						"button_insert_vector",
+						"button_delete_vector"
+					};
+				}
+				break;
+
+			case ButtonID::Rectangle:
+				{
+					entry_names = {
+						"entry_point_x",
+						"entry_point_y",
+						"entry_point_z",
+						"entry_x1_Line",
+						"entry_x2_Line",
+						"entry_y1_Line",
+						"entry_y2_Line",
+						"entry_z1_Line",
+						"entry_z2_Line",
+						"entry_polygon_x",
+						"entry_polygon_y",
+						"entry_polygon_z",
+						"entry_height_dimension",
+						"entry_width_dimension"
+					};
+
+					std::string cell = "s_";
+
+					for (int i = 0; i < 20; ++i)
+						for (int j = 0; j < 20; ++j)
+							entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
+
+					button_names = {
+						"button_insert_vector",
+						"button_delete_vector"
+					};
+				}
+				break;
+
+
+			case ButtonID::Bezier:
+			case ButtonID::BSpline:
+			case ButtonID::Polygon:
+				{
+					entry_names = {
+						"entry_point_x",
+						"entry_point_y",
+						"entry_point_z",
+						"entry_x1_Line",
+						"entry_x2_Line",
+						"entry_y1_Line",
+						"entry_y2_Line",
+						"entry_z1_Line",
+						"entry_z2_Line",
+						"entry_x1_Rectangle",
+						"entry_x2_Rectangle",
+						"entry_y1_Rectangle",
+						"entry_y2_Rectangle",
+						"entry_z1_Rectangle",
+						"entry_z2_Rectangle",
+						"entry_height_dimension",
+						"entry_width_dimension"
+					};
+
+					std::string cell = "s_";
+
+					for (int i = 0; i < 20; ++i)
+						for (int j = 0; j < 20; ++j)
+							entry_names.emplace_back(cell + std::to_string(i) + "_" + std::to_string(j));
+				}
+				break;
+
+
+			case ButtonID::BezierSurface:
+			case ButtonID::BSplineSurface:
 				entry_names = {
+					"entry_point_x",
+					"entry_point_y",
 					"entry_point_z",
 					"entry_x1_Line",
 					"entry_x2_Line",
@@ -1279,102 +1536,35 @@ namespace control
 					"entry_z2_Rectangle",
 					"entry_polygon_x",
 					"entry_polygon_y",
-					"entry_polygon_z",
-					"entry_rotation_x",
-					"entry_rotation_y",
-					"entry_rotation_z"
-				};
-				button_names = {
-					"button_insert_vector",
-					"button_delete_vector"
-				};
-				break;
-
-			case ButtonID::Point:
-				entry_names = {
-					"entry_x1_Line",
-					"entry_x2_Line",
-					"entry_y1_Line",
-					"entry_y2_Line",
-					"entry_x1_Rectangle",
-					"entry_x2_Rectangle",
-					"entry_y1_Rectangle",
-					"entry_y2_Rectangle",
-					"entry_polygon_x",
-					"entry_polygon_y",
 					"entry_polygon_z"
 				};
 				button_names = {
 					"button_insert_vector",
 					"button_delete_vector"
-				};
-				break;
-
-			case ButtonID::Line:
-				entry_names = {
-					"entry_point_x",
-					"entry_point_y",
-					"entry_x1_Rectangle",
-					"entry_x2_Rectangle",
-					"entry_y1_Rectangle",
-					"entry_y2_Rectangle",
-					"entry_polygon_x",
-					"entry_polygon_y",
-					"entry_polygon_z"
-				};
-				button_names = {
-					"button_insert_vector",
-					"button_delete_vector"
-				};
-				break;
-
-			case ButtonID::Rectangle:
-				entry_names = {
-					"entry_point_x",
-					"entry_point_y",
-					"entry_x1_Line",
-					"entry_x2_Line",
-					"entry_y1_Line",
-					"entry_y2_Line",
-					"entry_polygon_x",
-					"entry_polygon_y",
-					"entry_polygon_z"
-				};
-				button_names = {
-					"button_insert_vector",
-					"button_delete_vector"
-				};
-				break;
-
-
-			case ButtonID::Bezier:
-			case ButtonID::BSpline:
-			case ButtonID::Polygon:
-				entry_names = {
-					"entry_point_x",
-					"entry_point_y",
-					"entry_x1_Line",
-					"entry_x2_Line",
-					"entry_y1_Line",
-					"entry_y2_Line",
-					"entry_x1_Rectangle",
-					"entry_x2_Rectangle",
-					"entry_y1_Rectangle",
-					"entry_y2_Rectangle"
 				};
 				break;
 
 			case ButtonID::CenterObject:
 				entry_names = {
 					"entry_rotation_x",
-					"entry_rotation_y"
+					"entry_rotation_y",
+					"entry_rotation_z"
 				};
 				break;
 
 			case ButtonID::CenterWorld:
 				entry_names = {
 					"entry_rotation_x",
-					"entry_rotation_y"
+					"entry_rotation_y",
+					"entry_rotation_z"
+				};
+				break;
+
+			case ButtonID::CenterAxisSpecific:
+				entry_names = {
+					"entry_rotation_x_axis",
+					"entry_rotation_y_axis",
+					"entry_rotation_z_axis"
 				};
 				break;
 
@@ -1550,6 +1740,65 @@ namespace control
 		{
 			add_entry(_objects_control, name, "B-Spline Curve");
 			_shapes.emplace_back(new model::BSpline(name, vectors));
+		}
+
+		_shapes_map[_objects_control++] = _shapes.back();
+
+		build_objects({_shapes.back()});
+	}
+
+	void MainControl::insert_surface(std::string name, std::string type)
+	{
+		db<MainControl>(TRC) << "MainControl::insert_surface()" << std::endl;
+
+		Gtk::Entry *entry;
+
+		int height, width;
+
+		_builder->get_widget("entry_height_dimension", entry);
+		height = atoi(std::string(entry->get_text()).c_str());
+
+		_builder->get_widget("entry_width_dimension", entry);
+		width = atoi(std::string(entry->get_text()).c_str());
+
+		if (width != height || height < 4 || (!type.compare("Bezier Surface") && (height - 4) % 3))
+			return;
+
+		std::vector<std::vector<model::Vector>> v;
+		std::string cell = "s_";
+
+		for (int i = 0; i < height; ++i)
+		{
+			v.push_back({});
+
+			for (int j = 0; j < width; ++j)
+			{
+				_builder->get_widget(cell + std::to_string(i) + "_" + std::to_string(j), entry);
+
+				auto vec = std::string(entry->get_text());
+
+				auto comma1 = vec.find(",");
+				auto comma2 = vec.find(",", comma1 + 1);
+
+				auto x = atof(vec.substr(0, comma1).c_str());
+				auto y = atof(vec.substr(comma1 + 1, comma2).c_str());
+				auto z = atof(vec.substr(comma2 + 1, vec.size()).c_str());
+
+				std::cout << x << " | " << y << " | " << z << std::endl;
+
+				v.back().emplace_back(model::Vector(x, y, z));
+			}
+		}
+
+		if (!type.compare("Bezier Surface"))
+		{
+			add_entry(_objects_control, name, "Bezier Surface");
+			_shapes.emplace_back(new model::BezierSurface(name, v));
+		}
+		else
+		{
+			add_entry(_objects_control, name, "B-Spline Surface");
+			_shapes.emplace_back(new model::BSplineSurface(name, v));
 		}
 
 		_shapes_map[_objects_control++] = _shapes.back();

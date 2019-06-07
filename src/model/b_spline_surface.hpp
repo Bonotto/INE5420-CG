@@ -358,8 +358,14 @@ namespace model
 				if (new_xa > max[0] && new_xb > max[0])
 					continue;
 
-				vectors.emplace_back(new_xa, pa[1] + p4 * rn1);
-				vectors.emplace_back(new_xb, pa[1] + p4 * rn2);
+				auto new_ya = pa[1] + p4 * rn1;
+				auto new_yb = pa[1] + p4 * rn2;
+
+				if (new_ya > max[1] && new_yb > max[1])
+					continue;
+
+				vectors.emplace_back(new_xa, new_ya);
+				vectors.emplace_back(new_xb, new_yb);
 			}
 
 			line = vectors;
