@@ -358,7 +358,6 @@ namespace model
 		return "Bezier Surface";
 	}
 
-
 } //! namespace model
 
 #endif  // MODEL_BEZIER_SURFACE_HPP

@@ -52,10 +52,10 @@ namespace model
 
 		~Polygon() = default;
 
+		void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T) override;
+		void clipping(const Vector & min, const Vector & max) override;
 
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T);
-		virtual void clipping(const Vector & min, const Vector & max);
-		virtual std::string type();
+		std::string type() override;
 
 	private:
 		void sutherland_hodgeman(double x1, double y1, double x2, double y2);

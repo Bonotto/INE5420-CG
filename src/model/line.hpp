@@ -54,8 +54,8 @@ namespace model
 
 		~Line() = default;
 
-		virtual void clipping(const Vector & min, const Vector & max);
-		virtual std::string type();
+		void clipping(const Vector & min, const Vector & max) override;
+		std::string type() override;
 
 	private:
 		void cohen_sutherland(const Vector & min, const Vector & max);
