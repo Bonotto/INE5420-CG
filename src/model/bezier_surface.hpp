@@ -344,7 +344,7 @@ namespace model
 			{
 				v = v * M;
 				
-				if (!v[2])
+				if (v[2] >= 0)
 					continue;
 
 				v[0] = v[0] * d / v[2];

@@ -981,7 +981,16 @@ namespace control
 		_shapes.emplace_back(&_window->drawable());
 		_shapes_map[_objects_control++] = _shapes.back();
 
-		// auto surface2 = new model::BSplineSurface("Teste2",
+		// auto surface2 = new model::BezierSurface("Teste2",
+		// 	{
+		// 		{model::Vector(0, 0, 0),   model::Vector(25, 0, 0),    model::Vector(75, 0, 0),    model::Vector(100, 0, 0)},
+		// 		{model::Vector(0, 25, 0),  model::Vector(25, 25, 100), model::Vector(75, 25, 100), model::Vector(100, 25, 0)},
+		// 		{model::Vector(0, 75, 0),  model::Vector(25, 75, 100), model::Vector(75, 75, 100), model::Vector(100, 75, 0)},
+		// 		{model::Vector(0, 100, 0), model::Vector(25, 100, 0),  model::Vector(75, 100, 0),  model::Vector(100, 100, 0)}
+		// 	}
+		// );
+
+		// auto surface2 = new model::BezierSurface("Teste2",
 		// 	{
 		// 		{model::Vector(0, 0, 0),   model::Vector(25, 0, 0),    model::Vector(75, 0, 0),    model::Vector(100, 0, 0),   model::Vector(125, 0, 0),    model::Vector(175, 0, 0),    model::Vector(200, 0, 0)},
 		// 		{model::Vector(0, 25, 0),  model::Vector(25, 25, 100), model::Vector(75, 25, 100), model::Vector(100, 25, 0),  model::Vector(125, 25, 100), model::Vector(175, 25, 100), model::Vector(200, 25, 0)},
