@@ -46,7 +46,7 @@ namespace model
 
 		~Rectangle() = default;
 
-		virtual std::string type();
+		std::string type() override;
 	};
 
 /*================================================================================*/

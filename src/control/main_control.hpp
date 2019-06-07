@@ -934,7 +934,7 @@ namespace control
 	{
 		ObjectLoader loader;
 
-		auto new_shapes = loader.load(path_name);
+		auto new_shapes = loader.load(path_name, _window->min(), _window->max());
 
 		_shapes.insert(_shapes.end(), new_shapes.begin(), new_shapes.end());
 

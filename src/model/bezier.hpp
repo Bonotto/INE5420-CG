@@ -49,21 +49,20 @@ namespace model
 		{}
 
 		~Bezier() = default;
-
-		virtual void clipping(const Vector & min, const Vector & max);
 		
-		void transformation(const Matrix & world_T);
-		void w_transformation(const Matrix & window_T);
+		void transformation(const Matrix & world_T) override;
+		void w_transformation(const Matrix & window_T) override;
 
-		void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T);
+		void clipping(const Vector & min, const Vector & max) override;
+		void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T) override;
 
-		virtual std::string type();
+		std::string type() override;
 
+	private:
 		static const double precision;
 		static const double world_max_size;
 		static const double window_max_size;
 
-	private:
 		bool over_perpendicular_edges(const Vector & pa, const Vector & pb);
 	};
 

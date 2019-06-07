@@ -95,6 +95,8 @@ namespace model
 		}
 
 	protected:
+		// void default_clipping(const Vector & min, const Vector & max);
+
 		std::string _name{"Shape"};
 		std::vector<Vector> _world_vectors{{0, 0}};
 		std::vector<Vector> _window_vectors{{0, 0}};
@@ -196,7 +198,7 @@ namespace model
 		for (auto &v: _window_vectors)
 		{
 			v = v * M;
-			
+
 			if (!v[2])
 				continue;
 

@@ -51,8 +51,8 @@ namespace model
 
 		~Point() = default;
 
-		virtual void clipping(const Vector & min, const Vector & max);
-		virtual std::string type();
+		void clipping(const Vector & min, const Vector & max) override;
+		std::string type() override;
 	};
 
 /*================================================================================*/
@@ -64,8 +64,6 @@ namespace model
 		db<Point>(INF) << "[" << this << "] Clipping Point" << std::endl;
 
 		Vector & p = _window_vectors[0];
-
-		std::cout << "POINT = (" << _window_vectors[0][0] << ", " << _window_vectors[0][1] << ")" << std::endl;
 
 		bool x_is_outside = p[0] < min[0] || p[0] > max[0];
 		bool y_is_outside = p[1] < min[1] || p[1] > max[1];

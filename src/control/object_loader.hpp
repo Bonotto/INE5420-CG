@@ -26,9 +26,12 @@
 
 /* External includes */
 #include <fstream>
+#include <sstream>
 
 /* Local includes */
 #include "../config/traits.hpp"
+#include "../model/complex_shape.hpp"
+#include "../model/window.hpp"
 
 namespace control
 {
@@ -43,7 +46,7 @@ namespace control
 		ObjectLoader()  = default;
 		~ObjectLoader() = default;
 
-		std::vector<std::shared_ptr<model::Shape>> load(std::string path_name);
+		std::vector<std::shared_ptr<model::Shape>> load(std::string path_name, const model::Vector& min, const model::Vector& max);
 	
 	private:
 		std::vector<std::string> split(std::string s, const std::string & delimiter);
@@ -74,7 +77,7 @@ namespace control
 		return tokens;
 	}
 
-	std::vector<std::shared_ptr<model::Shape>> ObjectLoader::load(std::string path_name)
+	std::vector<std::shared_ptr<model::Shape>> ObjectLoader::load(std::string path_name, const model::Vector& min, const model::Vector& max)
 	{
 		db<ObjectLoader>(INF) << "ObjectLoader::load() => " << path_name << std::endl;
 
@@ -85,13 +88,41 @@ namespace control
 			db<ObjectLoader>(ERR) << "Unable to open file" << std::endl;
 			return {};
 		}
-		
+
+		auto map_x = [=](double x)
+		{
+			return x;
+			// return (x - model::Window::fixed_min[0])
+			// 	* (max[0] - min[0])
+			// 	/ (model::Window::fixed_max[0] - model::Window::fixed_min[0])
+			// 	+ min[0];
+		};
+
+		auto map_y = [=](double y)
+		{
+			return y;
+			// return (y - model::Window::fixed_min[1])
+			// 	* (max[1] - min[1])
+			// 	/ (model::Window::fixed_max[1] - model::Window::fixed_min[1])
+			// 	+ min[1];
+		};
+
+		auto map_z = [=](double z)
+		{
+			return z;
+			// return (z - model::Window::fixed_min[2])
+			// 	* (max[2] - min[2])
+			// 	/ (model::Window::fixed_max[2] - model::Window::fixed_min[2])
+			// 	+ min[2];
+		};
+
 		int count = 0;
 		std::string line;
 		std::string name;
 
 		std::vector<model::Vector> vectors;
 		std::vector<std::shared_ptr<model::Shape>> shapes;
+		std::vector<std::shared_ptr<model::Shape>> complex_shapes;
 		
 		while (std::getline(file, line))
 		{
@@ -103,6 +134,12 @@ namespace control
 			switch (words[0][0])
 			{
 			case 'o':
+				if (!shapes.empty())
+				{
+					complex_shapes.emplace_back(new model::ComplexShape(name, shapes));
+					shapes.clear();
+				}
+
 				count = 0;
 				name = words[1];
 				break;
@@ -110,19 +147,32 @@ namespace control
 			case 'v':
 				if (words[0] == "v")
 				{
-					double x = std::stod(words[1]);
-					double y = std::stod(words[2]);
-					double z = std::stod(words[3]);
+					double x, y, z;
+
+					std::stringstream string_x(words[1]);
+					std::stringstream string_y(words[2]);
+					std::stringstream string_z(words[3]);
+
+					string_x >> x;
+					string_y >> y;
+					string_z >> z;
+
+					std::cout << vectors.size() + 1 << ": " << x << ", " << y << ", " << z << std::endl;
 
 					if (model::Vector::dimension == 3)
 						z = 1;
 					
-					vectors.emplace_back(x, y, z);
+					vectors.emplace_back(
+						map_x(x),
+						map_y(y),
+						map_z(z)
+					);
 				}
 
 				break;
 
-			case 'p': {
+			case 'p':
+			{
 				int p = std::stoi(split(words[1], "/")[0]) - 1;
 
 				shapes.emplace_back(
@@ -132,7 +182,8 @@ namespace control
 				break;
 			}
 
-			case 'l': {
+			case 'l':
+			{
 				int p0 = std::stoi(split(words[1], "/")[0]) - 1;
 				int p1 = std::stoi(split(words[2], "/")[0]) - 1;
 
@@ -143,7 +194,8 @@ namespace control
 				break;
 			}
 
-			case 'f': {
+			case 'f':
+			{
 				words.erase(words.begin());
 				std::vector<model::Vector> pvectors;
 
@@ -167,7 +219,7 @@ namespace control
 
 		file.close();
 
-		return std::move(shapes);
+		return std::move(complex_shapes);
 	}
 
 } //! namespace control

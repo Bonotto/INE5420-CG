@@ -36,44 +36,32 @@ namespace model
 /*                                   Definitions                                  */
 /*================================================================================*/
 
-	class ComplexShape
+	class ComplexShape : public Shape
 	{
 	public:
 		ComplexShape()  = default;
 
-		ComplexShape(std::string name, const std::initializer_list<std::shared_ptr<Shape>>& ss) :
-			_name(name),
+		ComplexShape(std::string name, const std::vector<std::shared_ptr<Shape>>& ss) :
+			Shape(name),
 			_shapes(ss)
-		{}
-
-		ComplexShape(std::string name, const std::vector<std::shared_ptr<Shape>>& ssize_t) :
-			_name(name),
-			_shapes(ss)
-		{}
-
-		virtual ~ComplexShape() = default;
-
-		virtual Vector mass_center() const;
-
-		virtual void clipping(const Vector & min, const Vector & max);
-
-		virtual void w_transformation(const Matrix & window_T);
-		virtual void transformation(const Matrix & world_T);
-		virtual void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T);
-
-		std::string name();
-		virtual std::string type();
-
-		friend Debug & operator<<(Debug & db, const ComplexShape & s)
 		{
-			for (const Vector & v : s._world_vectors)
-				db << v << std::endl;
-
-			return db;
+			_normal = _normal + mass_center();
 		}
 
+		~ComplexShape() = default;
+
+		Vector mass_center() const override;
+
+		void perspective() override;
+		void clipping(const Vector & min, const Vector & max) override;
+
+		void w_transformation(const Matrix & window_T) override;
+		void transformation(const Matrix & world_T) override;
+		void draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T) override;
+
+		std::string type() override;
+
 	protected:
-		std::string _name{"Complex Shape"};
 		std::vector<std::shared_ptr<Shape>> _shapes;
 	};
 
@@ -111,9 +99,23 @@ namespace model
 	}
 
 	void ComplexShape::transformation(const Matrix & world_T)
-	{	
+	{
 		for (auto & s : _shapes)
 			s->transformation(world_T);
+
+		_normal = _normal * world_T;
+	}
+
+	void ComplexShape::clipping(const Vector & min, const Vector & max)
+	{
+		for (auto & s : _shapes)
+			s->clipping(min, max);
+	}
+	
+	void ComplexShape::perspective()
+	{
+		for (auto & s : _shapes)
+			s->perspective();
 	}
 
 	void ComplexShape::draw(const Cairo::RefPtr<Cairo::Context>& cr, const Matrix & viewport_T)
@@ -122,19 +124,9 @@ namespace model
 			s->draw(cr, viewport_T);
 	}
 
-	std::string ComplexShape::name()
-	{
-		return _name;
-	}
-
 	std::string ComplexShape::type()
 	{
 		return "ComplexShape_t";
-	}
-
-	void ComplexShape::clipping(const Vector & min, const Vector & max)
-	{
-		db<ComplexShape>(INF) << "[" << this << "] Clipping: I'm only a ComplexShape dude!" << std::endl;
 	}
 
 } //! namespace model

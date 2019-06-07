@@ -49,8 +49,8 @@ namespace model
 			_visible_world(
 				Rectangle(
 					"window",
-					Vector(min[0] - 0.05*min[0], min[1] - 0.05*min[1], 0),
-					Vector(max[0] - 0.05*max[0], max[1] - 0.05*max[1], 0)
+					Vector(min[0] - 0.05*min[0], min[1] - 0.05*min[1], min[0] - 0.05*min[0]),
+					Vector(max[0] - 0.05*max[0], max[1] - 0.05*max[1], max[0] - 0.05*max[0])
 				)
 			)
 		{
@@ -85,17 +85,17 @@ namespace model
 /*                                 Implementaions                                 */
 /*================================================================================*/
 
-	const Vector Window::fixed_min{-1, -1};
-	const Vector Window::fixed_max{ 1,  1};
+	const Vector Window::fixed_min{-1, -1, -1};
+	const Vector Window::fixed_max{ 1,  1,  1};
 
 	const double Window::width()
 	{
-		return calculation::euclidean_distance({_max[0], 0}, {_min[0], 0});
+		return calculation::euclidean_distance({_min[0], 0}, {_max[0], 0});
 	}
 
 	const double Window::height()
 	{
-		return calculation::euclidean_distance({0, _max[1]}, {0, _min[1]});
+		return calculation::euclidean_distance({0, _min[1]}, {0, _max[1]});
 	}
 
 	void Window::transformation(const Matrix& T)
